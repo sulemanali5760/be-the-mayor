@@ -51,6 +51,12 @@ life.snapshot()                       // public town snapshot, see 3.4
 - **Contract change 1 (director, from Lane S):**
   - `upgrades()` items carry `repeat: true|false`. A repeatable upgrade (e.g. `bridge_fund`, €20 → +1 Reputation) is always buyable, never `done`, applies its effect at once, and emits no `upgradeDone`.
   - Any `{ ok: true }` result may carry `msg`, a person's line that the UI shows as a toast.
+- **Contract change 3 (director, from Lane W):**
+  - Lane W also owns `tools/smoke_world.mjs`, and `wall.js` lives in `js/world/`, not `js/world/fp/`.
+  - The QA hooks are `__btmWorld.tap(id)`, `finish(stars)`, `task()` and `screen(x, z)`.
+  - The wall is always 11 bricks (`params.bricks` is ignored).
+  - `town.json` follows the footprints table in ASSETS.md.
+  - `anchors()` covers buildings only; people get positions in 0.2.
 - **Contract change 2 (director, rule D1):** QA showed 3 walls and 3 deliveries on the way to Skilled.
   - A **quick shift** fixes it: once you have finished a task kind with **≥ 2 stars**, later offers of that kind carry `quick: true`.
   - `life.doJob(offerId, { quick: true }, now)` pays **80%**, takes no first-person time, and gives no stars or skill-star progress.
