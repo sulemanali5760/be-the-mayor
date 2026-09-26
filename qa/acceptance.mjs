@@ -44,9 +44,11 @@ const snapshotState = () => {
     rank: l.rank, mode: b.mode, t: +b.clock.t.toFixed(1), ...b.stats(), visits: b.meta.visits, hook: b.meta.hook,
     card: !document.getElementById('modal').hidden, promoCard: document.getElementById('card').classList.contains('promo'),
     cardOpts: [...document.querySelectorAll('#card [data-opt]')].map(x => ({ id: x.dataset.opt, disabled: x.disabled })),
+    cardKind: document.querySelector('#card .eyebrow')?.textContent || '', studiedDay: L.state.studiedDay,
     offers: L.offers().map(o => ({ id: o.id, energy: o.energy ?? 0, task: o.task, quick: !!o.quick })),
-    problems: L.problems().map(p => ({ id: p.id, options: p.options.map(o => ({ id: o.id, money: o.effects?.money || 0, rep: o.effects?.rep || 0 })) })),
-    upgrades: L.upgrades().map(u => ({ id: u.id, status: u.status, cost: u.cost ?? 0, endsAt: u.endsAt ?? 0, repeat: !!u.repeat })),
+    problems: L.problems().map(p => ({ id: p.id, options: p.options.map(o => ({ id: o.id, money: o.effects?.money || 0, rep: o.effects?.rep || 0,
+      slots: -(o.effects?.energy || 0), help: !!o.help, needsOk: !o.needs || L.state.skills?.[o.needs] > 0 })) })),
+    upgrades: L.upgrades().map(u => ({ id: u.id, status: u.status, cost: u.cost ?? 0, kind: u.kind, studied: u.studied, evenings: u.evenings, repeat: !!u.repeat })),
     checklist: l.next?.checklist || [],
   };
 };
@@ -78,16 +80,31 @@ async function goHome(page) {
 }
 
 const botLog = []; // kept outside the bot so a failure report can show its last steps
+// a player's pace in game seconds per action, the same as Lane S's balance bot (js/rules/balance.test.mjs);
+// first-person tasks add their own time. The bot is faster than a person, so it advances the game clock by these.
+const T = { board: 20, quick: 20, study: 15, card: 15, buy: 15, sleep: 30, visit: 90 };
+const pace = (page, sec) => page.evaluate(x => __btm.advance(x), sec);
+
 // B1 bot: plays through the real UI with sane choices until the ladder says Skilled
 async function playToSkilled(page, v) {
-  const log = botLog, tried = {};
+  const log = botLog, tried = {}, acts = []; // acts: [{ day, type }] for the action types per day
   log.length = 0;
   let want = null, promo = null, downloaded = '';
   for (let step = 0; step < 160; step++) {
     const s = await page.evaluate(snapshotState);
-    if (s.rank >= 1 && promo && !s.card) return { ok: true, s, log, promo, downloaded };
+    if (s.rank >= 1 && promo && !s.card) return { ok: true, s, log, promo, downloaded, acts };
     let did;
-    if (s.card) {
+    if (s.card && !s.promoCard && /Something happened|Town problem/.test(s.cardKind)) {
+      // an event or a problem: pick the planned option, else the first one that can be taken
+      const ids = s.cardOpts.filter(o => !o.disabled).map(o => o.id);
+      const id = want && ids.includes(want) ? want : ids.find(x => x !== '') ?? ids[0];
+      const help = want && id === want && s.problems.some(p => p.options.some(o => o.id === id && o.help));
+      want = null;
+      await page.click(`#card [data-opt="${id}"]`);
+      if (id) acts.push({ day: s.day, type: /Town problem/.test(s.cardKind) ? (help ? 'help' : 'problem') : 'event' });
+      await pace(page, T.card);
+      did = `card → ${id}`;
+    } else if (s.card) {
       const ids = s.cardOpts.filter(o => !o.disabled).map(o => o.id);
       if (s.promoCard) {
         promo = await page.evaluate(() => __btm.qa.promo?.toDataURL('image/png').length || 0);
@@ -105,29 +122,44 @@ async function playToSkilled(page, v) {
     } else if (s.mode === 'task') {
       await finishTask(page);
       await page.waitForFunction(() => __btm.mode !== 'task', null, { timeout: 30000 });
+      await pace(page, T.board); // reading the board and the result; the task itself ran on the game clock
       did = 'task finished';
     } else if (s.mode === 'visit') {
       await goHome(page);
       did = 'home';
     } else {
-      // courses and tools when affordable; a repeatable (the bridge fund) once, so money still goes to the courses
-      const up = s.upgrades.find(u => u.status === 'available' && u.cost <= s.money && !(u.repeat && log.includes(`upgrade ${u.id}`)));
-      const running = s.upgrades.find(u => u.status === 'running');
+      // contract change 4: enrol in one course, study one evening a day, buy extras only once enrolled
+      const enrolled = s.upgrades.find(u => u.kind === 'course' && (u.status === 'running' || u.status === 'done'));
+      const course = !enrolled && s.upgrades.find(u => u.kind === 'course' && u.status === 'available' && u.cost <= s.money);
+      const study = s.upgrades.find(u => u.status === 'running') && s.studiedDay !== s.day && s.slots > 0 && s.upgrades.find(u => u.status === 'running');
+      const extra = enrolled && s.upgrades.find(u => u.kind === 'buy' && u.status === 'available' && u.cost <= s.money && !log.includes(`buy ${u.id}`));
       // rotate job kinds so both verbs get played
-      const offers = s.offers.filter(o => o.energy <= s.energy);
+      const offers = s.offers.filter(o => o.energy <= s.slots);
       const last = log.filter(l => l.startsWith('job ')).pop();
       const offer = offers.find(o => !last || !last.endsWith(o.task)) || offers[0];
       // a sane player takes a problem once they can afford an option that helps (rep up), and gives up after 2 tries
       const prob = s.problems.filter(p => (tried[p.id] || 0) < 2)
-        .map(p => ({ p, o: p.options.filter(o => s.money + o.money >= 0 && o.rep > 0).sort((a, b) => b.rep - a.rep)[0] })).find(x => x.o);
-      if (up) {
+        .map(p => ({ p, o: p.options.filter(o => s.money + o.money >= 0 && o.rep > 0 && o.needsOk && o.slots <= s.slots).sort((a, b) => b.rep - a.rep)[0] })).find(x => x.o);
+      if (course || extra) {
+        const u = course || extra;
         await openPanel(page, 'upgrades');
-        await page.click(`#sheetBody [data-upgrade="${up.id}"]`);
-        did = `upgrade ${up.id}`;
-      } else if (running && !s.visits) {
+        await page.click(`#sheetBody [data-upgrade="${u.id}"]`);
+        acts.push({ day: s.day, type: 'buy' });
+        await pace(page, T.buy);
+        did = `${course ? 'enrol' : 'buy'} ${u.id}`;
+      } else if (study) {
+        await openPanel(page, 'upgrades');
+        if (!log.some(l => l.startsWith('study '))) await shot(page, `${v}-3c-learn`);
+        await page.click(`#sheetBody [data-study="${study.id}"]`);
+        acts.push({ day: s.day, type: 'study' });
+        await pace(page, T.study);
+        did = `study ${study.id} ${study.studied + 1}/${study.evenings}`;
+      } else if (enrolled && !s.visits) {
         await visitFirst(page);
         await shot(page, `${v}-6-visit`);
         await page.click('[data-visit="like"]');
+        acts.push({ day: s.day, type: 'visit' });
+        await pace(page, T.visit);
         did = 'visit + like';
       } else if (prob) {
         await openPanel(page, 'problems');
@@ -140,29 +172,30 @@ async function playToSkilled(page, v) {
         if (offer.quick) { // contract change 2: a mastered task is taken as a quick shift whenever offered
           if (!log.some(l => l.startsWith('quick '))) await shot(page, `${v}-3b-quick`);
           await page.click(`#sheetBody [data-quick="${offer.id}"]`);
-          log.push(`quick ${offer.task}`);
-          await page.waitForTimeout(350);
-          continue;
+          acts.push({ day: s.day, type: 'quick' });
+          await pace(page, T.quick);
+          did = `quick ${offer.task}`;
+        } else {
+          if (!log.some(l => l.startsWith('job '))) await shot(page, `${v}-3-jobs`);
+          await page.click(`#sheetBody [data-job="${offer.id}"]`);
+          acts.push({ day: s.day, type: offer.task });
+          await page.waitForTimeout(300);
+          if (!log.some(l => l.startsWith('job '))) await shot(page, `${v}-4-task`);
+          did = `job ${offer.task}`;
         }
-        if (!log.some(l => l.startsWith('job '))) await shot(page, `${v}-3-jobs`);
-        await page.click(`#sheetBody [data-job="${offer.id}"]`);
-        await page.waitForTimeout(300);
-        if (!log.some(l => l.startsWith('job '))) await shot(page, `${v}-4-task`);
-        did = `job ${offer.task}`;
-      } else if (running) {
-        await page.evaluate(sec => __btm.advance(sec), running.endsAt - s.t + 0.5);
-        did = `wait ${Math.round(running.endsAt - s.t)} s for ${running.id}`;
       } else if (s.rank >= 1) {
         did = 'waiting for the promotion card';
       } else {
+        if (!log.some(l => l.startsWith('sleep'))) await shot(page, `${v}-3d-day-done`);
         await page.click('#dock [data-act="sleep"]');
-        did = 'sleep';
+        await pace(page, T.sleep);
+        did = `sleep (day ${s.day}, ${s.slots} slots left)`;
       }
     }
     log.push(did);
     await page.waitForTimeout(350);
   }
-  return { ok: false, s: await page.evaluate(snapshotState), log, promo, downloaded };
+  return { ok: false, s: await page.evaluate(snapshotState), log, promo, downloaded, acts };
 }
 
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
@@ -203,6 +236,13 @@ for (const v of VIEWS) {
     const quick = await page.evaluate(() => __btm.qa.quick);
     check(v.name, 'B1 ≤ 2 first-person tasks per kind', Object.values(per).every(n => n <= 2),
       `${Object.entries(per).map(([k, n]) => `${k} ×${n}`).join(', ')}; quick shifts: ${quick.join(', ') || 'none'}`);
+    // contract change 4 targets: ≤ 12 jobs before Skilled, on average ≥ 2 different action types per day
+    const days = {};
+    for (const a of b1.acts) (days[a.day] ||= new Set()).add(['wall', 'delivery', 'quick'].includes(a.type) ? 'job' : a.type);
+    const jobs = tasks.length + quick.length, perDay = Object.values(days).map(d => d.size), avg = perDay.reduce((a, b) => a + b, 0) / (perDay.length || 1);
+    check(v.name, 'B1 days: ≤ 12 jobs, ≥ 2 action types a day', jobs <= 12 && avg >= 2,
+      `${jobs} jobs over ${perDay.length} days; action types a day ${perDay.join('/')} (avg ${avg.toFixed(1)}); ` +
+      Object.entries(days).map(([d, set]) => `d${d}: ${b1.acts.filter(a => a.day == d).map(a => a.type).join('+')}`).join(' · '));
     check(v.name, 'B2 first-person tasks ≤ 90 s game time', tasks.length >= 2 && kinds.size >= 2 && tasks.every(t => t.game <= 90 && t.seconds <= 90),
       tasks.map(t => `${t.kind} ${t.game}s/${t.seconds}s`).join(', ') || 'no tasks played');
     await page.click('#ladder');

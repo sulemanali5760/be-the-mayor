@@ -56,7 +56,7 @@ if (saved) whileAway();
 // ---- helpers over the rules' state -----------------------------------------------------------------------------
 function stats() {
   const s = life.state;
-  return { money: s.money ?? 0, rep: s.rep ?? 0, energy: s.energy ?? 0, maxEnergy: s.maxEnergy ?? s.energyMax ?? 3, day: s.day ?? 1 };
+  return { money: s.money ?? 0, rep: s.rep ?? 0, slots: s.slots ?? 0, maxSlots: 3, day: s.day ?? 1 }; // 3 action slots a day (contract change 4)
 }
 const person = id => content.people?.find?.(p => p.id === id) || { name: id };
 const skillName = k => content.upgrades.find(u => u.gives === k)?.title || k;
@@ -66,7 +66,7 @@ function blocked(o) {
   const s = life.state, e = o.effects || {};
   if (o.needs && !(s.skills?.[o.needs] > 0)) return `Needs ${skillName(o.needs)}`;
   if (s.money + (e.money ?? 0) < 0) return 'Not enough money';
-  if (s.energy + (e.energy ?? 0) < 0) return 'Too tired';
+  if (life.state.slots + (e.energy ?? 0) < 0) return 'No time left today';
   return '';
 }
 const optionCard = o => { const why = blocked(o); return { id: o.id, disabled: !!why, html: `${esc(o.label)}${chips(o.effects, { later: o.later })}${why ? `<span class="status">${esc(why)}</span>` : ''}` }; };
@@ -77,7 +77,6 @@ function addNews(list = []) {
   meta.paper = [...items.reverse(), ...meta.paper].slice(0, 12);
   return items;
 }
-const mmss = s => `${Math.floor(s / 60)}:${String(Math.max(0, Math.ceil(s % 60)) % 60).padStart(2, '0')}`;
 
 // ---- intro: name yourself and the town (2 taps, suggestions prefilled) -------------------------------------------
 async function intro() {
@@ -104,17 +103,19 @@ async function intro() {
 
 // ---- HUD ------------------------------------------------------------------------------------------------------
 function guide() {
-  if (meta.hook) return `🎯 ${esc(meta.hook)}`;
   const s = stats(), up = life.upgrades();
+  if (s.slots <= 0) return '🌙 Day done: <b>Sleep</b> → tomorrow\'s newspaper'; // the main call to action at 0 slots
+  if (meta.hook) return `🎯 ${esc(meta.hook)}`;
   if (!meta.jobs) return '👉 Pick a job from the <b>Jobs</b> board';
   if (!meta.choices && life.problems().length) return '👉 Someone needs you: tap a speech bubble';
-  if (!up.some(u => u.status === 'running' || u.status === 'done') && up.some(u => u.status === 'available')) return '👉 Invest in yourself: open <b>Learn</b>';
-  if (!meta.visits && up.some(u => u.status === 'running')) return '👉 Your course runs while you play. <b>Visit</b> a neighbour';
-  if (s.energy <= 0) return '👉 Out of energy: <b>Sleep</b> to start a new day';
+  if (!up.some(u => u.status === 'running' || u.status === 'done') && up.some(u => u.status === 'available' && u.kind === 'course')) return '👉 Invest in yourself: open <b>Learn</b>';
+  if (up.some(u => u.status === 'running') && life.state.studiedDay !== s.day) return '👉 Your course: <b>Learn</b> → study tonight';
+  if (!meta.visits && up.some(u => u.status === 'running')) return '👉 <b>Visit</b> a neighbour to see where you\'re heading';
   return '';
 }
 function refresh() {
   ui.renderStats(stats());
+  document.querySelector('#dock [data-act="sleep"]').classList.toggle('due', stats().slots <= 0);
   ui.renderLadder(life.ladder());
   ui.setGoal(guide());
   ui.setBadge('jobs', life.offers().length && !meta.jobs ? life.offers().length : 0);
@@ -131,7 +132,7 @@ function panel(name) {
     const html = life.offers().map(o => `<div class="item"><h3>${esc(o.title)}</h3>${whoLine(o.who)}
       ${o.twist ? `<p>Twist: ${esc(typeof o.twist === 'string' ? o.twist : o.twist.label || o.twist.id)}</p>` : ''}
       ${chips({ money: o.pay }, { energy: o.energy })}
-      ${o.energy > s.energy ? '<button class="go" disabled>Too tired: sleep first</button>'
+      ${o.energy > s.slots ? '<button class="go" disabled>No time left today: sleep</button>'
         : o.quick ? `<div class="row"><button class="go" data-job="${esc(o.id)}">Do it (first person)</button><button class="opt" data-quick="${esc(o.id)}">Quick shift · 80%${chips({ money: Math.round(o.pay * 0.8) })}</button></div>`
         : `<button class="go" data-job="${esc(o.id)}">${o.task === 'delivery' ? 'Plan the route' : 'Start the job'}</button>`}</div>`).join('');
     ui.openSheet('jobs', 'Job board', html || '<p class="muted">No offers right now. New ones come tomorrow.</p>');
@@ -140,12 +141,20 @@ function panel(name) {
       <button class="opt" data-problem="${esc(p.id)}">Hear them out</button></div>`).join('');
     ui.openSheet('problems', 'Town problems', html || '<p class="muted">Nobody needs you right now. Enjoy it while it lasts.</p>');
   } else if (name === 'upgrades') {
+    // contract change 4: `buy` items are instant; a `course` is enrolled once, then studied one evening a day (1 slot)
+    const studied = life.state.studiedDay === s.day;
     const html = life.upgrades().map(u => {
-      const left = u.status === 'running' ? Math.max(0, u.endsAt - clock.t) : 0;
-      return `<div class="item"><h3>${esc(u.title)}</h3>${u.text && u.status !== 'done' ? `<p>${esc(u.text)}</p>` : ''}
-        <div class="status">${u.status === 'running' ? `Running · ${mmss(left)} left` : u.status === 'done' ? '✅ Done' : u.status === 'locked' ? `🔒 ${u.needs && !(life.state.skills?.[u.needs] > 0) ? `Needs ${esc(skillName(u.needs))}` : `Unlocks at ${esc(content.ranks.find(r => r.rank === u.rank)?.title || 'a later rank')}`}` : u.repeat ? 'Any time, as often as you like' : `${mmss(u.seconds || 0)} of play`}</div>
-        ${u.status === 'running' ? `<div class="prog"><i style="width:${100 - (100 * left) / (u.seconds || 1)}%"></i></div>` : ''}
-        ${u.status === 'available' ? `${chips({ money: -u.cost, ...upgradeEffects(u) })}<button class="go" data-upgrade="${esc(u.id)}" ${u.cost > s.money ? 'disabled' : ''}>${u.cost > s.money ? `Need €${esc(u.cost)}` : u.repeat ? `Pay €${esc(u.cost)}` : 'Start'}</button>` : ''}</div>`;
+      const course = u.kind === 'course';
+      const status = u.status === 'running' ? `Enrolled · evening ${u.studied}/${u.evenings}`
+        : u.status === 'done' ? '✅ Yours'
+        : u.status === 'locked' ? `🔒 ${u.needs && !(life.state.skills?.[u.needs] > 0) ? `Needs ${esc(skillName(u.needs))}` : `Unlocks at ${esc(content.ranks.find(r => r.rank === u.rank)?.title || 'a later rank')}`}`
+        : u.repeat ? 'Any time, as often as you like' : course ? `${u.evenings} evenings of study, one a day` : 'Yours at once';
+      const act = u.status === 'running'
+        ? `${chips({ energy: -1 })}<button class="go" data-study="${esc(u.id)}" ${studied || s.slots < 1 ? 'disabled' : ''}>${studied ? 'Studied tonight already' : s.slots < 1 ? 'No time left today' : `Study tonight (evening ${u.studied + 1}/${u.evenings})`}</button>`
+        : u.status === 'available'
+          ? `${chips({ money: -u.cost, ...upgradeEffects(u) })}<button class="go" data-upgrade="${esc(u.id)}" ${u.cost > s.money ? 'disabled' : ''}>${u.cost > s.money ? `Need €${esc(u.cost)}` : u.repeat ? `Pay €${esc(u.cost)}` : course ? `Enrol · €${esc(u.cost)}` : `Buy · €${esc(u.cost)}`}</button>`
+          : '';
+      return `<div class="item"><h3>${esc(u.title)}</h3>${u.text && u.status !== 'done' ? `<p>${esc(u.text)}</p>` : ''}<div class="status">${status}</div>${act}</div>`;
     }).join('');
     ui.openSheet('upgrades', 'Invest in yourself', html || '<p class="muted">Nothing to learn yet.</p>');
   } else if (name === 'ladder') {
@@ -235,7 +244,16 @@ function startUpgrade(id) {
   const u = life.upgrades().find(x => x.id === id);
   if (!r.ok) toast(esc(r.msg || 'Not possible right now'));
   else if (u?.repeat) toast(`${chips({ money: -u.cost, ...upgradeEffects(u) })}${r.msg ? `<div>${esc(r.msg)}</div>` : ''}`); // pays out at once
-  else toast(`🎓 <b>${esc(u?.title)}</b> started. It runs while you play.${r.msg ? `<div>${esc(r.msg)}</div>` : ''}`);
+  else if (u?.kind === 'course') toast(`🎓 Enrolled: <b>${esc(u.title)}</b>. Study one evening a day.${r.msg ? `<div>${esc(r.msg)}</div>` : ''}`);
+  else if (r.msg) toast(esc(r.msg)); // a bought thing announces itself through tick's upgradeDone
+  after();
+}
+
+// one evening of a course: 1 slot, at most one a day (contract change 4)
+function study(id) {
+  const r = life.study(id, clock.t);
+  if (!r.ok) toast(esc(r.msg || 'Not possible right now'));
+  else if (r.msg) toast(`📚 ${esc(r.msg)}`);
   after();
 }
 
@@ -379,6 +397,7 @@ $('sheetBody').onclick = e => {
   else if (b.dataset.quick) quickShift(b.dataset.quick);
   else if (b.dataset.problem) openProblem(b.dataset.problem);
   else if (b.dataset.upgrade) startUpgrade(b.dataset.upgrade);
+  else if (b.dataset.study) study(b.dataset.study);
   else if (b.dataset.town) visit(b.dataset.town);
   else if (b.dataset.act === 'restart') restart();
 };
@@ -389,10 +408,10 @@ addEventListener('visibilitychange', () => { if (document.hidden) { persist(); n
 addEventListener('pagehide', persist);
 
 // ---- main loop ----------------------------------------------------------------------------------------------------
-let last = performance.now(), sinceSave = 0, sinceHud = 0;
+let last = performance.now(), sinceSave = 0;
 function handle(events) {
   for (const e of events || []) {
-    if (e.type === 'upgradeDone') toast(`🎓 <b>${esc(e.title || 'Course')}</b> finished!${e.text ? `<div>${esc(e.text)}</div>` : ''}`);
+    if (e.type === 'upgradeDone') toast(`✅ <b>${esc(e.title || 'Course')}</b> is yours!${e.text ? `<div>${esc(e.text)}</div>` : ''}`);
     else if (e.type === 'promotion') promotion(e);
     else if (e.type === 'consequence') {
       const items = addNews(e.news || (e.text ? [e.text] : []));
@@ -416,7 +435,6 @@ function frame(now) {
     if (ev) showEvent(ev);
     ui.bubbles(mode === 'town' ? life.problems().map(p => ({ id: p.at || p.who, key: p.id, text: p.title })) : [], world.anchors(), openProblem);
   }
-  if ((sinceHud += dt) > 1) { sinceHud = 0; if (ui.sheet.panel === 'upgrades') panel('upgrades'); }
   if ((sinceSave += dt) > 10) { sinceSave = 0; persist(); }
   requestAnimationFrame(frame);
 }

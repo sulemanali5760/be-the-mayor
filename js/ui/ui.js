@@ -13,7 +13,7 @@ export function chips(e = {}, { later, energy } = {}) {
   if (e.money) add(e.money, `${signed(e.money)} €`);
   if (e.rep) add(e.rep, `${signed(e.rep)} ★`);
   const en = e.energy ?? (energy ? -energy : 0);
-  if (en) add(en, `${signed(en)} ⚡`);
+  if (en) add(en, `${signed(en)} action${Math.abs(en) > 1 ? 's' : ''}`); // effects.energy = today's action slots
   for (const [id, n] of Object.entries(e.skill || {})) add(n, `${signed(n)} 🔧 ${esc(id)}`);
   if (e.fix) add(1, `🏠 fixes ${esc(e.label || e.fix)}`);
   else if (e.label) out.push(`<span class="chip">${esc(e.label)}</span>`);
@@ -33,7 +33,8 @@ export function toast(html, ms = 4200) {
 export function renderStats(s) {
   $('stats').innerHTML =
     `<span>€${esc(Math.round(s.money))}</span><span>★ ${esc(s.rep)}</span>` +
-    `<span>⚡ ${esc(s.energy)}<small>/${esc(s.maxEnergy)}</small></span><span><small>Day</small> ${esc(s.day)}</span>`;
+    `<span class="pips" title="Actions left today" aria-label="${esc(s.slots)} of ${esc(s.maxSlots)} actions left today">` +
+    Array.from({ length: s.maxSlots }, (_, i) => `<i class="${i < s.slots ? 'on' : ''}"></i>`).join('') + `</span><span><small>Day</small> ${esc(s.day)}</span>`;
 }
 
 export function renderLadder(l) {
