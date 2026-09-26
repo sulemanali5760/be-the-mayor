@@ -20,7 +20,8 @@ jobs:
       - run: node tools/validate_assets.mjs
       - run: node --test js/world/rules.test.mjs
       # every js/world module must at least parse (three.js is only in the browser, so check syntax, not imports)
-      - run: for f in js/world/*.js; do cp "$f" /tmp/check.mjs && node --check /tmp/check.mjs || { echo "syntax: $f"; exit 1; }; done
+      - run: |
+          for f in js/world/*.js; do cp "$f" /tmp/check.mjs && node --check /tmp/check.mjs || { echo "syntax error in $f"; exit 1; }; done
   # the real js/world in headless Chrome: town view input, both tasks driven by pointer input, no page errors
   smoke:
     runs-on: ubuntu-latest
