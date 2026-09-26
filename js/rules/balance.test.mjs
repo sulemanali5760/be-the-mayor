@@ -71,7 +71,9 @@ function play(seed) {
       continue;
     }
 
-    const extra = life.upgrades().filter(u => u.status === 'available' && !path.includes(u.id) && u.cost <= s.money);
+    // sane: the bridge tin gets spare money only, not the course savings
+    const extra = life.upgrades().filter(u => u.status === 'available' && !path.includes(u.id) && u.cost <= s.money
+      && !(u.repeat && course));
     if (extra.length && r() < 0.3) {
       assert.ok(life.startUpgrade(pick(extra).id, now).ok);
       m.bought += 1;

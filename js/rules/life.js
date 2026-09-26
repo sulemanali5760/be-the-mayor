@@ -99,7 +99,7 @@ export function createLife(content, save, rand = Math.random) {
         : s.rank >= (u.rank ?? 0) && has(u.needs) ? 'available' : 'locked';
       return {
         id: u.id, who: u.who, title: u.title, text: fmt(u.text), cost: u.cost, seconds: u.seconds,
-        needs: u.needs ?? null, rank: u.rank ?? 0, status, endsAt: run?.endsAt ?? null,
+        needs: u.needs ?? null, rank: u.rank ?? 0, status, endsAt: run?.endsAt ?? null, repeat: !!u.repeat,
       };
     });
   }
@@ -178,6 +178,11 @@ export function createLife(content, save, rand = Math.random) {
       if (u.status !== 'available') return { ok: false, msg: 'Already yours.' };
       if (s.money < u.cost) return { ok: false, msg: 'Not enough money.' };
       s.money -= u.cost;
+      const c = find(content.upgrades, id);
+      if (c.repeat) { // a standing money destination (GAMES §4.12): pays out at once and stays available
+        apply(c.effects ?? {});
+        return { ok: true, msg: fmt(c.says) };
+      }
       s.upgrades[id] = { endsAt: now + u.seconds, done: false };
       return { ok: true };
     },
