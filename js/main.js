@@ -16,7 +16,7 @@ const content = Object.fromEntries(await Promise.all(FILES.map(async f => [f, aw
 
 // ---- the one game clock: seconds of play, advancing only while the game runs and the tab is visible ----------
 const clock = { t: 0, speed: 1, running: false };
-const qa = { tasks: [], visits: [], promo: null }; // evidence for qa/acceptance.mjs
+const qa = { tasks: [], quick: [], visits: [], promo: null }; // evidence for qa/acceptance.mjs
 
 // ---- local save: { v, t, meta, save }; life.state is the rules' save object, meta is the shell's own ---------
 const KEY = 'btm.save.v1';
@@ -131,7 +131,9 @@ function panel(name) {
     const html = life.offers().map(o => `<div class="item"><h3>${esc(o.title)}</h3>${whoLine(o.who)}
       ${o.twist ? `<p>Twist: ${esc(typeof o.twist === 'string' ? o.twist : o.twist.label || o.twist.id)}</p>` : ''}
       ${chips({ money: o.pay }, { energy: o.energy })}
-      <button class="go" data-job="${esc(o.id)}" ${o.energy > s.energy ? 'disabled' : ''}>${o.energy > s.energy ? 'Too tired: sleep first' : o.task === 'delivery' ? 'Plan the route' : 'Start the job'}</button></div>`).join('');
+      ${o.energy > s.energy ? '<button class="go" disabled>Too tired: sleep first</button>'
+        : o.quick ? `<div class="row"><button class="go" data-job="${esc(o.id)}">Do it (first person)</button><button class="opt" data-quick="${esc(o.id)}">Quick shift · 80%${chips({ money: Math.round(o.pay * 0.8) })}</button></div>`
+        : `<button class="go" data-job="${esc(o.id)}">${o.task === 'delivery' ? 'Plan the route' : 'Start the job'}</button>`}</div>`).join('');
     ui.openSheet('jobs', 'Job board', html || '<p class="muted">No offers right now. New ones come tomorrow.</p>');
   } else if (name === 'problems') {
     const html = life.problems().map(p => `<div class="item"><h3>${esc(p.title)}</h3>${whoLine(p.who)}
@@ -189,6 +191,17 @@ async function doJob(id) {
   qa.tasks.push({ kind: o.task, game: +(clock.t - t0).toFixed(2), seconds: result.seconds, stars: result.stars });
   world.showTown(life.state);
   if (applyResult(life.doJob(o.id, result, clock.t), o.who)) meta.jobs++;
+  after();
+}
+
+// a task you have mastered (≥ 2 stars) can be done as a quick shift: 80% pay, no first-person time (contract change 2)
+function quickShift(id) {
+  const o = life.offers().find(x => x.id === id);
+  if (!o || mode !== 'town') return;
+  ui.closeSheet();
+  qa.quick.push(o.task);
+  world.showTown(life.state);
+  if (applyResult(life.doJob(o.id, { quick: true }, clock.t), o.who)) meta.jobs++;
   after();
 }
 
@@ -363,6 +376,7 @@ $('sheetBody').onclick = e => {
   const b = e.target.closest('button');
   if (!b || b.disabled) return;
   if (b.dataset.job) doJob(b.dataset.job);
+  else if (b.dataset.quick) quickShift(b.dataset.quick);
   else if (b.dataset.problem) openProblem(b.dataset.problem);
   else if (b.dataset.upgrade) startUpgrade(b.dataset.upgrade);
   else if (b.dataset.town) visit(b.dataset.town);

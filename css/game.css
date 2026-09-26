@@ -74,6 +74,7 @@ body.visiting #dock,body.visiting #goal{display:none}
 .opt{display:grid;gap:4px;width:100%;text-align:left;background:rgba(244,242,237,.06);border:1.5px solid var(--line);padding:8px 10px;font-family:var(--label);font-weight:700;font-size:15px}
 .opt:hover:not(:disabled){border-color:var(--hivis)}
 .opts{display:grid;gap:6px}
+.item .row>button{flex:1 1 140px;width:auto}
 .status{font-family:var(--label);font-size:13px;color:var(--muted)}
 .prog{height:5px;background:rgba(244,242,237,.18)} .prog i{display:block;height:100%;background:var(--hivis)}
 .ranks{list-style:none;margin:6px 0;padding:0;display:grid;gap:2px}

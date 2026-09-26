@@ -44,7 +44,7 @@ const snapshotState = () => {
     rank: l.rank, mode: b.mode, t: +b.clock.t.toFixed(1), ...b.stats(), visits: b.meta.visits, hook: b.meta.hook,
     card: !document.getElementById('modal').hidden, promoCard: document.getElementById('card').classList.contains('promo'),
     cardOpts: [...document.querySelectorAll('#card [data-opt]')].map(x => ({ id: x.dataset.opt, disabled: x.disabled })),
-    offers: L.offers().map(o => ({ id: o.id, energy: o.energy ?? 0, task: o.task })),
+    offers: L.offers().map(o => ({ id: o.id, energy: o.energy ?? 0, task: o.task, quick: !!o.quick })),
     problems: L.problems().map(p => ({ id: p.id, options: p.options.map(o => ({ id: o.id, money: o.effects?.money || 0, rep: o.effects?.rep || 0 })) })),
     upgrades: L.upgrades().map(u => ({ id: u.id, status: u.status, cost: u.cost ?? 0, endsAt: u.endsAt ?? 0, repeat: !!u.repeat })),
     checklist: l.next?.checklist || [],
@@ -137,6 +137,13 @@ async function playToSkilled(page, v) {
         did = `problem ${prob.p.id}`;
       } else if (offer) {
         await openPanel(page, 'jobs');
+        if (offer.quick) { // contract change 2: a mastered task is taken as a quick shift whenever offered
+          if (!log.some(l => l.startsWith('quick '))) await shot(page, `${v}-3b-quick`);
+          await page.click(`#sheetBody [data-quick="${offer.id}"]`);
+          log.push(`quick ${offer.task}`);
+          await page.waitForTimeout(350);
+          continue;
+        }
         if (!log.some(l => l.startsWith('job '))) await shot(page, `${v}-3-jobs`);
         await page.click(`#sheetBody [data-job="${offer.id}"]`);
         await page.waitForTimeout(300);
@@ -190,6 +197,12 @@ for (const v of VIEWS) {
     check(v.name, 'B1 promotion card PNG', b1.promo > 20000 && /\.png$/.test(b1.downloaded), `canvas ${b1.promo} chars, download “${b1.downloaded}”`);
     const tasks = await page.evaluate(() => __btm.qa.tasks);
     const kinds = new Set(tasks.map(t => t.kind));
+    // rule D1 via contract change 2: at most 2 first-person tasks per kind on the way to Skilled (B1 plays no others)
+    const per = {};
+    for (const t of tasks) per[t.kind] = (per[t.kind] || 0) + 1;
+    const quick = await page.evaluate(() => __btm.qa.quick);
+    check(v.name, 'B1 ≤ 2 first-person tasks per kind', Object.values(per).every(n => n <= 2),
+      `${Object.entries(per).map(([k, n]) => `${k} ×${n}`).join(', ')}; quick shifts: ${quick.join(', ') || 'none'}`);
     check(v.name, 'B2 first-person tasks ≤ 90 s game time', tasks.length >= 2 && kinds.size >= 2 && tasks.every(t => t.game <= 90 && t.seconds <= 90),
       tasks.map(t => `${t.kind} ${t.game}s/${t.seconds}s`).join(', ') || 'no tasks played');
     await page.click('#ladder');
