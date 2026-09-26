@@ -48,6 +48,9 @@ life.snapshot()                       // public town snapshot, see 3.4
 ```
 
 - `effects` = `{ money?, rep?, energy?, skill?: { id: n }, fix?: buildingId, label?: string }`, always shown **before** you choose (pillar 2).
+- **Contract change 1 (director, from Lane S):**
+  - `upgrades()` items carry `repeat: true|false`. A repeatable upgrade (e.g. `bridge_fund`, €20 → +1 Reputation) is always buyable, never `done`, applies its effect at once, and emits no `upgradeDone`.
+  - Any `{ ok: true }` result may carry `msg`, a person's line that the UI shows as a toast.
 - `save.js`: `newSave(name, town)`, `migrate(save)`. Old or partial saves always load.
 
 ### 3.2 Content (`data/`, Lane S)
