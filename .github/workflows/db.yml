@@ -1,0 +1,30 @@
+# Row-level security tests against a local Supabase started on this runner. Never the live project:
+# the tests refuse any URL that is not 127.0.0.1/localhost, and no service key is used anywhere.
+name: db
+on:
+  push:
+    paths-ignore: ['docs/**', '**.md']
+  workflow_dispatch:
+concurrency:
+  group: db-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  policies:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Start local Supabase (applies supabase/migrations)
+        run: supabase start
+      - run: npm install --no-save @supabase/supabase-js@2
+      - name: Policy tests
+        run: |
+          eval "$(supabase status -o env)"
+          export SUPABASE_URL="$API_URL" SUPABASE_ANON_KEY="${ANON_KEY:-$PUBLISHABLE_KEY}"
+          node --test supabase/tests/policies.test.mjs

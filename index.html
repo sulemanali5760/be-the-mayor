@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Be the Mayor</title>
+<meta name="description" content="Start as a labourer in a run-down town, fix real problems for named people and climb from council to mayor to president.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@500;600;700&family=Saira+Stencil+One&display=swap" rel="stylesheet">
+<style>*,*::before,*::after{box-sizing:border-box}[hidden]{display:none!important}</style>
+<link rel="stylesheet" href="css/game.css?v=0.1.0">
+</head>
+<body>
+<div id="app">
+  <canvas id="view" aria-label="Your town"></canvas>
+  <div id="bubbles" aria-live="off"></div>
+
+  <header id="top" class="panel">
+    <div id="stats" class="stats"></div>
+    <button id="ladder" class="ladder" aria-label="Career ladder"></button>
+    <div id="goal" class="goal" hidden></div>
+  </header>
+
+  <div id="toasts" aria-live="polite"></div>
+
+  <nav id="dock" class="panel">
+    <button data-panel="jobs"><i>🧰</i>Jobs<b class="badge" hidden></b></button>
+    <button data-panel="problems"><i>💬</i>Town<b class="badge" hidden></b></button>
+    <button data-panel="upgrades"><i>🎓</i>Learn<b class="badge" hidden></b></button>
+    <button data-panel="visit"><i>🧭</i>Visit</button>
+    <button data-panel="paper"><i>📰</i>Paper</button>
+    <button data-act="sleep"><i>🌙</i>Sleep</button>
+  </nav>
+
+  <nav id="visitbar" class="panel" hidden>
+    <div class="who"><span class="eyebrow">Visiting</span><b id="visitName"></b></div>
+    <div class="row">
+      <button data-visit="like">❤️ Like</button>
+      <button data-visit="sign">🪧 Sign</button>
+      <button data-visit="help">🤝 Help</button>
+      <button data-visit="home" class="plain">Home</button>
+    </div>
+  </nav>
+
+  <section id="sheet" class="panel" hidden>
+    <div class="sheetHead"><span id="sheetTitle" class="eyebrow"></span><button id="sheetClose" class="x" aria-label="Close">✕</button></div>
+    <div id="sheetBody"></div>
+  </section>
+
+  <div id="modal" class="overlay" hidden><div id="card" class="card panel" role="dialog" aria-modal="true"></div></div>
+  <div id="boot" class="overlay"><div class="card panel"><h1>Be the Mayor</h1><p id="bootMsg">Loading…</p></div></div>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+} }
+</script>
+<script>
+  // show start-up failures on the loading card instead of a silent "Loading…"
+  addEventListener('error', e => { const l = document.getElementById('bootMsg'); if (l && !document.getElementById('boot').hidden) l.textContent = 'Could not start: ' + (e.message || 'a file failed to load'); }, true);
+</script>
+<script type="module" src="js/main.js?v=0.1.0"></script>
+</body>
+</html>

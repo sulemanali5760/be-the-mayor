@@ -1,0 +1,40 @@
+# Local Supabase for the `db` CI job only (supabase start on the Actions runner). The live project is
+# configured in its dashboard; nothing here touches it. Only db, auth and the REST API are needed.
+project_id = "be-the-mayor"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+
+[studio]
+enabled = false
+
+[inbucket]
+enabled = false
+
+[storage]
+enabled = false
+
+[realtime]
+enabled = false
+
+[edge_runtime]
+enabled = false
+
+[analytics]
+enabled = false
+
+[auth]
+enabled = true
+site_url = "http://127.0.0.1:8080"
+enable_signup = true
+enable_anonymous_sign_ins = true
+
+[auth.rate_limit]
+anonymous_users = 1000

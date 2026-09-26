@@ -1,0 +1,115 @@
+/* Be the Mayor: game shell. Phone-first: a top bar (stats, ladder, goal), a bottom dock, and one sheet or
+   card at a time over the town. Wide screens move the sheet to the right. */
+:root{
+  color-scheme:dark;
+  --ink:#1E2226; --glass:rgba(24,28,31,.86); --paper:#F4F2ED; --muted:#B9B6AE; --hivis:#F5B400;
+  --good:#7CD992; --bad:#FF7A59; --line:rgba(244,242,237,.18);
+  --display:'Saira Stencil One','Barlow Semi Condensed',Impact,sans-serif;
+  --body:'Barlow',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --label:'Barlow Semi Condensed','Barlow',system-ui,sans-serif;
+  --gut:10px; --dockH:62px;
+}
+html,body{height:100%}
+body{margin:0;background:var(--ink);color:var(--paper);font-family:var(--body);overflow:hidden}
+#app{position:relative;height:100%;overflow:hidden}
+#view{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+button{font:inherit;cursor:pointer;color:inherit}
+:focus-visible{outline:3px solid var(--hivis);outline-offset:2px}
+.panel{background:var(--glass);border:1.5px solid var(--line);backdrop-filter:blur(6px)}
+.eyebrow{font-family:var(--label);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--hivis)}
+.muted{color:var(--muted)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.plain{background:transparent;border:1.5px solid rgba(244,242,237,.3);font-family:var(--label);font-weight:600;font-size:15px;padding:9px 14px}
+.go{font-family:var(--label);font-weight:700;font-size:16px;background:var(--hivis);color:var(--ink);border:0;padding:10px 16px;box-shadow:0 3px 0 #8a6600}
+.go:active{transform:translateY(2px);box-shadow:0 1px 0 #8a6600}
+.go:disabled,.opt:disabled{opacity:.45;cursor:default;box-shadow:none}
+
+/* top bar: stats, the always-visible ladder, the current goal */
+#top{position:absolute;top:calc(var(--gut) + env(safe-area-inset-top,0px));left:var(--gut);right:var(--gut);padding:6px 10px 8px;display:grid;gap:4px}
+.stats{display:flex;gap:14px;font-family:var(--label);font-weight:700;font-size:16px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden}
+.stats span{display:inline-flex;gap:4px;align-items:baseline}
+.stats small{font-weight:500;color:var(--muted);font-size:12px}
+.ladder{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;text-align:left;background:none;border:0;padding:0}
+.ladder .rung{font-family:var(--label);font-weight:700;font-size:14px;white-space:nowrap}
+.ladder .rung em{font-style:normal;color:var(--hivis)}
+.ladder .bar{height:5px;background:rgba(244,242,237,.18)}
+.ladder .bar i{display:block;height:100%;background:var(--hivis);transition:width .3s}
+.ladder .next{grid-column:1/-1;font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.goal{font-family:var(--label);font-weight:600;font-size:13px;color:var(--paper);border-top:1px solid var(--line);padding-top:4px}
+.goal b{color:var(--hivis)}
+
+/* bottom dock */
+#dock,#visitbar{position:absolute;left:var(--gut);right:var(--gut);bottom:calc(var(--gut) + env(safe-area-inset-bottom,0px))}
+#dock{height:var(--dockH);display:grid;grid-template-columns:repeat(6,1fr)}
+#dock button{position:relative;background:none;border:0;display:grid;place-items:center;align-content:center;gap:2px;font-family:var(--label);font-weight:700;font-size:12.5px;padding:4px 0}
+#dock button i{font-style:normal;font-size:20px;line-height:1}
+#dock button.on{background:rgba(245,180,0,.18);color:var(--hivis)}
+.badge{position:absolute;top:4px;right:calc(50% - 22px);min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--bad);color:#fff;font-size:11px;line-height:16px}
+#visitbar{padding:6px 10px 8px;display:grid;gap:6px}
+#visitbar .who b{display:block;font-family:var(--label);font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#visitbar button{flex:1;min-width:0;background:rgba(244,242,237,.08);border:1.5px solid var(--line);font-family:var(--label);font-weight:700;font-size:14px;padding:9px 4px}
+#visitbar button:disabled{opacity:.45}
+body.task #top,body.task #dock,body.task #bubbles,body.task #sheet,body.task #toasts{display:none}
+body.visiting #dock,body.visiting #goal{display:none}
+
+/* toasts: named people reacting, results */
+#toasts{position:absolute;left:var(--gut);right:var(--gut);bottom:calc(var(--dockH) + 2*var(--gut) + env(safe-area-inset-bottom,0px));display:grid;gap:6px;pointer-events:none}
+.toast{padding:8px 12px;font-size:14px;line-height:1.35;animation:pop .25s ease-out}
+.toast b{font-family:var(--label);color:var(--hivis)}
+@keyframes pop{from{transform:translateY(8px);opacity:0}}
+
+/* the sheet: job board, problems, upgrades, ladder, visits, newspaper */
+#sheet{position:absolute;left:var(--gut);right:var(--gut);bottom:calc(var(--dockH) + 2*var(--gut) + env(safe-area-inset-bottom,0px));
+  max-height:calc(100% - var(--dockH) - 3*var(--gut) - var(--topH,110px) - env(safe-area-inset-bottom,0px) - env(safe-area-inset-top,0px));overflow:auto;padding:10px 12px 12px}
+.sheetHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.x{background:none;border:0;font-size:18px;padding:2px 6px;color:var(--muted)}
+.item{display:grid;gap:6px;padding:10px 0;border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:0}
+.item h3{margin:0;font-family:var(--label);font-size:17px;line-height:1.2}
+.item p{margin:0;font-size:14px;line-height:1.4;color:#DEDBD3}
+.who{font-size:12.5px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{font-family:var(--label);font-weight:700;font-size:13px;padding:2px 7px;background:rgba(244,242,237,.1);white-space:nowrap}
+.chip.up{color:var(--good)} .chip.down{color:var(--bad)} .chip.later{color:var(--hivis)}
+.opt{display:grid;gap:4px;width:100%;text-align:left;background:rgba(244,242,237,.06);border:1.5px solid var(--line);padding:8px 10px;font-family:var(--label);font-weight:700;font-size:15px}
+.opt:hover:not(:disabled){border-color:var(--hivis)}
+.opts{display:grid;gap:6px}
+.status{font-family:var(--label);font-size:13px;color:var(--muted)}
+.prog{height:5px;background:rgba(244,242,237,.18)} .prog i{display:block;height:100%;background:var(--hivis)}
+.ranks{list-style:none;margin:6px 0;padding:0;display:grid;gap:2px}
+.ranks li{display:flex;gap:8px;align-items:center;padding:4px 0;font-family:var(--label);font-weight:600;color:var(--muted)}
+.ranks li.me{color:var(--paper)} .ranks li.me::after{content:'← you';color:var(--hivis);font-size:12px}
+.ranks li.done{color:var(--good)}
+.check{list-style:none;margin:4px 0 8px;padding:0;display:grid;gap:3px;font-size:14px}
+.check li::before{content:'☐ ';color:var(--muted)} .check li.done::before{content:'☑ ';color:var(--good)}
+.linkish{background:none;border:0;padding:0;color:var(--muted);font-size:12px;text-decoration:underline}
+
+/* cards: intro, events, results, newspaper, promotion */
+.overlay{position:absolute;inset:0;display:grid;place-items:center;padding:16px;background:rgba(18,21,24,.55);overflow:auto}
+.card{width:min(480px,100%);padding:18px 18px 16px}
+.card h1{font-family:var(--display);font-weight:400;font-size:clamp(30px,8vw,42px);line-height:1;margin:6px 0 10px}
+.card h2{font-family:var(--label);font-size:20px;line-height:1.2;margin:4px 0 8px}
+.card p{margin:0 0 12px;color:#DEDBD3;line-height:1.5}
+.card label{display:grid;gap:4px;margin-bottom:10px;font-family:var(--label);font-weight:600;font-size:14px;color:var(--muted)}
+.card input{font:inherit;font-size:17px;padding:9px 10px;background:rgba(244,242,237,.08);color:var(--paper);border:1.5px solid var(--line)}
+.card .err{color:var(--bad);font-size:13px;min-height:1em;margin:0 0 8px}
+.paper{background:#F4F2ED;color:#1E2226;border:0}
+.paper .mast{font-family:var(--display);font-size:30px;text-align:center;border-bottom:3px double #1E2226;padding-bottom:4px;margin-bottom:8px}
+.paper .dateline{text-align:center;font-family:var(--label);font-size:12px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px}
+.paper h3{font-family:var(--label);font-size:18px;margin:8px 0 2px;line-height:1.2}
+.paper p{color:#3a3d40;margin:0 0 6px;font-size:14px}
+.paper .go{margin-top:8px}
+.promo canvas{width:100%;height:auto;display:block;margin-bottom:10px;border:1px solid var(--line)}
+
+/* speech bubbles over the town, placed from world.anchors() */
+#bubbles{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.bubble{position:absolute;left:0;top:0;max-width:150px;padding:5px 8px;background:#fff;color:#1E2226;border-radius:10px;font-family:var(--label);font-weight:700;font-size:13px;line-height:1.2;
+  border:0;pointer-events:auto;transform:translate(-50%,-100%);box-shadow:0 2px 6px rgba(0,0,0,.35);text-align:left}
+.bubble::after{content:'';position:absolute;left:50%;bottom:-6px;margin-left:-6px;border:6px solid transparent;border-bottom:0;border-top-color:#fff}
+
+@media (min-width:900px){
+  #top{right:auto;width:420px}
+  #sheet{left:auto;right:var(--gut);top:var(--gut);bottom:calc(var(--dockH) + 2*var(--gut));width:400px;max-height:none}
+  #dock,#visitbar,#toasts{left:50%;right:auto;width:520px;transform:translateX(-50%)}
+}
+@media (prefers-reduced-motion:reduce){.toast{animation:none}.ladder .bar i{transition:none}}
