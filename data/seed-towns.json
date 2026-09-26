@@ -1,0 +1,61 @@
+[
+  {
+    "id": "seed-lindenau", "town": "Lindenau", "mayor": "Greta Brandt", "title": "Mayor", "rank": 4, "likes": 128, "helps": 14, "updatedAt": "2026-09-20T18:00:00Z",
+    "signs": [{ "phrase": 0 }, { "phrase": 3 }],
+    "snapshot": {
+      "v": 1, "town": "Lindenau", "mayor": "Greta Brandt", "rank": 4, "title": "Mayor", "day": 41,
+      "buildings": [
+        { "id": "townhall", "type": "townhall", "x": 0, "z": 0, "rot": 0, "state": "ok", "label": "Town hall, renovated by Mayor Brandt" },
+        { "id": "statue", "type": "statue", "x": 0, "z": 6, "rot": 0, "state": "ok", "label": "Mayor statue" },
+        { "id": "bridge", "type": "bridge", "x": 12, "z": -6, "rot": 0, "state": "ok", "label": "The bridge – rebuilt in 3 days" },
+        { "id": "busstop", "type": "busstop", "x": -8, "z": 4, "rot": 90, "state": "ok", "label": "Dry bus stop" },
+        { "id": "cafe", "type": "cafe", "x": -6, "z": -6, "rot": 0, "state": "ok" },
+        { "id": "school", "type": "school", "x": 8, "z": 8, "rot": 0, "state": "ok" },
+        { "id": "park", "type": "park", "x": -12, "z": -10, "rot": 0, "state": "ok", "label": "Playground, repainted by 40 neighbours" }
+      ],
+      "posted": [{ "id": "p-railing", "title": "Repaint the bridge railing" }, { "id": "p-lights", "title": "Street lights on Mill Lane" }]
+    }
+  },
+  {
+    "id": "seed-millbrook", "town": "Millbrook", "mayor": "Tomasz Nowak", "title": "Councillor", "rank": 3, "likes": 57, "helps": 6, "updatedAt": "2026-09-22T09:30:00Z",
+    "signs": [{ "phrase": 1 }],
+    "snapshot": {
+      "v": 1, "town": "Millbrook", "mayor": "Tomasz Nowak", "rank": 3, "title": "Councillor", "day": 12,
+      "buildings": [
+        { "id": "townhall", "type": "townhall", "x": 0, "z": 0, "rot": 0, "state": "broken" },
+        { "id": "bridge", "type": "bridge", "x": 12, "z": -6, "rot": 0, "state": "ok", "label": "Bridge railing – fixed by Tomasz" },
+        { "id": "busstop", "type": "busstop", "x": -8, "z": 4, "rot": 90, "state": "ok" },
+        { "id": "cafe", "type": "cafe", "x": -6, "z": -6, "rot": 0, "state": "ok" },
+        { "id": "park", "type": "park", "x": -12, "z": -10, "rot": 0, "state": "broken" }
+      ],
+      "posted": [{ "id": "p-dumping", "title": "Clear the dumping behind the park" }]
+    }
+  },
+  {
+    "id": "seed-harbourside", "town": "Harbourside", "mayor": "Aisha Rahman", "title": "Community helper", "rank": 2, "likes": 23, "helps": 3, "updatedAt": "2026-09-24T20:15:00Z",
+    "signs": [],
+    "snapshot": {
+      "v": 1, "town": "Harbourside", "mayor": "Aisha Rahman", "rank": 2, "title": "Community helper", "day": 5,
+      "buildings": [
+        { "id": "townhall", "type": "townhall", "x": 0, "z": 0, "rot": 0, "state": "broken" },
+        { "id": "busstop", "type": "busstop", "x": -8, "z": 4, "rot": 90, "state": "ok", "label": "Bus stop roof – fixed by Aisha" },
+        { "id": "cafe", "type": "cafe", "x": -6, "z": -6, "rot": 0, "state": "ok" },
+        { "id": "house-keller", "type": "house", "x": 6, "z": -4, "rot": 0, "state": "ok", "label": "Garden wall – built by Aisha" }
+      ],
+      "posted": [{ "id": "p-water", "title": "Water tank for the school" }]
+    }
+  },
+  {
+    "id": "seed-oakridge", "town": "Oak Ridge", "mayor": "Leo Martins", "title": "Skilled", "rank": 1, "likes": 9, "helps": 1, "updatedAt": "2026-09-25T16:40:00Z",
+    "signs": [{ "phrase": 2 }],
+    "snapshot": {
+      "v": 1, "town": "Oak Ridge", "mayor": "Leo Martins", "rank": 1, "title": "Skilled", "day": 3,
+      "buildings": [
+        { "id": "townhall", "type": "townhall", "x": 0, "z": 0, "rot": 0, "state": "broken" },
+        { "id": "busstop", "type": "busstop", "x": -8, "z": 4, "rot": 90, "state": "broken" },
+        { "id": "house-keller", "type": "house", "x": 6, "z": -4, "rot": 0, "state": "ok", "label": "Garden wall – built by Leo" }
+      ],
+      "posted": [{ "id": "p-potholes", "title": "Potholes on Station Road" }]
+    }
+  }
+]

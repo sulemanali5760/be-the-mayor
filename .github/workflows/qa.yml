@@ -1,0 +1,36 @@
+# Automated acceptance run: headless Chrome (WebGL via SwiftShader) plays the first 15 minutes at desktop,
+# small-window and phone sizes, offline (never the live Supabase), checks B1–B4 and keeps screenshots.
+name: qa
+on:
+  push:
+    paths-ignore: ['docs/**', '**.md']
+  workflow_dispatch:
+concurrency: # a newer push to the same branch cancels the older run
+  group: qa-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save playwright && npx playwright install --with-deps chromium
+      # until Lane S and Lane W are merged, qa/stubs stand in for their files on this runner only
+      - name: Stub lanes that are not merged yet
+        run: |
+          mkdir -p js/rules js/world data
+          [ -f js/rules/life.js ] || cp qa/stubs/life.js js/rules/life.js
+          [ -f js/rules/save.js ] || cp qa/stubs/save.js js/rules/save.js
+          [ -f js/world/world.js ] || cp qa/stubs/world.js js/world/world.js
+          node -e "const fs=require('fs');for(const[k,v]of Object.entries(require('./qa/stubs/content.json')))if(!fs.existsSync('data/'+k+'.json'))fs.writeFileSync('data/'+k+'.json',JSON.stringify(v))"
+      - name: Serve the game
+        run: python3 -m http.server 8080 &
+      - run: node qa/acceptance.mjs http://localhost:8080/
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: qa-screenshots
+          path: qa/out
