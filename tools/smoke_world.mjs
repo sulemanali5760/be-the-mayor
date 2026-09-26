@@ -31,14 +31,14 @@ step(1);
 window.ready = true;
 </script></body></html>`;
 
-const browser = await chromium.launch({ args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader'] });
+const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: 960, height: 600 } });
 const errors = [];
 page.on('pageerror', e => errors.push(String(e)));
 page.on('console', m => { if (m.type() === 'error' && !/favicon/.test(m.text() + m.location().url)) errors.push(m.text()); });
 await page.route('**/__smoke.html', r => r.fulfill({ contentType: 'text/html', body: html }));
 await page.goto(`${base}__smoke.html?q=low`);
-await page.waitForFunction(() => window.ready, null, { timeout: 60000 });
+await page.waitForFunction(() => window.ready, null, { timeout: 60000 }).catch(e => { console.log('page errors:', errors); throw e; });
 const W = (fn, arg) => page.evaluate(fn, arg);
 const step = (n, dt = 0.1) => W(([n, dt]) => step(n, dt), [n, dt]);
 const check = (name, fn) => fn().then(() => console.log(`ok   ${name}`), e => { console.log(`FAIL ${name}: ${e.message}`); process.exitCode = 1; });
