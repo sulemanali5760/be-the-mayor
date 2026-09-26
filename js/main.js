@@ -59,6 +59,16 @@ function stats() {
   return { money: s.money ?? 0, rep: s.rep ?? 0, energy: s.energy ?? 0, maxEnergy: s.maxEnergy ?? s.energyMax ?? 3, day: s.day ?? 1 };
 }
 const person = id => content.people?.find?.(p => p.id === id) || { name: id };
+const skillName = k => content.upgrades.find(u => u.gives === k)?.title || k;
+// why an option can't be taken right now (shown on the card, the button is disabled); mirrors life.choose's checks
+function blocked(o) {
+  const s = life.state, e = o.effects || {};
+  if (o.needs && !(s.skills?.[o.needs] > 0)) return `Needs ${skillName(o.needs)}`;
+  if (s.money + (e.money ?? 0) < 0) return 'Not enough money';
+  if (s.energy + (e.energy ?? 0) < 0) return 'Too tired';
+  return '';
+}
+const optionCard = o => { const why = blocked(o); return { id: o.id, disabled: !!why, html: `${esc(o.label)}${chips(o.effects, { later: o.later })}${why ? `<span class="status">${esc(why)}</span>` : ''}` }; };
 const whoLine = id => { const p = person(id); return `<div class="who">${esc(p.name)}${p.line ? ` · “${esc(p.line)}”` : ''}</div>`; };
 const newsItem = x => typeof x === 'string' ? { title: x } : { title: x.headline || x.title || x.text || '', text: x.headline || x.title ? x.text || x.body || '' : '' };
 function addNews(list = []) {
@@ -129,8 +139,8 @@ function panel(name) {
   } else if (name === 'upgrades') {
     const html = life.upgrades().map(u => {
       const left = u.status === 'running' ? Math.max(0, u.endsAt - clock.t) : 0;
-      return `<div class="item"><h3>${esc(u.title)}</h3>
-        <div class="status">${u.status === 'running' ? `Running · ${mmss(left)} left` : u.status === 'done' ? '✅ Done' : u.status === 'locked' ? `🔒 Needs ${esc([].concat(u.needs || []).map(n => life.upgrades().find(x => x.id === n)?.title || n).join(', '))}` : `${mmss(u.seconds || 0)} of play`}</div>
+      return `<div class="item"><h3>${esc(u.title)}</h3>${u.text && u.status !== 'done' ? `<p>${esc(u.text)}</p>` : ''}
+        <div class="status">${u.status === 'running' ? `Running · ${mmss(left)} left` : u.status === 'done' ? '✅ Done' : u.status === 'locked' ? `🔒 ${u.needs && !(life.state.skills?.[u.needs] > 0) ? `Needs ${esc(skillName(u.needs))}` : `Unlocks at ${esc(content.ranks.find(r => r.rank === u.rank)?.title || 'a later rank')}`}` : `${mmss(u.seconds || 0)} of play`}</div>
         ${u.status === 'running' ? `<div class="prog"><i style="width:${100 - (100 * left) / (u.seconds || 1)}%"></i></div>` : ''}
         ${u.status === 'available' ? `${chips({ money: -u.cost })}<button class="go" data-upgrade="${esc(u.id)}" ${u.cost > s.money ? 'disabled' : ''}>${u.cost > s.money ? `Need €${esc(u.cost)}` : 'Start'}</button>` : ''}</div>`;
     }).join('');
@@ -187,8 +197,8 @@ async function openProblem(id) {
   ui.closeSheet();
   if (p.at) world.focus(p.at);
   const opt = await card({
-    html: `<div class="eyebrow">Town problem</div><h2>${esc(p.title)}</h2>${whoLine(p.who)}`,
-    options: [...p.options.map(o => ({ id: o.id, html: `${esc(o.label)}${chips(o.effects)}${o.needs ? `<span class="status">Needs ${esc(o.needs)}</span>` : ''}` })), { id: '', html: 'Not now' }],
+    html: `<div class="eyebrow">Town problem</div><h2>${esc(p.title)}</h2>${whoLine(p.who)}${p.text ? `<p>${esc(p.text)}</p>` : ''}`,
+    options: [...p.options.map(optionCard), { id: '', html: 'Not now' }],
   });
   if (!opt) return;
   if (applyResult(life.choose(p.id, opt, clock.t), p.who)) meta.choices++;
@@ -198,8 +208,8 @@ async function openProblem(id) {
 async function showEvent(ev) {
   shownEvent = ev.id;
   const opt = await card({
-    html: `<div class="eyebrow">Something happened</div>${whoLine(ev.who)}<h2>${esc(ev.text)}</h2>`,
-    options: ev.options.map(o => ({ id: o.id, html: `${esc(o.label)}${chips(o.effects, { later: o.later })}` })),
+    html: `<div class="eyebrow">Something happened</div>${whoLine(ev.who)}<h2>${esc(ev.title || ev.text)}</h2>${ev.title && ev.text ? `<p>${esc(ev.text)}</p>` : ''}`,
+    options: ev.options.map(optionCard),
   });
   if (applyResult(life.choose(ev.id, opt, clock.t), ev.who)) meta.choices++;
   shownEvent = null;
@@ -261,7 +271,7 @@ async function promotion(e) {
   qa.promo = cv;
   await card({
     cls: 'promo',
-    html: `<div class="eyebrow">Promotion</div><h2>You are now ${esc(d.to)}!</h2>`,
+    html: `<div class="eyebrow">Promotion</div><h2>You are now ${esc(d.to)}!</h2>${e.text ? `<p>${esc(e.text)}</p>` : ''}`,
     onShow: el => el.prepend(cv),
     options: [{ id: 'save', go: true, html: '📸 Save the card' }, { id: 'ok', html: 'Back to work' }],
     act: id => { if (id === 'save') { downloadPng(cv, `be-the-mayor-${d.to.toLowerCase().replace(/\W+/g, '-')}.png`); return true; } return false; },
@@ -365,7 +375,7 @@ addEventListener('pagehide', persist);
 let last = performance.now(), sinceSave = 0, sinceHud = 0;
 function handle(events) {
   for (const e of events || []) {
-    if (e.type === 'upgradeDone') toast(`🎓 <b>${esc(e.title || 'Course')}</b> finished!`);
+    if (e.type === 'upgradeDone') toast(`🎓 <b>${esc(e.title || 'Course')}</b> finished!${e.text ? `<div>${esc(e.text)}</div>` : ''}`);
     else if (e.type === 'promotion') promotion(e);
     else if (e.type === 'consequence') {
       const items = addNews(e.news || (e.text ? [e.text] : []));
