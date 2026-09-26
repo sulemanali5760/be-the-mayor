@@ -14,6 +14,9 @@ const town = [
   { id: 'garden', type: 'garden', x: -15, z: -20, rot: 0, state: 'broken' },
   { id: 'hall', type: 'townhall', x: 10, z: -22, rot: 0, state: 'ok', label: 'Town hall' },
   { id: 'bus', type: 'bus_stop', x: 30, z: -14, rot: 90, state: 'broken' },
+  { id: 'dump', type: 'dump_pile', x: -32, z: -18, rot: 0, state: 'broken' },
+  { id: 'dump2', type: 'dump_pile', x: -32, z: -28, rot: 0, state: 'ok' },
+  { id: 'yard', type: 'yard', x: 32, z: -28, rot: 180, state: 'ok', label: 'Brandt Bau yard' },
 ];
 const html = `<!doctype html><html><head><meta charset="utf-8">
 <style>html,body{margin:0;height:100%;overflow:hidden}canvas{display:block;width:100vw;height:100vh}</style>
@@ -97,13 +100,25 @@ await check('delivery: a drawn route through 3 stops gets 3 stars, and the town 
   await W(() => run('delivery', { stops: ['house', 'shop', 'school'], from: 'cafe' }));
   await until(() => __btmWorld.task(), 20);
   const info = await W(() => __btmWorld.task());
-  assert.equal(info.kind, 'delivery'); assert.equal(info.total, 3); assert.equal(info.barrier, null);
+  assert.equal(info.kind, 'delivery'); assert.equal(info.total, 3); assert.equal(info.barrier, null); assert.equal(info.limit, 45);
   await draw(route);
   await until(() => window.res, 120);
   const res = await W(() => window.res);
   assert.equal(res.stars, 3, JSON.stringify(res));
   assert.ok(res.seconds > 2 && res.seconds < 10, `${res.seconds} s`);
   assert.deepEqual(await W(() => __btmWorld.view), before);
+});
+
+await check('delivery twist "rush": 10 s less; the first listed stop is the pickup (as in data/jobs.json)', async () => {
+  await W(() => run('delivery', { stops: ['cafe', 'house', 'shop', 'school'], seconds: 45, twist: 'rush' }));
+  await until(() => __btmWorld.task(), 20);
+  const info = await W(() => __btmWorld.task());
+  assert.equal(info.limit, 35);
+  assert.deepEqual(info.stops.map(s => s.id), ['house', 'shop', 'school']);
+  assert.ok(Math.abs(info.van[0] + 30) < 0.01, `starts at the café: ${info.van}`);
+  await draw(route);
+  await until(() => window.res, 120);
+  assert.equal((await W(() => window.res)).stars, 3);
 });
 
 await check('delivery twist "closed road": the barrier blocks the direct leg; a detour gets round it', async () => {

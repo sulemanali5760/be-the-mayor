@@ -135,13 +135,37 @@ const TYPES = {
     box(g, m('lamp'), 0.45, 0.2, 0.3, 0.8, 4.2, 0);
   } },
   tree: { foot: [2, 2], h: 3.8, solid: false, build(g, m) { tree(g, m, 0, 0, 1.1); } },
+  dump_pile: { foot: [6, 5], h: 2, solid: false, build(g, m, broken) {
+    if (broken) { // a heap of bags, a mattress, tyres and a fridge; building rubble is added on top
+      add(g, new THREE.IcosahedronGeometry(1.4, 0).scale(1.4, 0.6, 1), m('stone'), -0.6, 0.3, -0.4);
+      box(g, m('dark'), 1.9, 0.25, 1, 1.2, 0, -1.2, 0.4);
+      for (const [x, z] of [[1.6, 0.6], [1.9, 0.9]]) cyl(g, m('dark'), 0.45, 0.25, x, 0, z, 8);
+      box(g, m('white'), 0.8, 1.5, 0.7, -2.1, 0, 0.9, 0.3);
+      for (const [x, z] of [[-0.2, 1.3], [0.5, 0.9], [-1.1, 1.8]]) add(g, new THREE.IcosahedronGeometry(0.35, 0), m('dark'), x, 0.3, z);
+    } else { // cleared: a mown patch with a bench, a bin and a flower bed
+      box(g, m('grass'), 6, 0.06, 5);
+      box(g, m('wood'), 1.8, 0.45, 0.5, 0, 0, -1.5);
+      cyl(g, m('metal'), 0.3, 0.8, 1.6, 0, -1.5, 6);
+      for (const [x, c] of [[-2, 'red'], [-1.4, 'yellow'], [1, 'red'], [1.6, 'yellow']]) box(g, m(c), 0.35, 0.4, 0.35, x, 0.06, 1.6);
+    }
+  } },
+  yard: { foot: [10, 8], h: 4, solid: false, build(g, m) { // a builder's yard: gravel, a shed, pallets and bricks
+    box(g, m('path'), 10, 0.06, 8);
+    box(g, m('shop'), 4, 2.8, 3, -2.8, 0, -2.3);
+    box(g, m('roof2'), 4.4, 0.2, 3.4, -2.8, 2.8, -2.3);
+    for (const x of [1.4, 2.8]) box(g, m('wood'), 1.2, 0.6, 0.8, x, 0, -2.6);
+    box(g, m('brick'), 1.2, 0.8, 0.8, 2.1, 0.6, -2.6);
+    box(g, m('yellow'), 2.2, 0.9, 1.2, 2.5, 0, 1.2); // a skip
+    for (const x of [-4.9, 4.9]) box(g, m('wood'), 0.12, 1.4, 8, x);
+    box(g, m('white'), 2.6, 0.8, 0.1, -2.8, 1.6, -0.75);
+  } },
   statue: { foot: [2, 2], h: 4.2, solid: true, build(g, m) {
     box(g, m('stone'), 1.6, 1.4, 1.6);
     box(g, m('metal'), 0.7, 1.9, 0.45, 0, 1.4);
     add(g, new THREE.IcosahedronGeometry(0.32, 0), m('metal'), 0, 3.65, 0);
   } },
 };
-const ALIAS = { hall: 'townhall', cityhall: 'townhall', stop: 'busstop', store: 'shop', lamp: 'streetlight', light: 'streetlight', wall: 'garden', gardenwall: 'garden', fountain: 'park' };
+const ALIAS = { hall: 'townhall', cityhall: 'townhall', stop: 'busstop', store: 'shop', lamp: 'streetlight', light: 'streetlight', wall: 'garden', gardenwall: 'garden', fountain: 'park', dumppile: 'dump_pile', dump: 'dump_pile' };
 // 'bus_stop', 'Bus-Stop' and 'busStop' all mean busstop; unknown types fall back to a house
 export function typeOf(t) {
   const k = String(t ?? '').toLowerCase().replace(/[^a-z]/g, '');

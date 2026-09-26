@@ -7,6 +7,7 @@ const V = new URL(import.meta.url).searchParams.get('v') || 'dev';
 const { DELIVERY: D, box, inBox, distToBox, drive, bestTour, deliveryStars } = await import(`./rules.js?v=${V}`);
 
 const SKIP = new Set(['tree', 'streetlight']); // not somewhere a parcel goes
+const TWISTS = { rush: 'Rush: 10 seconds less on the clock.', rain: 'Rain: slippery corners.', dog: 'A dachshund is chasing the van.' };
 const DOT = 1, MAX_DOTS = 400;                 // route dots every metre, at most 400 m of route queued
 const dist = (p, q) => Math.hypot(p[0] - q[0], p[1] - q[1]);
 
@@ -21,13 +22,17 @@ export function start(ctx, params, done) {
   const M = ctx.mat, own = []; // own: geometries and materials made here, disposed at the end
   const geo = g => (own.push(g), g), mine = m => (own.push(m), m);
   const pool = [...ctx.items.values()].filter(it => !SKIP.has(it.group.userData.type));
-  const closed = /closed|road/.test(params.twist ?? '');
-  if (params.twist && !closed) console.warn('Unknown delivery twist, playing without one:', params.twist);
+  // twists (ids arrive normalised: 'closed_road' → 'closedroad'); rain and dog are flavour text in 0.1
+  const twist = params.twist ?? null, closed = /closed|road/.test(twist ?? '');
+  if (twist && !closed && !TWISTS[twist]) console.warn('Unknown delivery twist, playing without one:', twist);
+  const limit = Math.min(D.limit, params.seconds ?? D.limit) - (twist === 'rush' ? 10 : 0);
 
-  // where the van starts, and the stops: params.stops is a list of building ids or a count (3-4)
-  const home = ctx.items.get(params.from) ?? pool.find(it => it.group.userData.type === 'cafe') ?? pool[0];
-  const want = Math.max(3, Math.min(4, Array.isArray(params.stops) ? params.stops.length : Number.isFinite(params.stops) ? params.stops : params.count ?? 3));
-  const picked = (Array.isArray(params.stops) ? params.stops : []).map(id => ctx.items.get(id)).filter(it => it && it !== home);
+  // where the van starts, and the stops: params.stops is a list of building ids (the first is the pickup,
+  // unless params.from names it) or a count; always 3-4 stops, topped up with other buildings
+  const list = Array.isArray(params.stops) ? params.stops : [];
+  const home = ctx.items.get(params.from ?? list[0]) ?? pool.find(it => it.group.userData.type === 'cafe') ?? pool[0];
+  const picked = list.map(id => ctx.items.get(id)).filter(it => it && it !== home);
+  const want = Math.max(3, Math.min(4, list.length ? picked.length : Number.isFinite(params.stops) ? params.stops : params.count ?? 3));
   const rest = pool.filter(it => it !== home && !picked.includes(it)).sort(() => Math.random() - 0.5);
   const stops = [...picked, ...rest].slice(0, want).map(it => ({ id: it.b.id, at: front(it), foot: footBox(it), done: false }));
   const origin = home ? front(home) : [ctx.view.x, ctx.view.z];
@@ -96,7 +101,7 @@ export function start(ctx, params, done) {
 
   const el = ctx.hud(), row = style => { const d = document.createElement('div'); d.style.cssText = style; el.appendChild(d); return d; };
   const titleEl = row(''), twistEl = row('color:#ffd76a;font-size:14px'), hintEl = row('margin-top:6px');
-  twistEl.textContent = barrier ? 'A road is closed: find a way round.' : '';
+  twistEl.textContent = barrier ? 'A road is closed: find a way round.' : TWISTS[twist] ?? '';
 
   let t = 0, pos = origin.slice(), path = [], pathLen = 0, drawing = null, ended = null, closedDone = false;
   const delivered = () => stops.filter(s => s.done).length;
@@ -119,7 +124,7 @@ export function start(ctx, params, done) {
     for (const s of stops) if (!s.done && distToBox(pos, s.foot) <= D.reach) { s.done = true; s.cone.material = doneMat; }
   }
   function end() {
-    const seconds = Math.min(t, D.limit), stars = deliveryStars({ delivered: delivered(), total: stops.length, pathLen, best, seconds });
+    const seconds = Math.min(t, limit), stars = deliveryStars({ delivered: delivered(), total: stops.length, pathLen, best, seconds, limit });
     ended = { stars, seconds, t: 0 };
     drawing = null; path = [];
   }
@@ -141,7 +146,7 @@ export function start(ctx, params, done) {
       if (ended.t >= 1.5) { close({ stars: ended.stars, seconds: ended.seconds }); return; }
     } else {
       drivePath(dt);
-      if (delivered() === stops.length || t >= D.limit) end();
+      if (delivered() === stops.length || t >= limit) end();
     }
     for (const s of stops) {
       s.cone.position.y = s.done ? Math.max(0.9, s.cone.position.y - dt * 6) : 4 + 0.4 * Math.sin(t * 4);
@@ -153,7 +158,7 @@ export function start(ctx, params, done) {
     dots.instanceMatrix.needsUpdate = true;
 
     el.place();
-    const txt = `${params.title ?? 'Deliveries'} · ${delivered()} / ${stops.length} stops · ${Math.floor(Math.min(t, D.limit))} s of ${D.limit}`;
+    const txt = `${params.title ?? 'Deliveries'} · ${delivered()} / ${stops.length} stops · ${Math.floor(Math.min(t, limit))} s of ${limit}`;
     if (titleEl.textContent !== txt) titleEl.textContent = txt;
     const hint = ended ? `${'★'.repeat(ended.stars)}${'☆'.repeat(3 - ended.stars)}`
       : t < 0.5 && !path.length ? 'Drag from the van to draw its route through every yellow stop.'
@@ -173,8 +178,8 @@ export function start(ctx, params, done) {
     },
     move(e) { if (e.pointerId === drawing) addPoint(e); },
     up(e) { if (e.pointerId === drawing) drawing = null; },
-    finish(stars) { close({ stars, seconds: Math.min(t, D.limit) }); },
-    info: () => ({ kind: 'delivery', twist: barrier ? 'closed' : null, t, van: pos.slice(), queued: path.length, pathLen, best,
+    finish(stars) { close({ stars, seconds: Math.min(t, limit) }); },
+    info: () => ({ kind: 'delivery', twist, closed: !!barrier, limit, t, van: pos.slice(), queued: path.length, pathLen, best,
       delivered: delivered(), total: stops.length, stops: stops.map(s => ({ id: s.id, x: s.at[0], z: s.at[1], done: s.done })),
       barrier: barrier && { x: barrier.cx, z: barrier.cz, rot: barrier.rot } }),
   };

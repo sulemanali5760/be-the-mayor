@@ -218,7 +218,7 @@ export function createWorld(canvas, content) { // content: not needed yet, kept 
     if (!file) throw new Error(`Unknown task: ${kind}`);
     if (busy) throw new Error('A task is already running.');
     busy = true;
-    // main.js passes the offer's twist as a string ('closed road') or an object ({ id, label }): make it 'closedroad'
+    // params.twist is the twist id ('closed_road'); match it without case or punctuation: 'closedroad'
     const tw = typeof params.twist === 'string' ? params.twist : params.twist?.id;
     params = { ...params, twist: tw ? String(tw).toLowerCase().replace(/[^a-z]/g, '') : null };
     try {
