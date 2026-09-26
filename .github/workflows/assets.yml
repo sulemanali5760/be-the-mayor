@@ -1,0 +1,42 @@
+# Lane W's checks: the glTF models (validator, self-contained, triangle budget) and the world's pure task rules.
+name: assets
+on:
+  push:
+    paths: ['assets/**', 'js/world/**', 'tools/validate_assets.mjs', 'tools/smoke_world.mjs','.github/workflows/assets.yml']
+  workflow_dispatch:
+concurrency:
+  group: assets-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save gltf-validator
+      - run: node tools/validate_assets.mjs
+      - run: node --test js/world/rules.test.mjs
+      # every js/world module must at least parse (three.js is only in the browser, so check syntax, not imports)
+      - run: |
+          for f in js/world/*.js; do cp "$f" /tmp/check.mjs && node --check /tmp/check.mjs || { echo "syntax error in $f"; exit 1; }; done
+  # the real js/world in headless Chrome: town view input, both tasks driven by pointer input, no page errors
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save playwright && npx playwright install --with-deps chromium
+      - run: python3 -m http.server 8080 &
+      - run: node tools/smoke_world.mjs http://localhost:8080/
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: world-smoke
+          path: smoke-town.png
+          if-no-files-found: ignore
