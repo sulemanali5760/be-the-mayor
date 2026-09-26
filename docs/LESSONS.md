@@ -54,4 +54,5 @@ Entries marked **BbB** were carried over from our first game, *Brick by Brick* (
 |---|---|
 | P1 | Every build has a plan in `docs/builds/`. Investigate to the root cause first and bundle fixes; no patch chains (BbB L18). |
 | P2 | Studio builds: contract first, file ownership, at most 3 lanes, a two-strike rule. See [STUDIO.md](STUDIO.md). In 0.8 every lane was green on its first push, with no merge conflicts. |
+| P4 | Markdown table cells hold **one line only**. Bullets or line breaks inside a cell break the table (it happened twice: the BbB roadmap and the 0.2 row here). Put long cells in prose below the table. |
 | P3 | The Agent tool's automatic worktree fails on these repos, so the director makes lane worktrees by hand. |
