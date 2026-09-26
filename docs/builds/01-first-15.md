@@ -92,6 +92,16 @@ net.inbox(since)                  // { likes, signs, helps } for the newspaper
 - a snapshot plausibility check: building count and rank must be possible for the account's age;
 - the name word filter; service keys never.
 
+### 3.5 Backend already live (director, 2026-09-26)
+
+- `supabase/migrations/20260926000000_init.sql` has been **applied to the live project** by the owner.
+- `js/net/config.js` holds the URL and the public anon key.
+- The director ran 16 live security checks, and all behaved as intended:
+  - RLS blocks cross-town edits; you can't set your own likes; no self-likes;
+  - the once-per-day and 20-per-day caps hold; direct writes to interactions are blocked;
+  - the 60 s save limit, the name filter and the rank cap work; signed-out users can't interact.
+- **Schema changes = a new migration file** (never edit an applied one). The director hands it to the owner to run in the SQL Editor.
+
 ## 4. Lanes
 
 ### Lane S: systems and content, branch `feat/0.1-systems`
