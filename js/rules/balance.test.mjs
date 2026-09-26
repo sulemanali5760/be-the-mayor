@@ -155,16 +155,6 @@ function measure(content) {
   };
 }
 
-// ponytail: tuning sweep of course prices, printed only; delete once the prices settle
-function sweep() {
-  return [0, 40, 80].map(add => {
-    const content = { ...CONTENT, upgrades: CONTENT.upgrades.map(u =>
-      (['night_school', 'online_plumbing'].includes(u.id) ? { ...u, cost: u.cost + add } : u)) };
-    const b = measure(content);
-    return `| course +€${add} | ${min(b.med)} | ${b.jobs} (p90 ${b.jobsP90}) | ${b.types.toFixed(2)} | ${b.within}/${b.reached.length} |`;
-  });
-}
-
 test('balance bot: 200 runs of the first 20 minutes', () => {
   const { runs, reached, skilled, med, jobs, jobsP90, types, within } = measure(CONTENT);
   const brokeRuns = runs.filter(x => x.broke);
@@ -190,7 +180,6 @@ test('balance bot: 200 runs of the first 20 minutes', () => {
   const table = ['### Balance bot (200 runs)', '', '| Measure | Result | Target |', '|---|---|---|',
     ...rows.map(r => `| ${r.join(' | ')} |`),
     '', `### A median run, day by day (Skilled at ${min(med)})`, '', '| Day | Actions |', '|---|---|', ...mix,
-    '', '### Course price sweep', '', '| Variant | Skilled | Jobs | Types/day | ≤ 2 FP |', '|---|---|---|---|---|', ...sweep(),
   ].join('\n');
   console.log(`BALANCE\n${table}`);
   if (brokeRuns.length) console.log(`BALANCE first stuck: ${brokeRuns[0].brokeAt}`);
