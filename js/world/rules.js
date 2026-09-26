@@ -135,15 +135,22 @@ function walk(p, q, obstacles, step) {
   }
   return at;
 }
-// move at most maxDist from p towards q; when blocked, slide along x then z so the van doesn't stick to walls
+// move at most maxDist from p towards q; when blocked, slide along the blocking box's own sides (its local x,
+// then z; world x then z for a box that isn't turned) so the van doesn't stick to walls, turned ones included
 export function drive(p, q, obstacles, maxDist, step = DELIVERY.step) {
   const d = Math.hypot(q[0] - p[0], q[1] - p[1]);
   if (d < 1e-6) return p;
   const k = Math.min(1, maxDist / d), goal = [p[0] + (q[0] - p[0]) * k, p[1] + (q[1] - p[1]) * k];
   let at = walk(p, goal, obstacles, step);
-  if (Math.hypot(goal[0] - at[0], goal[1] - at[1]) > 1e-6) {
-    at = walk(at, [goal[0], at[1]], obstacles, step);
-    at = walk(at, [at[0], goal[1]], obstacles, step);
+  const left = () => [goal[0] - at[0], goal[1] - at[1]];
+  const [lx, lz] = left(), n = Math.hypot(lx, lz);
+  if (n > 1e-6) {
+    const probe = [at[0] + lx / n * step, at[1] + lz / n * step];
+    const rot = obstacles.find(o => inBox(probe, o))?.rot ?? 0, c = Math.cos(rot), s = Math.sin(rot);
+    for (const [ax, az] of [[c, -s], [s, c]]) {
+      const [rx, rz] = left(), along = rx * ax + rz * az;
+      at = walk(at, [at[0] + ax * along, at[1] + az * along], obstacles, step);
+    }
   }
   return at;
 }
