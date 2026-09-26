@@ -110,6 +110,9 @@ test('drive: stops at a wall, slides along it, and never jumps a thin barrier', 
   assert.ok(slid[1] > 5.9, 'slides along the wall');
   const big = drive([0, 0], [10, 0], [wall], 100, 0.25);
   assert.ok(big[0] < 5);
+  const turned = box(5, 0, 0.3, 10, 0.3); // the same wall turned 0.3 rad: the van slides along it, not stuck
+  const along = drive([0, 0], [10, 0], [turned], 100);
+  assert.ok(Math.abs(along[1]) > 1 && !inBox(along, turned), `slid to ${along}`);
   const capped = drive([0, 0], [100, 0], [], DELIVERY.speed * 0.5);
   assert.ok(Math.abs(capped[0] - 7) < 1e-9, 'speed limit per frame');
 });
