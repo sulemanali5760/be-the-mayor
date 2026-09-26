@@ -218,6 +218,9 @@ export function createWorld(canvas, content) { // content: not needed yet, kept 
     if (!file) throw new Error(`Unknown task: ${kind}`);
     if (busy) throw new Error('A task is already running.');
     busy = true;
+    // main.js passes the offer's twist as a string ('closed road') or an object ({ id, label }): make it 'closedroad'
+    const tw = typeof params.twist === 'string' ? params.twist : params.twist?.id;
+    params = { ...params, twist: tw ? String(tw).toLowerCase().replace(/[^a-z]/g, '') : null };
     try {
       const mod = await import(`./${file}?v=${V}`);
       await mod.ready?.();
@@ -244,9 +247,10 @@ export function createWorld(canvas, content) { // content: not needed yet, kept 
   // QA and console hooks (Lane U's qa/acceptance.mjs drives these; see docs/ASSETS.md "QA hooks")
   window.__btmWorld = {
     world,
-    pick(id) { if (!items.has(id)) return false; emitPick(id); return true; },
-    finishTask(stars = 3) { if (!active) return false; active.finish(clamp(Math.round(stars), 0, 3)); return true; },
+    tap(id) { if (!items.has(id)) return false; emitPick(id); return true; },
+    finish(stars = 3) { if (!active) return false; active.finish(clamp(Math.round(stars), 0, 3)); return true; },
     task: () => active?.info() ?? null,
+    screen(x, z) { v.set(x, 0, z).project(camera); return [(v.x + 1) / 2 * size.w, (1 - v.y) / 2 * size.h]; }, // a ground point in canvas px
     get view() { return { x: view.x, z: view.z, d: view.d }; },
     stats: () => ({ ...renderer.info.render, buildings: items.size, time: t }),
   };

@@ -393,6 +393,7 @@ export function start(ctx, params, done) {
       if (!ended && e.type === 'pointerup') act(t - d.t, d.u);
     },
     finish(stars) { close({ stars, seconds: Math.min(t, WALL.limit) }); },
-    info: () => ({ kind: 'wall', twist, t, next: game.next(), laid: game.state.results.length, total: slots.length, hand: game.state.hand, setting: game.state.setting && { a: game.state.setting.a, b: game.state.setting.b } }),
+    // aim: the current brick's top front middle in canvas px, for QA bots
+    info: () => ({ kind: 'wall', twist, t, next: game.next(), aim: slots[game.state.cur] ? proj(slots[game.state.cur].x, slotY(slots[game.state.cur]) + BH, BD / 2) : null, laid: game.state.results.length, total: slots.length, hand: game.state.hand, setting: game.state.setting && { a: game.state.setting.a, b: game.state.setting.b } }),
   };
 }

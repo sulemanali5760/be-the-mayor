@@ -135,6 +135,11 @@ const TYPES = {
     box(g, m('lamp'), 0.45, 0.2, 0.3, 0.8, 4.2, 0);
   } },
   tree: { foot: [2, 2], h: 3.8, solid: false, build(g, m) { tree(g, m, 0, 0, 1.1); } },
+  statue: { foot: [2, 2], h: 4.2, solid: true, build(g, m) {
+    box(g, m('stone'), 1.6, 1.4, 1.6);
+    box(g, m('metal'), 0.7, 1.9, 0.45, 0, 1.4);
+    add(g, new THREE.IcosahedronGeometry(0.32, 0), m('metal'), 0, 3.65, 0);
+  } },
 };
 const ALIAS = { hall: 'townhall', cityhall: 'townhall', stop: 'busstop', store: 'shop', lamp: 'streetlight', light: 'streetlight', wall: 'garden', gardenwall: 'garden', fountain: 'park' };
 // 'bus_stop', 'Bus-Stop' and 'busStop' all mean busstop; unknown types fall back to a house
