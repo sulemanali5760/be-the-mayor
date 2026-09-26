@@ -1,0 +1,20 @@
+[
+  { "id": "keller", "name": "Frau Hilde Keller", "role": "retired teacher", "line": "Corrects your grammar, then gives you cake. In that order." },
+  { "id": "lindner", "name": "Tomasz Lindner", "role": "owner of Café Lindner", "line": "Makes the best Streuselkuchen in town and tells you so before you've taken a bite." },
+  { "id": "brandt", "name": "Rolf Brandt", "role": "foreman at Brandt Bau", "line": "Believes every problem can be solved with more mortar or less paperwork." },
+  { "id": "pfennig", "name": "Mayor Gerhard Pfennig", "role": "the mayor", "line": "Has cut eleven ribbons and zero budgets. Nobody remembers voting for him, including him." },
+  { "id": "qureshi", "name": "Hassan Qureshi", "role": "runs the kiosk", "line": "Sells newspapers, phone cards and very strong opinions about the bus timetable." },
+  { "id": "okafor", "name": "Grace Okafor", "role": "electrician and night-school teacher", "line": "Has been shocked by 230 volts four times and by her students far more often." },
+  { "id": "nair", "name": "Priya Nair", "role": "pharmacist", "line": "Knows everyone's blood pressure and keeps every secret." },
+  { "id": "dieter", "name": "Dieter Mahlke", "role": "pensioner", "line": "Has reported the same pothole 41 times. Keeps a folder. The folder has tabs." },
+  { "id": "marta", "name": "Marta Nowak", "role": "night-shift carer at the care home", "line": "Works nights, raises two kids and is still the funniest person at the bus stop." },
+  { "id": "leni", "name": "Leni Nowak", "role": "Marta's daughter, 8", "line": "Wants a working swing and a pet dragon, in that order." },
+  { "id": "amira", "name": "Amira Haddad", "role": "bus driver", "line": "Knows every pothole in town by name and has opinions about each one." },
+  { "id": "voss", "name": "Jens Voss", "role": "retired fisherman", "line": "Has fished off the bridge since it was a whole bridge." },
+  { "id": "benno", "name": "Benno", "role": "Dieter's dachshund", "line": "Chases delivery bikes. Has never caught one. Lives in hope." },
+  { "id": "ravi", "name": "Ravi Menon", "role": "fixes laptops in his garage", "line": "Names every laptop he repairs. Yours is called Gustav." },
+  { "id": "fink", "name": "Lotte Fink", "role": "editor of the town Gazette", "line": "The paper's only reporter, photographer and delivery person. Very fair. Very tired." },
+  { "id": "yilmaz", "name": "Mehmet Yilmaz", "role": "school caretaker", "line": "Has kept the school running for 22 years with gaffer tape and patience." },
+  { "id": "kai", "name": "Kai Sturm", "role": "travel vlogger, 2 million followers", "line": "Has never been anywhere he didn't call ‘insane’." },
+  { "id": "helga", "name": "Helga", "role": "the petting zoo's goat", "line": "Has escaped eleven times. Considers fences a suggestion." }
+]

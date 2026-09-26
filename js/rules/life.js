@@ -1,0 +1,261 @@
+// Be the Mayor: the rules of a life. Pure JS: no DOM, no Three.js. Contract: docs/builds/01-first-15.md §3.1.
+// Time is always `now` = seconds of play from main.js's game clock (LESSONS T6). Nothing here reads real time.
+import { migrate } from './save.js';
+
+// `content` = { [name]: parsed data/<name>.json } for each of these
+export const CONTENT = ['jobs', 'people', 'problems', 'events', 'upgrades', 'ranks', 'signs', 'town'];
+
+const STAR_PAY = [0.5, 0.75, 0.9, 1]; // share of the offered pay, by stars
+const MAX_PROBLEMS = 2;               // open problem cards at once
+const PROBLEM_GAP = 90;               // play seconds between new problems
+const EVENT_GAP = [150, 270];         // play seconds between surprise events (min, max)
+
+export function createLife(content, save, rand = Math.random) {
+  const s = migrate(save);
+  const find = (list, id) => list.find(x => x.id === id);
+
+  // content changes between versions must never break an old save
+  s.buildings ??= [];
+  for (const b of content.town) if (!find(s.buildings, b.id)) s.buildings.push({ ...b });
+  s.offers = s.offers.filter(o => find(content.jobs, o.job));
+  s.problems = s.problems.filter(id => find(content.problems, id));
+  if (s.event && !find(content.events, s.event)) s.event = null;
+  if (!content.ranks.some(r => r.rank === s.rank)) s.rank = 0;
+
+  const fmt = t => t && t.replaceAll('{town}', s.town).replaceAll('{name}', s.name);
+  const has = skill => !skill || (s.skills[skill] ?? 0) > 0;
+  const pick = list => list[Math.floor(rand() * list.length)];
+  const rankOf = n => content.ranks.find(r => r.rank === n);
+  const needName = skill => content.upgrades.find(u => u.gives === skill)?.title ?? skill;
+  const fail = msg => ({ ok: false, msg, effects: {}, news: [] });
+
+  function apply(e) {
+    s.money = Math.max(0, s.money + (e.money ?? 0));
+    s.rep = Math.max(0, s.rep + (e.rep ?? 0));
+    s.energy = Math.max(0, s.energy + (e.energy ?? 0));
+    for (const [k, n] of Object.entries(e.skill ?? {})) s.skills[k] = (s.skills[k] ?? 0) + n;
+    const b = e.fix && find(s.buildings, e.fix);
+    if (b) {
+      b.state = 'ok';
+      if (e.label) b.label = e.label;
+    }
+  }
+
+  // ---- job board ----
+  const eligible = j => (j.rank ?? 0) <= s.rank && s.rank <= (j.maxRank ?? Infinity)
+    && has(j.needs) && !(j.once && s.jobs.includes(j.id));
+
+  function makeOffer(j) {
+    const fresh = j.twists.filter(t => t.id !== s.lastTwist[j.task]);
+    const t = pick(fresh.length ? fresh : j.twists);
+    s.seq += 1;
+    return {
+      id: `${j.id}-${s.seq}`, job: j.id, who: j.who, title: fmt(j.title), pay: j.pay,
+      energy: j.energy ?? 1, task: j.task, twist: t.text, params: { ...j.params, twist: t.id },
+    };
+  }
+
+  function fillBoard() {
+    const last = s.jobs.at(-1);
+    while (s.offers.length < 2) {
+      const pool = content.jobs.filter(j => eligible(j) && !s.offers.some(o => o.job === j.id));
+      const kinds = s.offers.map(o => o.task);
+      const unlocked = pool.filter(j => j.needs && !s.jobs.includes(j.id));
+      const tiers = [
+        unlocked.filter(j => !kinds.includes(j.task)),       // new work an upgrade just opened
+        unlocked,
+        pool.filter(j => j.start && !s.jobs.includes(j.id)), // the story's first jobs
+        pool.filter(j => !kinds.includes(j.task) && j.id !== last), // otherwise a different verb
+        pool.filter(j => j.id !== last),
+        pool,
+      ];
+      const j = pick(tiers.find(t => t.length) ?? []);
+      if (!j) break;
+      s.offers.push(makeOffer(j));
+    }
+  }
+  if (s.offers.length < 2) fillBoard();
+
+  // ---- cards ----
+  const card = c => ({
+    id: c.id, who: c.who, title: fmt(c.title), text: fmt(c.text), at: c.at ?? null,
+    options: c.options.map(o => ({ id: o.id, label: fmt(o.label), effects: o.effects, needs: o.needs ?? null, later: !!o.later })),
+  });
+
+  function checklist(r) {
+    return (r.checklist ?? []).map(c => ({
+      label: fmt(c.label),
+      done: c.type === 'rep' ? s.rep >= c.n
+        : c.type === 'jobs' ? s.jobs.length >= c.n
+        : c.type === 'upgrade' ? c.ids.some(id => s.upgrades[id]?.done)
+        : false, // 'locked': arrives in a later build
+    }));
+  }
+
+  function upgrades() {
+    return content.upgrades.map(u => {
+      const run = s.upgrades[u.id];
+      const status = run ? (run.done ? 'done' : 'running')
+        : s.rank >= (u.rank ?? 0) && has(u.needs) ? 'available' : 'locked';
+      return {
+        id: u.id, who: u.who, title: u.title, text: fmt(u.text), cost: u.cost, seconds: u.seconds,
+        needs: u.needs ?? null, rank: u.rank ?? 0, status, endsAt: run?.endsAt ?? null,
+      };
+    });
+  }
+
+  return {
+    state: s,
+
+    offers: () => s.offers,
+    problems: () => s.problems.map(id => card(find(content.problems, id))),
+    pendingEvent: () => (s.event ? card(find(content.events, s.event)) : null),
+    upgrades,
+
+    ladder() {
+      const next = rankOf(s.rank + 1);
+      return {
+        rank: s.rank,
+        title: rankOf(s.rank).title,
+        all: content.ranks.map(r => ({ rank: r.rank, title: r.title })),
+        next: next ? { rank: next.rank, title: next.title, locked: !!next.locked, checklist: checklist(next) } : null,
+      };
+    },
+
+    doJob(offerId, result, now) {
+      const o = find(s.offers, offerId);
+      if (!o) return fail('That job is gone.');
+      if (s.energy < o.energy) return fail('Too tired. Sleep first.');
+      const j = find(content.jobs, o.job);
+      const stars = Math.max(0, Math.min(3, Math.round(result?.stars ?? 0)));
+      const effects = {
+        money: Math.round(o.pay * STAR_PAY[stars]),
+        rep: (j.rep ?? 0) + (stars === 3 ? 1 : 0),
+        energy: -o.energy,
+        skill: { [o.task]: stars },
+      };
+      if (j.fix) Object.assign(effects, { fix: j.fix, label: j.label });
+      apply(effects);
+      s.jobs.push(j.id);
+      s.lastTwist[o.task] = o.params.twist;
+      s.offers = s.offers.filter(x => x !== o);
+      fillBoard();
+      if (j.headline) s.headlines.push(fmt(j.headline));
+      return { ok: true, effects, news: j.says ? [fmt(j.says)] : [] };
+    },
+
+    choose(cardId, optionId, now) {
+      const isEvent = s.event === cardId;
+      const c = isEvent ? find(content.events, cardId)
+        : s.problems.includes(cardId) ? find(content.problems, cardId) : null;
+      if (!c) return fail('That card is gone.');
+      const o = find(c.options, optionId);
+      if (!o) return fail('No such choice.');
+      if (!has(o.needs)) return fail(`Needs ${needName(o.needs)} first.`);
+      if (s.money + (o.effects.money ?? 0) < 0) return fail('Not enough money.');
+      if (s.energy + (o.effects.energy ?? 0) < 0) return fail('Too tired. Sleep first.');
+      apply(o.effects);
+      if (o.later) {
+        s.later.push({ at: now + o.later.after, who: o.later.who ?? c.who, text: o.later.text,
+          effects: o.later.effects ?? {}, headline: o.later.headline ?? null });
+      }
+      if (isEvent) {
+        s.event = null;
+        s.nextEventAt = Math.round(now + EVENT_GAP[0] + rand() * (EVENT_GAP[1] - EVENT_GAP[0]));
+      } else {
+        s.problems = s.problems.filter(id => id !== cardId);
+      }
+      if (o.headline) s.headlines.push(fmt(o.headline));
+      return { ok: true, effects: o.effects, news: o.says ? [fmt(o.says)] : [] };
+    },
+
+    startUpgrade(id, now) {
+      const u = upgrades().find(x => x.id === id);
+      if (!u) return { ok: false, msg: 'No such upgrade.' };
+      if (u.status === 'locked') {
+        return { ok: false, msg: has(u.needs) ? `Unlocks at ${rankOf(u.rank).title}.` : `Needs ${needName(u.needs)} first.` };
+      }
+      if (u.status !== 'available') return { ok: false, msg: 'Already yours.' };
+      if (s.money < u.cost) return { ok: false, msg: 'Not enough money.' };
+      s.money -= u.cost;
+      s.upgrades[id] = { endsAt: now + u.seconds, done: false };
+      return { ok: true };
+    },
+
+    tick(now) {
+      const out = [];
+      let board = false;
+
+      for (const [id, run] of Object.entries(s.upgrades)) {
+        if (run.done || run.endsAt > now) continue;
+        run.done = true;
+        const u = find(content.upgrades, id);
+        if (u?.gives) apply({ skill: { [u.gives]: 1 } });
+        out.push({ type: 'upgradeDone', id, title: u?.title ?? id, text: fmt(u?.says) ?? null });
+        if (u?.gives && content.jobs.some(j => j.needs === u.gives && eligible(j))) {
+          s.offers.pop(); // make room for the work this upgrade opens
+          board = true;
+        }
+      }
+
+      s.later = s.later.filter(c => {
+        if (c.at > now) return true;
+        apply(c.effects);
+        if (c.headline) s.headlines.push(fmt(c.headline));
+        out.push({ type: 'consequence', who: c.who, text: fmt(c.text), effects: c.effects });
+        return false;
+      });
+
+      const next = rankOf(s.rank + 1);
+      if (next && !next.locked && checklist(next).every(c => c.done)) {
+        s.rank = next.rank;
+        out.push({ type: 'promotion', rank: next.rank, title: next.title, text: fmt(next.card) });
+        if (next.hook) out.push({ type: 'hook', text: fmt(next.hook) });
+        if (next.headline) s.headlines.push(fmt(next.headline));
+        s.offers = [];
+        board = true;
+      }
+
+      if (board) {
+        fillBoard();
+        out.push({ type: 'newOffers', offers: s.offers });
+      }
+
+      if (s.problems.length < MAX_PROBLEMS && now >= s.nextProblemAt) {
+        const p = content.problems.find(p => !s.seen.includes(p.id) && (p.after ?? 0) <= now && (p.rank ?? 0) <= s.rank);
+        if (p) {
+          s.problems.push(p.id);
+          s.seen.push(p.id);
+          s.nextProblemAt = now + PROBLEM_GAP;
+        }
+      }
+
+      if (!s.event && now >= s.nextEventAt) {
+        const ok = content.events.filter(e => !s.seen.includes(e.id) && (e.after ?? 0) <= now
+          && (e.rank ?? 0) <= s.rank && has(e.needs)
+          && (!e.requires || find(s.buildings, e.requires)?.state === 'ok'));
+        if (ok.length) {
+          s.event = pick(ok).id;
+          s.seen.push(s.event);
+        }
+      }
+      return out;
+    },
+
+    endDay(now) {
+      s.day += 1;
+      s.energy = s.maxEnergy;
+      s.offers = [];
+      fillBoard();
+      const news = s.headlines.length ? s.headlines : [`A quiet day in ${s.town}. Dieter Mahlke complained anyway.`];
+      s.headlines = [];
+      return { day: s.day, news };
+    },
+
+    snapshot: () => ({
+      v: 1, town: s.town, mayor: s.name, rank: s.rank, title: rankOf(s.rank).title, day: s.day,
+      buildings: s.buildings.map(({ id, type, x, z, rot, state, label }) => ({ id, type, x, z, rot, state, label: label ?? null })),
+      posted: s.problems.map(id => ({ id, title: fmt(find(content.problems, id).title) })),
+    }),
+  };
+}

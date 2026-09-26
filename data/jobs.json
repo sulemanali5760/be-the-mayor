@@ -1,0 +1,168 @@
+[
+  {
+    "id": "keller_wall", "who": "keller", "start": true, "once": true, "maxRank": 0,
+    "title": "Build Frau Keller's garden wall", "task": "wall", "pay": 45, "energy": 1, "rep": 3,
+    "params": { "at": "keller_garden", "bricks": 10 },
+    "twists": [
+      { "id": "audience", "text": "Frau Keller supervises from a deckchair, with notes" },
+      { "id": "rain", "text": "Rain: the mortar sets faster" }
+    ],
+    "fix": "keller_garden", "label": "Keller's wall – built by you",
+    "says": "Frau Keller: “Straight as a ruler. Straighter than my late husband, God rest him.” She gives you cake.",
+    "headline": "Garden wall rises on Keller corner; neighbours stop to stare"
+  },
+  {
+    "id": "lindner_cakes", "who": "lindner", "start": true, "maxRank": 0,
+    "title": "Deliver Café Lindner's cakes before the cream melts", "task": "delivery", "pay": 35, "energy": 1, "rep": 1,
+    "params": { "stops": ["cafe", "keller_house", "school"], "seconds": 45 },
+    "twists": [
+      { "id": "rush", "text": "Hot day: the cream gives you 10 seconds less" },
+      { "id": "rain", "text": "Rain: slippery corners" }
+    ],
+    "says": "Tomasz: “Not one cake squashed. You have the hands of a pastry surgeon.”"
+  },
+  {
+    "id": "brandt_garage", "who": "brandt", "maxRank": 0,
+    "title": "Lay a garage wall at the Brandt Bau yard", "task": "wall", "pay": 50, "energy": 1, "rep": 1,
+    "params": { "at": "yard", "bricks": 10 },
+    "twists": [
+      { "id": "rain", "text": "Rain: the mortar sets faster" },
+      { "id": "wonky", "text": "The foundation leans; keep every row level" }
+    ],
+    "says": "Rolf: “Good. Fast. Could be faster. Everything could be faster.”"
+  },
+  {
+    "id": "qureshi_papers", "who": "qureshi", "maxRank": 0,
+    "title": "Deliver Hassan's newspapers", "task": "delivery", "pay": 35, "energy": 1, "rep": 1,
+    "params": { "stops": ["kiosk", "flat", "town_hall", "pharmacy"], "seconds": 45 },
+    "twists": [
+      { "id": "dog", "text": "Benno the dachshund is chasing you. He believes" },
+      { "id": "closed_road", "text": "The road by the town hall is closed" }
+    ],
+    "says": "Hassan: “Every paper on a doorstep. The mayor's is upside down? Perfect. Leave it.”"
+  },
+  {
+    "id": "nair_pills", "who": "nair", "maxRank": 0,
+    "title": "Take Priya's prescriptions to people who can't get out", "task": "delivery", "pay": 40, "energy": 1, "rep": 2,
+    "params": { "stops": ["pharmacy", "keller_house", "flat"], "seconds": 45 },
+    "twists": [
+      { "id": "rain", "text": "Rain: slippery corners" },
+      { "id": "closed_road", "text": "The bridge road is closed" }
+    ],
+    "says": "Priya: “Everyone got their pills, and three people got a chat. That's the part that matters.”"
+  },
+  {
+    "id": "park_wall", "who": "dieter", "once": true, "maxRank": 0,
+    "title": "Rebuild the park wall so Benno stays in", "task": "wall", "pay": 40, "energy": 1, "rep": 2,
+    "params": { "at": "park", "bricks": 8 },
+    "twists": [
+      { "id": "cat", "text": "A cat has claimed the top row" },
+      { "id": "rain", "text": "Rain: the mortar sets faster" }
+    ],
+    "fix": "park", "label": "Park wall – rebuilt by you",
+    "says": "Dieter: “Benno has already found a way over it. But it's a beautiful wall.”",
+    "headline": "Park wall back up; dachshund unimpressed"
+  },
+  {
+    "id": "pizza_oven", "who": "lindner", "needs": "trowel", "maxRank": 0,
+    "title": "Build Tomasz a brick pizza oven behind the café", "task": "wall", "pay": 55, "energy": 1, "rep": 2,
+    "params": { "at": "cafe", "bricks": 12 },
+    "twists": [
+      { "id": "audience", "text": "Tomasz is filming it for the café's page" },
+      { "id": "wonky", "text": "The oven dome curves; every brick sits a little wonky" }
+    ],
+    "says": "Tomasz: “A café that sells pizza. Revolutionary. I'm calling it Pizza Lindner. No, Lindzza.”"
+  },
+  {
+    "id": "bike_fridge", "who": "marta", "needs": "bike", "maxRank": 0,
+    "title": "Cargo-bike a second-hand fridge to Marta's flat (plus three errands)", "task": "delivery", "pay": 50, "energy": 1, "rep": 2,
+    "params": { "stops": ["yard", "kiosk", "flat", "school"], "seconds": 45 },
+    "twists": [
+      { "id": "dog", "text": "Benno the dachshund is chasing the fridge" },
+      { "id": "closed_road", "text": "The road past the school is closed" }
+    ],
+    "says": "Marta: “A fridge that closes! The kids opened it forty times just to hear it.”"
+  },
+  {
+    "id": "van_run", "who": "brandt", "needs": "licence",
+    "title": "Van run: Brandt Bau materials to four sites", "task": "delivery", "pay": 60, "energy": 1, "rep": 1,
+    "params": { "stops": ["yard", "school", "cafe", "town_hall"], "seconds": 45 },
+    "twists": [
+      { "id": "closed_road", "text": "The bridge road is closed" },
+      { "id": "rush", "text": "Rolf needs it ten seconds ago" }
+    ],
+    "says": "Rolf: “You didn't scratch the van. You're the first. I'm almost emotional.”"
+  },
+  {
+    "id": "sk_meter_wall", "who": "yilmaz", "rank": 1, "needs": "electric",
+    "title": "Brick in the school's new meter cabinet", "task": "wall", "pay": 65, "energy": 1, "rep": 2,
+    "params": { "at": "school", "bricks": 12 },
+    "twists": [
+      { "id": "audience", "text": "A whole class is watching and asking questions" },
+      { "id": "wonky", "text": "The old wall behind it leans" }
+    ],
+    "says": "Mehmet: “22 years I've waited for a meter cabinet that doesn't hum. It doesn't hum!”"
+  },
+  {
+    "id": "sk_callouts", "who": "okafor", "rank": 1, "needs": "electric",
+    "title": "Emergency call-outs: three flats with no power", "task": "delivery", "pay": 60, "energy": 1, "rep": 2,
+    "params": { "stops": ["flat", "keller_house", "cafe"], "seconds": 45 },
+    "twists": [
+      { "id": "rain", "text": "Rain: slippery corners (and no puddles near the fuse box)" },
+      { "id": "closed_road", "text": "The road by the town hall is closed" }
+    ],
+    "says": "Grace: “Three flats, zero sparks. I trained you well. Mostly.”"
+  },
+  {
+    "id": "sk_shower_wall", "who": "keller", "rank": 1, "needs": "plumbing",
+    "title": "Build Frau Keller a walk-in shower wall", "task": "wall", "pay": 65, "energy": 1, "rep": 2,
+    "params": { "at": "keller_house", "bricks": 12 },
+    "twists": [
+      { "id": "audience", "text": "Frau Keller supervises from the doorway, with notes" },
+      { "id": "wonky", "text": "The old floor slopes; keep every row level" }
+    ],
+    "says": "Frau Keller: “No more climbing into the bath like a mountaineer. Thank you, dear.”"
+  },
+  {
+    "id": "sk_leak_patrol", "who": "nair", "rank": 1, "needs": "plumbing",
+    "title": "Leak patrol: four dripping taps before the water bill comes", "task": "delivery", "pay": 60, "energy": 1, "rep": 2,
+    "params": { "stops": ["pharmacy", "school", "flat", "keller_house"], "seconds": 45 },
+    "twists": [
+      { "id": "rush", "text": "One tap is gushing: 10 seconds less" },
+      { "id": "closed_road", "text": "The bridge road is closed" }
+    ],
+    "says": "Priya: “Four taps, four happy people, one very confused water company.”"
+  },
+  {
+    "id": "sk_bus_shelter", "who": "amira", "rank": 1, "once": true,
+    "title": "Rebuild the bus shelter properly for Amira's route", "task": "wall", "pay": 60, "energy": 1, "rep": 3,
+    "params": { "at": "bus_stop", "bricks": 12 },
+    "twists": [
+      { "id": "rain", "text": "Rain: the mortar sets faster (fitting, for a bus stop)" },
+      { "id": "audience", "text": "The whole 7:15 queue is watching" }
+    ],
+    "fix": "bus_stop", "label": "Bus shelter – rebuilt by you",
+    "says": "Amira: “A shelter with a roof and a wall. People will wait for the bus on purpose now.”",
+    "headline": "New bus shelter: first dry commute in living memory"
+  },
+  {
+    "id": "sk_school_lights", "who": "yilmaz", "rank": 1, "needs": "electric_kit",
+    "title": "Fit new lamps round the school, one building at a time", "task": "delivery", "pay": 75, "energy": 1, "rep": 3,
+    "params": { "stops": ["school", "playground", "park", "bus_stop"], "seconds": 45 },
+    "twists": [
+      { "id": "rain", "text": "Rain: slippery ladders" },
+      { "id": "rush", "text": "Parents' evening starts soon: 10 seconds less" }
+    ],
+    "says": "Mehmet: “The playground is lit up. Leni says it looks like a spaceship. High praise.”"
+  },
+  {
+    "id": "sk_radiators", "who": "marta", "rank": 1, "needs": "pipe_kit",
+    "title": "Radiator round at the care home before the night shift", "task": "delivery", "pay": 75, "energy": 1, "rep": 3,
+    "params": { "stops": ["pharmacy", "keller_house", "town_hall", "flat"], "seconds": 45 },
+    "twists": [
+      { "id": "rush", "text": "The residents' bingo starts in 10 seconds less" },
+      { "id": "closed_road", "text": "The bridge road is closed" }
+    ],
+    "says": "Marta: “Warm radiators on my shift. The residents want to adopt you.”"
+  }
+]
