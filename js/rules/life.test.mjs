@@ -176,6 +176,20 @@ test('upgrade: a new tool puts its new work on the board', () => {
   assert.equal(life.offers().length, 2);
 });
 
+test('upgrade: the bridge fund is a standing destination that pays out at once', () => {
+  const life = fresh();
+  const s = life.state;
+  s.money = 45;
+  const a = life.startUpgrade('bridge_fund', 10);
+  assert.equal(a.ok, true);
+  assert.ok(a.msg);
+  assert.equal(life.startUpgrade('bridge_fund', 11).ok, true);
+  assert.equal(s.money, 5);
+  assert.equal(s.rep, 2);
+  assert.equal(life.upgrades().find(u => u.id === 'bridge_fund').status, 'available');
+  assert.equal(life.startUpgrade('bridge_fund', 12).msg, 'Not enough money.');
+});
+
 test('ladder: promotion to Skilled with its card and hook, never into a locked rank', () => {
   const life = fresh();
   const s = life.state;

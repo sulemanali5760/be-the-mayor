@@ -48,5 +48,11 @@
     "id": "meister_prep", "who": "okafor", "title": "Meister prep course, part 1", "cost": 250, "seconds": 600, "gives": "meister", "rank": 1,
     "text": "The first step to running your own crew. Grace says the exam is ‘only mildly terrifying’.",
     "says": "Part 1 done. Grace: “Part 2 is where they make you do paperwork. Stay strong.”"
+  },
+  {
+    "id": "bridge_fund", "who": "voss", "title": "Chip in to the bridge fund", "cost": 20, "seconds": 0, "repeat": true,
+    "effects": { "rep": 1 },
+    "text": "Jens Voss keeps the tin on the broken bridge. A new one costs about €400,000; the tin holds €312 and a button. Every €20 puts your name on the list.",
+    "says": "Jens rattles the tin: “The bridge thanks you. The fish don't care.” Your name goes on the list."
   }
 ]
