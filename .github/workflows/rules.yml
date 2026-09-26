@@ -1,0 +1,23 @@
+name: rules
+
+on:
+  push:
+    paths: ['js/rules/**', 'data/**', '.github/workflows/rules.yml']
+  pull_request:
+    paths: ['js/rules/**', 'data/**', '.github/workflows/rules.yml']
+
+concurrency:
+  group: rules-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rules:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Rules, content and balance bot
+        run: node --test js/rules/*.test.mjs

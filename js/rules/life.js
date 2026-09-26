@@ -20,6 +20,7 @@ export function createLife(content, save, rand = Math.random) {
   s.offers = s.offers.filter(o => find(content.jobs, o.job));
   s.problems = s.problems.filter(id => find(content.problems, id));
   if (s.event && !find(content.events, s.event)) s.event = null;
+  if (!content.ranks.some(r => r.rank === s.rank)) s.rank = 0;
 
   const fmt = t => t && t.replaceAll('{town}', s.town).replaceAll('{name}', s.name);
   const has = skill => !skill || (s.skills[skill] ?? 0) > 0;
@@ -61,9 +62,9 @@ export function createLife(content, save, rand = Math.random) {
       const kinds = s.offers.map(o => o.task);
       const unlocked = pool.filter(j => j.needs && !s.jobs.includes(j.id));
       const tiers = [
-        pool.filter(j => j.start && !s.jobs.includes(j.id)), // the story's first jobs
         unlocked.filter(j => !kinds.includes(j.task)),       // new work an upgrade just opened
         unlocked,
+        pool.filter(j => j.start && !s.jobs.includes(j.id)), // the story's first jobs
         pool.filter(j => !kinds.includes(j.task) && j.id !== last), // otherwise a different verb
         pool.filter(j => j.id !== last),
         pool,
