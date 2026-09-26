@@ -18,6 +18,7 @@ Owner: Lane S. The rules live in `js/rules/life.js` (contract: [builds/01-first-
 - Every job has 2+ twists, and the next job of the same verb never repeats the last twist (LESSONS D1).
 - **Quick shift** (contract change 2, LESSONS D1): once you have done a kind (wall or delivery) in first person with 2+ stars, later offers of that kind can be done off-screen for 80 % pay, with no stars and no skill progress. A first-person task is a choice, not a chore.
 - Some jobs fix a building (`fix`), which turns it from grey to colour with a label, e.g. "Keller's wall – built by you".
+- The town (`data/town.json`, 15 buildings) is laid out on the footprints table in ASSETS.md; a rules test keeps every footprint at least 1 m apart. Wall twists are the ones the world plays: `rain`, `cracked`, `hurry` (the wall is always 11 bricks).
 
 ## Cards
 

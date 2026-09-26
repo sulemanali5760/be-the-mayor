@@ -11,8 +11,7 @@ export function newSave(name, town) {
     day: 1,
     money: 0,
     rep: 0,
-    energy: 3,
-    maxEnergy: 3,
+    slots: 3,          // action slots left today (contract change 4)
     rank: 0,
     skills: {},        // { wall: stars, delivery: stars, electric: 1, computer: 1, ... }
     jobs: [],          // ids of jobs done, in order
@@ -25,7 +24,8 @@ export function newSave(name, town) {
     event: null,       // pending event id
     nextEventAt: 240,  // play seconds
     nextProblemAt: 0,
-    upgrades: {},      // { id: { endsAt, done } }
+    upgrades: {},      // { id: { studied, done, told } }: studied = course evenings done
+    studiedDay: 0,     // the day of the last evening of study (one a day)
     later: [],         // delayed consequences: [{ at, who, text, effects, headline }]
     headlines: [],     // for the next newspaper
     buildings: null,   // filled from data/town.json by createLife

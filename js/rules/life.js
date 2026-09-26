@@ -7,6 +7,8 @@ export const CONTENT = ['jobs', 'people', 'problems', 'events', 'upgrades', 'ran
 
 const STAR_PAY = [0.5, 0.75, 0.9, 1]; // share of the offered pay, by stars
 const QUICK_PAY = 0.8;                // quick shift: no first-person task, no stars
+const SLOTS = 3;                      // action slots per day (contract change 4)
+const NO_SLOTS = 'No time left today. Sleep first.';
 const MAX_PROBLEMS = 2;               // open problem cards at once
 const PROBLEM_GAP = 90;               // play seconds between new problems
 const EVENT_GAP = [150, 270];         // play seconds between surprise events (min, max)
@@ -22,6 +24,14 @@ export function createLife(content, save, rand = Math.random) {
   s.problems = s.problems.filter(id => find(content.problems, id));
   if (s.event && !find(content.events, s.event)) s.event = null;
   if (!content.ranks.some(r => r.rank === s.rank)) s.rank = 0;
+  for (const [id, run] of Object.entries(s.upgrades)) { // timer-era saves: a running course restarts at evening 0
+    if (!run || typeof run !== 'object') { delete s.upgrades[id]; continue; }
+    run.studied ??= 0;
+    run.told ??= !!run.done;
+    delete run.endsAt;
+    const u = find(content.upgrades, id);
+    if (u && !run.done && u.kind !== 'course') finish(id); // a bought thing that was "on its way"
+  }
 
   const fmt = t => t && t.replaceAll('{town}', s.town).replaceAll('{name}', s.name);
   const has = skill => !skill || (s.skills[skill] ?? 0) > 0;
@@ -33,7 +43,7 @@ export function createLife(content, save, rand = Math.random) {
   function apply(e) {
     s.money = Math.max(0, s.money + (e.money ?? 0));
     s.rep = Math.max(0, s.rep + (e.rep ?? 0));
-    s.energy = Math.max(0, s.energy + (e.energy ?? 0));
+    s.slots = Math.max(0, s.slots + (e.energy ?? 0)); // effects.energy = action slots used
     for (const [k, n] of Object.entries(e.skill ?? {})) s.skills[k] = (s.skills[k] ?? 0) + n;
     const b = e.fix && find(s.buildings, e.fix);
     if (b) {
@@ -82,8 +92,15 @@ export function createLife(content, save, rand = Math.random) {
   // ---- cards ----
   const card = c => ({
     id: c.id, who: c.who, title: fmt(c.title), text: fmt(c.text), at: c.at ?? null,
-    options: c.options.map(o => ({ id: o.id, label: fmt(o.label), effects: o.effects, needs: o.needs ?? null, later: !!o.later })),
+    options: c.options.map(o => ({ id: o.id, label: fmt(o.label), effects: o.effects, needs: o.needs ?? null,
+      later: !!o.later, help: !!o.help })),
   });
+
+  function finish(id) { // an upgrade is yours: its skill now, its toast and new work on the next tick
+    const u = find(content.upgrades, id);
+    s.upgrades[id] = { studied: u.evenings ?? 0, done: true, told: false };
+    if (u.gives) apply({ skill: { [u.gives]: 1 } });
+  }
 
   function checklist(r) {
     return (r.checklist ?? []).map(c => ({
@@ -101,8 +118,9 @@ export function createLife(content, save, rand = Math.random) {
       const status = run ? (run.done ? 'done' : 'running')
         : s.rank >= (u.rank ?? 0) && has(u.needs) ? 'available' : 'locked';
       return {
-        id: u.id, who: u.who, title: u.title, text: fmt(u.text), cost: u.cost, seconds: u.seconds,
-        needs: u.needs ?? null, rank: u.rank ?? 0, status, endsAt: run?.endsAt ?? null, repeat: !!u.repeat,
+        id: u.id, who: u.who, title: u.title, text: fmt(u.text), cost: u.cost, kind: u.kind,
+        evenings: u.evenings ?? null, studied: run?.studied ?? 0,
+        needs: u.needs ?? null, rank: u.rank ?? 0, status, repeat: !!u.repeat,
       };
     });
   }
@@ -128,7 +146,7 @@ export function createLife(content, save, rand = Math.random) {
     doJob(offerId, result, now) {
       const o = find(s.offers, offerId);
       if (!o) return fail('That job is gone.');
-      if (s.energy < o.energy) return fail('Too tired. Sleep first.');
+      if (s.slots < o.energy) return fail(NO_SLOTS);
       const j = find(content.jobs, o.job);
       const quick = !!result?.quick;
       if (quick && !o.quick) return fail('Do this kind of job in person first.');
@@ -163,7 +181,7 @@ export function createLife(content, save, rand = Math.random) {
       if (!o) return fail('No such choice.');
       if (!has(o.needs)) return fail(`Needs ${needName(o.needs)} first.`);
       if (s.money + (o.effects.money ?? 0) < 0) return fail('Not enough money.');
-      if (s.energy + (o.effects.energy ?? 0) < 0) return fail('Too tired. Sleep first.');
+      if (s.slots + (o.effects.energy ?? 0) < 0) return fail(NO_SLOTS);
       apply(o.effects);
       if (o.later) {
         s.later.push({ at: now + o.later.after, who: o.later.who ?? c.who, text: o.later.text,
@@ -193,8 +211,27 @@ export function createLife(content, save, rand = Math.random) {
         apply(c.effects ?? {});
         return { ok: true, msg: fmt(c.says) };
       }
-      s.upgrades[id] = { endsAt: now + u.seconds, done: false };
+      if (c.kind === 'course') s.upgrades[id] = { studied: 0, done: false, told: false };
+      else finish(id);
       return { ok: true };
+    },
+
+    // one evening of a course: uses a slot, at most one evening a day
+    study(id, now) {
+      const u = find(content.upgrades, id);
+      const run = s.upgrades[id];
+      if (!u || u.kind !== 'course' || !run) return { ok: false, msg: 'Enrol first.' };
+      if (run.done) return { ok: false, msg: 'Already yours.' };
+      if (s.studiedDay === s.day) return { ok: false, msg: "You've studied tonight already. Sleep first." };
+      if (s.slots < 1) return { ok: false, msg: NO_SLOTS };
+      s.slots -= 1;
+      s.studiedDay = s.day;
+      run.studied += 1;
+      if (run.studied >= u.evenings) {
+        finish(id);
+        return { ok: true, done: true };
+      }
+      return { ok: true, done: false, msg: `Evening ${run.studied} of ${u.evenings} done.` };
     },
 
     tick(now) {
@@ -202,10 +239,9 @@ export function createLife(content, save, rand = Math.random) {
       let board = false;
 
       for (const [id, run] of Object.entries(s.upgrades)) {
-        if (run.done || run.endsAt > now) continue;
-        run.done = true;
+        if (!run.done || run.told) continue;
+        run.told = true;
         const u = find(content.upgrades, id);
-        if (u?.gives) apply({ skill: { [u.gives]: 1 } });
         out.push({ type: 'upgradeDone', id, title: u?.title ?? id, text: fmt(u?.says) ?? null });
         if (u?.gives && content.jobs.some(j => j.needs === u.gives && eligible(j))) {
           s.offers.pop(); // make room for the work this upgrade opens
@@ -259,7 +295,7 @@ export function createLife(content, save, rand = Math.random) {
 
     endDay(now) {
       s.day += 1;
-      s.energy = s.maxEnergy;
+      s.slots = SLOTS;
       s.offers = [];
       fillBoard();
       const news = s.headlines.length ? s.headlines : [`A quiet day in ${s.town}. Dieter Mahlke complained anyway.`];

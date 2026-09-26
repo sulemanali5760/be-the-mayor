@@ -16,12 +16,12 @@ test('save: new, broken and partial saves always load', () => {
   assert.equal(s.town, 'Brookfield');
   assert.deepEqual(migrate(null), newSave());
   assert.deepEqual(migrate('junk'), newSave());
-  const m = migrate({ name: 'Old', money: 'lots', rep: 7, offers: 'bad', energy: NaN, event: 5 });
+  const m = migrate({ name: 'Old', money: 'lots', rep: 7, offers: 'bad', slots: NaN, event: 5 });
   assert.equal(m.name, 'Old');
   assert.equal(m.money, 0);
   assert.equal(m.rep, 7);
   assert.deepEqual(m.offers, []);
-  assert.equal(m.energy, 3);
+  assert.equal(m.slots, 3);
   assert.equal(m.event, null);
 });
 
@@ -70,7 +70,7 @@ test('job: pay by stars, energy, skill, the fix appears in the town', () => {
   assert.deepEqual(r.effects, { money: 45, rep: 4, energy: -1, skill: { wall: 3 }, fix: 'keller_garden', label: "Keller's wall – built by you" });
   assert.equal(r.news.length, 1);
   assert.equal(s.money, 45);
-  assert.equal(s.energy, 2);
+  assert.equal(s.slots, 2);
   const wall = s.buildings.find(b => b.id === 'keller_garden');
   assert.equal(wall.state, 'ok');
   assert.equal(wall.label, "Keller's wall – built by you");
@@ -80,8 +80,8 @@ test('job: pay by stars, energy, skill, the fix appears in the town', () => {
   const cakes = life.doJob(offerOf(life, 'lindner_cakes').id, { stars: 0, seconds: 45 }, 130);
   assert.equal(cakes.effects.money, 18);
   assert.equal(life.doJob('nope', { stars: 3 }, 140).ok, false);
-  s.energy = 0;
-  assert.deepEqual(life.doJob(life.offers()[0].id, { stars: 3 }, 150), { ok: false, msg: 'Too tired. Sleep first.', effects: {}, news: [] });
+  s.slots = 0;
+  assert.deepEqual(life.doJob(life.offers()[0].id, { stars: 3 }, 150), { ok: false, msg: 'No time left today. Sleep first.', effects: {}, news: [] });
 });
 
 test('job: the next task of the same verb never repeats the last twist', () => {
@@ -124,7 +124,7 @@ test('quick shift: a 1-star first try does not unlock it, a later 2-star one doe
   const s = life.state;
   life.doJob(offerOf(life, 'lindner_cakes').id, { stars: 1, seconds: 45 }, 60);
   assert.ok(life.offers().filter(o => o.task === 'delivery').every(o => !o.quick));
-  s.energy = 3;
+  s.slots = 3;
   s.offers = [];
   const deliveryOffer = () => {
     for (let i = 0; i < 20 && !life.offers().some(o => o.task === 'delivery'); i++) life.endDay(70 + i);
@@ -144,7 +144,9 @@ test('problem: appears on time, effects before choosing, money and skill checks'
   const [p] = life.problems();
   assert.equal(p.id, 'bus_stop_roof');
   assert.equal(p.at, 'bus_stop');
-  assert.deepEqual(p.options[0].effects, { money: -20, rep: 4, fix: 'bus_stop', label: 'Bus stop roof – patched by you' });
+  assert.deepEqual(p.options[0].effects, { money: -20, energy: -1, rep: 4, fix: 'bus_stop', label: 'Bus stop roof – patched by you' });
+  assert.equal(p.options[0].help, true);
+  assert.equal(p.options[1].help, false);
   assert.equal(life.choose('bus_stop_roof', 'tarp', 95).msg, 'Not enough money.');
   s.money = 25;
   const r = life.choose('bus_stop_roof', 'tarp', 95);
@@ -159,8 +161,8 @@ test('problem: appears on time, effects before choosing, money and skill checks'
   life.tick(200);
   assert.equal(life.problems()[0].id, 'dump_pile');
   assert.equal(life.choose('dump_pile', 'post', 200).msg, 'Needs Second-hand computer first.');
-  s.energy = 0;
-  assert.equal(life.choose('dump_pile', 'haul', 200).msg, 'Too tired. Sleep first.');
+  s.slots = 0;
+  assert.equal(life.choose('dump_pile', 'haul', 200).msg, 'No time left today. Sleep first.');
   assert.equal(life.choose('dump_pile', 'nope', 200).msg, 'No such choice.');
 });
 
@@ -187,25 +189,86 @@ test('event: arrives on schedule, and a later consequence lands on time and in t
   assert.ok(news.includes('Garage wall found leaning; foreman blames ‘the new kid’'));
 });
 
-test('upgrade: cost, timer on the game clock, skill, locks with reasons', () => {
+test('course: enrol, one evening a day uses a slot, done after 4 evenings, locks with reasons', () => {
   const life = fresh();
   const s = life.state;
   const status = id => life.upgrades().find(u => u.id === id);
+  assert.equal(life.study('night_school', 0).msg, 'Enrol first.');
   assert.equal(life.startUpgrade('night_school', 0).msg, 'Not enough money.');
   s.money = 200;
   assert.deepEqual(life.startUpgrade('night_school', 10), { ok: true });
   assert.equal(s.money, 80);
-  assert.equal(status('night_school').status, 'running');
-  assert.equal(status('night_school').endsAt, 610);
+  const u = status('night_school');
+  assert.deepEqual([u.kind, u.status, u.evenings, u.studied], ['course', 'running', 4, 0]);
+  assert.ok(!('seconds' in u) && !('endsAt' in u));
   assert.equal(life.startUpgrade('night_school', 11).msg, 'Already yours.');
-  assert.ok(!types(life.tick(609)).includes('upgradeDone'));
-  const done = life.tick(610).find(x => x.type === 'upgradeDone');
-  assert.equal(done.id, 'night_school');
+
+  for (let evening = 1; evening <= 4; evening++) {
+    const r = life.study('night_school', 20 * evening);
+    assert.equal(r.ok, true);
+    assert.equal(r.done, evening === 4);
+    assert.equal(s.slots, 2);
+    if (evening < 4) {
+      assert.equal(status('night_school').studied, evening);
+      assert.equal(life.study('night_school', 21 * evening).msg, "You've studied tonight already. Sleep first.");
+      assert.ok(!types(life.tick(22 * evening)).includes('upgradeDone'));
+      life.endDay(23 * evening);
+    }
+  }
   assert.equal(s.skills.electric, 1);
   assert.equal(status('night_school').status, 'done');
+  assert.equal(life.tick(100).find(x => x.type === 'upgradeDone').id, 'night_school');
+  assert.ok(!types(life.tick(101)).includes('upgradeDone'), 'announced once');
+  assert.equal(life.study('night_school', 102).msg, 'Already yours.');
+
   assert.equal(life.startUpgrade('online_plumbing', 500).msg, 'Needs Second-hand computer first.');
   assert.equal(life.startUpgrade('electric_kit', 500).msg, 'Unlocks at Skilled.');
   assert.equal(life.startUpgrade('nope', 500).ok, false);
+  s.money = 150;
+  life.startUpgrade('driving_licence', 500);
+  s.slots = 0;
+  life.endDay(501);
+  s.slots = 0;
+  assert.equal(life.study('driving_licence', 502).msg, 'No time left today. Sleep first.');
+});
+
+test('buy: instant, its skill at once, announced on the next tick', () => {
+  const life = fresh();
+  life.state.money = 60;
+  assert.deepEqual(life.startUpgrade('computer', 0), { ok: true });
+  assert.equal(life.state.skills.computer, 1);
+  assert.equal(life.upgrades().find(u => u.id === 'computer').status, 'done');
+  assert.equal(life.upgrades().find(u => u.id === 'online_plumbing').status, 'available');
+  assert.equal(life.tick(1)[0].type, 'upgradeDone');
+});
+
+test('save: a timer-era upgrade loads: bought things arrive, courses restart at evening 0', () => {
+  const life = createLife(content, { upgrades: { computer: { endsAt: 99, done: false }, night_school: { endsAt: 500, done: false },
+    bike: { endsAt: 5, done: true }, junk: null } }, rng(1));
+  const s = life.state;
+  assert.equal(s.skills.computer, 1);
+  assert.deepEqual(s.upgrades.night_school, { done: false, studied: 0, told: false });
+  assert.equal(life.upgrades().find(u => u.id === 'night_school').status, 'running');
+  assert.equal(s.upgrades.junk, undefined);
+  assert.deepEqual(types(life.tick(1)).filter(t => t === 'upgradeDone'), ['upgradeDone'], 'only the computer is new');
+});
+
+test('slots: 3 a day for jobs, study, help and card options that cost energy; free options stay free', () => {
+  const life = fresh();
+  const s = life.state;
+  life.tick(90);
+  s.money = 100;
+  life.choose('bus_stop_roof', 'tarp', 95);
+  assert.equal(s.slots, 2);
+  life.doJob(life.offers()[0].id, { stars: 3 }, 100);
+  life.doJob(life.offers()[0].id, { stars: 3 }, 110);
+  assert.equal(s.slots, 0);
+  assert.equal(life.doJob(life.offers()[0].id, { stars: 3 }, 120).msg, 'No time left today. Sleep first.');
+  life.tick(240);
+  const free = life.pendingEvent().options.find(o => !o.effects.energy && (o.effects.money ?? 0) >= 0);
+  assert.equal(life.choose(life.pendingEvent().id, free.id, 240).ok, true);
+  life.endDay(250);
+  assert.equal(s.slots, 3);
 });
 
 test('upgrade: a new tool puts its new work on the board', () => {
@@ -236,7 +299,7 @@ test('ladder: promotion to Skilled with its card and hook, never into a locked r
   const life = fresh();
   const s = life.state;
   assert.deepEqual(life.ladder().next.checklist.map(c => c.done), [false, false, false]);
-  Object.assign(s, { rep: 15, jobs: ['a', 'b', 'c', 'd'], skills: { electric: 1 }, upgrades: { night_school: { endsAt: 0, done: true } } });
+  Object.assign(s, { rep: 15, jobs: ['a', 'b', 'c', 'd'], skills: { electric: 1 }, upgrades: { night_school: { studied: 4, done: true, told: true } } });
   assert.deepEqual(life.ladder().next.checklist.map(c => c.done), [true, true, true]);
   const out = life.tick(700);
   assert.deepEqual(types(out).slice(0, 3), ['promotion', 'hook', 'newOffers']);
@@ -255,10 +318,10 @@ test('day: sleep refills energy, new board, headlines go to the paper once', () 
   const life = fresh();
   const s = life.state;
   life.doJob(offerOf(life, 'keller_wall').id, { stars: 1 }, 80);
-  s.energy = 0;
+  s.slots = 0;
   const a = life.endDay(100);
   assert.equal(a.day, 2);
-  assert.equal(s.energy, 3);
+  assert.equal(s.slots, 3);
   assert.deepEqual(a.news, ['Garden wall rises on Keller corner; neighbours stop to stare']);
   assert.equal(life.offers().length, 2);
   assert.deepEqual(life.endDay(110).news, ['A quiet day in Testville. Dieter Mahlke complained anyway.']);
@@ -284,7 +347,7 @@ test('determinism: the same seed and inputs give the same life', () => {
       life.tick(t);
       const e = life.pendingEvent();
       if (e) life.choose(e.id, e.options.at(-1).id, t);
-      if (life.state.energy) life.doJob(life.offers()[0].id, { stars: 2 }, t);
+      if (life.state.slots) life.doJob(life.offers()[0].id, { stars: 2 }, t);
       else life.endDay(t);
     }
     return JSON.stringify(life.state);
