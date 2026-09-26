@@ -6,12 +6,12 @@
       "v": 1, "town": "Lindenau", "mayor": "Greta Brandt", "rank": 4, "title": "Mayor", "day": 41,
       "buildings": [
         { "id": "townhall", "type": "townhall", "x": 0, "z": 0, "rot": 0, "state": "ok", "label": "Town hall, renovated by Mayor Brandt" },
-        { "id": "statue", "type": "statue", "x": 0, "z": 6, "rot": 0, "state": "ok", "label": "Mayor statue" },
-        { "id": "bridge", "type": "bridge", "x": 12, "z": -6, "rot": 0, "state": "ok", "label": "The bridge – rebuilt in 3 days" },
-        { "id": "busstop", "type": "busstop", "x": -8, "z": 4, "rot": 90, "state": "ok", "label": "Dry bus stop" },
-        { "id": "cafe", "type": "cafe", "x": -6, "z": -6, "rot": 0, "state": "ok" },
-        { "id": "school", "type": "school", "x": 8, "z": 8, "rot": 0, "state": "ok" },
-        { "id": "park", "type": "park", "x": -12, "z": -10, "rot": 0, "state": "ok", "label": "Playground, repainted by 40 neighbours" }
+        { "id": "statue", "type": "statue", "x": 0, "z": 8, "rot": 0, "state": "ok", "label": "Mayor statue" },
+        { "id": "bridge", "type": "bridge", "x": 20, "z": -6, "rot": 0, "state": "ok", "label": "The bridge – rebuilt in 3 days" },
+        { "id": "busstop", "type": "busstop", "x": -10, "z": 6, "rot": 90, "state": "ok", "label": "Dry bus stop" },
+        { "id": "cafe", "type": "cafe", "x": -12, "z": -4, "rot": 0, "state": "ok" },
+        { "id": "school", "type": "school", "x": 10, "z": 10, "rot": 0, "state": "ok" },
+        { "id": "park", "type": "park", "x": -14, "z": -16, "rot": 0, "state": "ok", "label": "Playground, repainted by 40 neighbours" }
       ],
       "posted": [{ "id": "p-railing", "title": "Repaint the bridge railing" }, { "id": "p-lights", "title": "Street lights on Mill Lane" }]
     }
@@ -23,10 +23,10 @@
       "v": 1, "town": "Millbrook", "mayor": "Tomasz Nowak", "rank": 3, "title": "Councillor", "day": 12,
       "buildings": [
         { "id": "townhall", "type": "townhall", "x": 0, "z": 0, "rot": 0, "state": "broken" },
-        { "id": "bridge", "type": "bridge", "x": 12, "z": -6, "rot": 0, "state": "ok", "label": "Bridge railing – fixed by Tomasz" },
-        { "id": "busstop", "type": "busstop", "x": -8, "z": 4, "rot": 90, "state": "ok" },
-        { "id": "cafe", "type": "cafe", "x": -6, "z": -6, "rot": 0, "state": "ok" },
-        { "id": "park", "type": "park", "x": -12, "z": -10, "rot": 0, "state": "broken" }
+        { "id": "bridge", "type": "bridge", "x": 20, "z": -6, "rot": 0, "state": "ok", "label": "Bridge railing – fixed by Tomasz" },
+        { "id": "busstop", "type": "busstop", "x": -10, "z": 6, "rot": 90, "state": "ok" },
+        { "id": "cafe", "type": "cafe", "x": -12, "z": -4, "rot": 0, "state": "ok" },
+        { "id": "park", "type": "park", "x": -14, "z": -16, "rot": 0, "state": "broken" }
       ],
       "posted": [{ "id": "p-dumping", "title": "Clear the dumping behind the park" }]
     }
@@ -38,9 +38,9 @@
       "v": 1, "town": "Harbourside", "mayor": "Aisha Rahman", "rank": 2, "title": "Community helper", "day": 5,
       "buildings": [
         { "id": "townhall", "type": "townhall", "x": 0, "z": 0, "rot": 0, "state": "broken" },
-        { "id": "busstop", "type": "busstop", "x": -8, "z": 4, "rot": 90, "state": "ok", "label": "Bus stop roof – fixed by Aisha" },
-        { "id": "cafe", "type": "cafe", "x": -6, "z": -6, "rot": 0, "state": "ok" },
-        { "id": "house-keller", "type": "house", "x": 6, "z": -4, "rot": 0, "state": "ok", "label": "Garden wall – built by Aisha" }
+        { "id": "busstop", "type": "busstop", "x": -10, "z": 6, "rot": 90, "state": "ok", "label": "Bus stop roof – fixed by Aisha" },
+        { "id": "cafe", "type": "cafe", "x": -12, "z": -4, "rot": 0, "state": "ok" },
+        { "id": "house-keller", "type": "house", "x": 11, "z": -6, "rot": 0, "state": "ok", "label": "Garden wall – built by Aisha" }
       ],
       "posted": [{ "id": "p-water", "title": "Water tank for the school" }]
     }
@@ -52,8 +52,8 @@
       "v": 1, "town": "Oak Ridge", "mayor": "Leo Martins", "rank": 1, "title": "Skilled", "day": 3,
       "buildings": [
         { "id": "townhall", "type": "townhall", "x": 0, "z": 0, "rot": 0, "state": "broken" },
-        { "id": "busstop", "type": "busstop", "x": -8, "z": 4, "rot": 90, "state": "broken" },
-        { "id": "house-keller", "type": "house", "x": 6, "z": -4, "rot": 0, "state": "ok", "label": "Garden wall – built by Leo" }
+        { "id": "busstop", "type": "busstop", "x": -10, "z": 6, "rot": 90, "state": "broken" },
+        { "id": "house-keller", "type": "house", "x": 11, "z": -6, "rot": 0, "state": "ok", "label": "Garden wall – built by Leo" }
       ],
       "posted": [{ "id": "p-potholes", "title": "Potholes on Station Road" }]
     }
