@@ -60,6 +60,7 @@ function stats() {
 }
 const person = id => content.people?.find?.(p => p.id === id) || { name: id };
 const skillName = k => content.upgrades.find(u => u.gives === k)?.title || k;
+const upgradeEffects = u => content.upgrades.find(x => x.id === u.id)?.effects || {}; // a repeatable's instant payout
 // why an option can't be taken right now (shown on the card, the button is disabled); mirrors life.choose's checks
 function blocked(o) {
   const s = life.state, e = o.effects || {};
@@ -118,7 +119,7 @@ function refresh() {
   ui.setGoal(guide());
   ui.setBadge('jobs', life.offers().length && !meta.jobs ? life.offers().length : 0);
   ui.setBadge('problems', life.problems().length);
-  ui.setBadge('upgrades', life.upgrades().filter(u => u.status === 'available').length);
+  ui.setBadge('upgrades', life.upgrades().filter(u => u.status === 'available' && !u.repeat).length); // the always-open bridge fund is no news
   document.documentElement.style.setProperty('--topH', $('top').offsetHeight + 'px');
   if (ui.sheet.panel && ui.sheet.panel !== 'visit') panel(ui.sheet.panel);
 }
@@ -140,9 +141,9 @@ function panel(name) {
     const html = life.upgrades().map(u => {
       const left = u.status === 'running' ? Math.max(0, u.endsAt - clock.t) : 0;
       return `<div class="item"><h3>${esc(u.title)}</h3>${u.text && u.status !== 'done' ? `<p>${esc(u.text)}</p>` : ''}
-        <div class="status">${u.status === 'running' ? `Running · ${mmss(left)} left` : u.status === 'done' ? '✅ Done' : u.status === 'locked' ? `🔒 ${u.needs && !(life.state.skills?.[u.needs] > 0) ? `Needs ${esc(skillName(u.needs))}` : `Unlocks at ${esc(content.ranks.find(r => r.rank === u.rank)?.title || 'a later rank')}`}` : `${mmss(u.seconds || 0)} of play`}</div>
+        <div class="status">${u.status === 'running' ? `Running · ${mmss(left)} left` : u.status === 'done' ? '✅ Done' : u.status === 'locked' ? `🔒 ${u.needs && !(life.state.skills?.[u.needs] > 0) ? `Needs ${esc(skillName(u.needs))}` : `Unlocks at ${esc(content.ranks.find(r => r.rank === u.rank)?.title || 'a later rank')}`}` : u.repeat ? 'Any time, as often as you like' : `${mmss(u.seconds || 0)} of play`}</div>
         ${u.status === 'running' ? `<div class="prog"><i style="width:${100 - (100 * left) / (u.seconds || 1)}%"></i></div>` : ''}
-        ${u.status === 'available' ? `${chips({ money: -u.cost })}<button class="go" data-upgrade="${esc(u.id)}" ${u.cost > s.money ? 'disabled' : ''}>${u.cost > s.money ? `Need €${esc(u.cost)}` : 'Start'}</button>` : ''}</div>`;
+        ${u.status === 'available' ? `${chips({ money: -u.cost, ...upgradeEffects(u) })}<button class="go" data-upgrade="${esc(u.id)}" ${u.cost > s.money ? 'disabled' : ''}>${u.cost > s.money ? `Need €${esc(u.cost)}` : u.repeat ? `Pay €${esc(u.cost)}` : 'Start'}</button>` : ''}</div>`;
     }).join('');
     ui.openSheet('upgrades', 'Invest in yourself', html || '<p class="muted">Nothing to learn yet.</p>');
   } else if (name === 'ladder') {
@@ -170,7 +171,7 @@ function applyResult(r, who) {
   if (!r.ok) { toast(esc(r.msg || 'Not possible right now')); return false; }
   const items = addNews(r.news);
   const said = person(who);
-  toast(`${chips(r.effects)}${items[0] ? `<div><b>${esc(said.name || 'Brookfield')}:</b> ${esc(items[0].title)}</div>` : ''}`);
+  toast(`${chips(r.effects)}${items[0] ? `<div><b>${esc(said.name || 'Brookfield')}:</b> ${esc(items[0].title)}</div>` : ''}${r.msg ? `<div>${esc(r.msg)}</div>` : ''}`);
   if (r.effects?.fix) { world.showTown(life.state); world.focus(r.effects.fix); }
   return true;
 }
@@ -183,7 +184,7 @@ async function doJob(id) {
   document.body.classList.add('task');
   const t0 = clock.t;
   let result;
-  try { result = await world.playTask(o.task, { ...o.params, twist: o.twist }); }
+  try { result = await world.playTask(o.task, o.params); } // params.twist is the twist id; o.twist is its text
   finally { document.body.classList.remove('task'); mode = 'town'; }
   qa.tasks.push({ kind: o.task, game: +(clock.t - t0).toFixed(2), seconds: result.seconds, stars: result.stars });
   world.showTown(life.state);
@@ -219,7 +220,9 @@ async function showEvent(ev) {
 function startUpgrade(id) {
   const r = life.startUpgrade(id, clock.t);
   const u = life.upgrades().find(x => x.id === id);
-  toast(r.ok ? `🎓 <b>${esc(u?.title)}</b> started. It runs while you play.` : esc(r.msg || 'Not possible right now'));
+  if (!r.ok) toast(esc(r.msg || 'Not possible right now'));
+  else if (u?.repeat) toast(`${chips({ money: -u.cost, ...upgradeEffects(u) })}${r.msg ? `<div>${esc(r.msg)}</div>` : ''}`); // pays out at once
+  else toast(`🎓 <b>${esc(u?.title)}</b> started. It runs while you play.${r.msg ? `<div>${esc(r.msg)}</div>` : ''}`);
   after();
 }
 

@@ -46,7 +46,7 @@ const snapshotState = () => {
     cardOpts: [...document.querySelectorAll('#card [data-opt]')].map(x => ({ id: x.dataset.opt, disabled: x.disabled })),
     offers: L.offers().map(o => ({ id: o.id, energy: o.energy ?? 0, task: o.task })),
     problems: L.problems().map(p => ({ id: p.id, options: p.options.map(o => ({ id: o.id, money: o.effects?.money || 0, rep: o.effects?.rep || 0 })) })),
-    upgrades: L.upgrades().map(u => ({ id: u.id, status: u.status, cost: u.cost ?? 0, endsAt: u.endsAt ?? 0 })),
+    upgrades: L.upgrades().map(u => ({ id: u.id, status: u.status, cost: u.cost ?? 0, endsAt: u.endsAt ?? 0, repeat: !!u.repeat })),
     checklist: l.next?.checklist || [],
   };
 };
@@ -56,13 +56,12 @@ async function openPanel(page, name) {
   await page.waitForTimeout(150);
 }
 
-// ends the running first-person task through Lane W's QA hook, after letting it run a few frames
+// ends the running first-person task through Lane W's QA hook (docs/ASSETS.md): wait until the task has
+// loaded its models and started, let it run a few frames, then finish with 3 stars
 async function finishTask(page) {
-  await page.evaluate(async () => {
-    for (let i = 0; i < 4; i++) await new Promise(r => requestAnimationFrame(r));
-    const w = window.__btmWorld;
-    (w.finish || w.finishTask)(3);
-  });
+  await page.waitForFunction(() => window.__btmWorld?.task(), null, { timeout: 60000 });
+  await page.evaluate(async () => { for (let i = 0; i < 4; i++) await new Promise(r => requestAnimationFrame(r)); });
+  await page.waitForFunction(() => __btmWorld.finish(3), null, { timeout: 30000 });
 }
 
 async function visitFirst(page, index = 0) {
@@ -111,7 +110,8 @@ async function playToSkilled(page, v) {
       await goHome(page);
       did = 'home';
     } else {
-      const up = s.upgrades.find(u => u.status === 'available' && u.cost <= s.money);
+      // courses and tools when affordable; a repeatable (the bridge fund) once, so money still goes to the courses
+      const up = s.upgrades.find(u => u.status === 'available' && u.cost <= s.money && !(u.repeat && log.includes(`upgrade ${u.id}`)));
       const running = s.upgrades.find(u => u.status === 'running');
       // rotate job kinds so both verbs get played
       const offers = s.offers.filter(o => o.energy <= s.energy);
