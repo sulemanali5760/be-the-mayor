@@ -2,9 +2,9 @@
   {
     "id": "keller_wall", "who": "keller", "start": true, "once": true, "maxRank": 0,
     "title": "Build Frau Keller's garden wall", "task": "wall", "pay": 45, "energy": 1, "rep": 3,
-    "params": { "at": "keller_garden", "bricks": 10 },
+    "params": { "at": "keller_garden" },
     "twists": [
-      { "id": "audience", "text": "Frau Keller supervises from a deckchair, with notes" },
+      { "id": "cracked", "text": "Frau Keller found a cracked brick before you did. Swap it" },
       { "id": "rain", "text": "Rain: the mortar sets faster" }
     ],
     "fix": "keller_garden", "label": "Keller's wall – built by you",
@@ -24,10 +24,10 @@
   {
     "id": "brandt_garage", "who": "brandt", "maxRank": 0,
     "title": "Lay a garage wall at the Brandt Bau yard", "task": "wall", "pay": 50, "energy": 1, "rep": 1,
-    "params": { "at": "yard", "bricks": 10 },
+    "params": { "at": "yard" },
     "twists": [
       { "id": "rain", "text": "Rain: the mortar sets faster" },
-      { "id": "wonky", "text": "The foundation leans; keep every row level" }
+      { "id": "hurry", "text": "Rolf needs it before lunch: three stars need a quick wall" }
     ],
     "says": "Rolf: “Good. Fast. Could be faster. Everything could be faster.”"
   },
@@ -54,9 +54,9 @@
   {
     "id": "park_wall", "who": "dieter", "once": true, "maxRank": 0,
     "title": "Rebuild the park wall so Benno stays in", "task": "wall", "pay": 40, "energy": 1, "rep": 2,
-    "params": { "at": "park", "bricks": 8 },
+    "params": { "at": "park" },
     "twists": [
-      { "id": "cat", "text": "A cat has claimed the top row" },
+      { "id": "cracked", "text": "Benno chewed one brick. It is cracked now" },
       { "id": "rain", "text": "Rain: the mortar sets faster" }
     ],
     "fix": "park", "label": "Park wall – rebuilt by you",
@@ -66,10 +66,10 @@
   {
     "id": "pizza_oven", "who": "lindner", "needs": "trowel", "maxRank": 0,
     "title": "Build Tomasz a brick pizza oven behind the café", "task": "wall", "pay": 55, "energy": 1, "rep": 2,
-    "params": { "at": "cafe", "bricks": 12 },
+    "params": { "at": "cafe" },
     "twists": [
-      { "id": "audience", "text": "Tomasz is filming it for the café's page" },
-      { "id": "wonky", "text": "The oven dome curves; every brick sits a little wonky" }
+      { "id": "hurry", "text": "Tomasz is filming it live: keep it snappy" },
+      { "id": "cracked", "text": "One brick came out of the kiln cracked" }
     ],
     "says": "Tomasz: “A café that sells pizza. Revolutionary. I'm calling it Pizza Lindner. No, Lindzza.”"
   },
@@ -96,10 +96,10 @@
   {
     "id": "sk_meter_wall", "who": "yilmaz", "rank": 1, "needs": "electric",
     "title": "Brick in the school's new meter cabinet", "task": "wall", "pay": 65, "energy": 1, "rep": 2,
-    "params": { "at": "school", "bricks": 12 },
+    "params": { "at": "school" },
     "twists": [
-      { "id": "audience", "text": "A whole class is watching and asking questions" },
-      { "id": "wonky", "text": "The old wall behind it leans" }
+      { "id": "hurry", "text": "The class watches until the bell: be quick" },
+      { "id": "cracked", "text": "The old wall hides a cracked brick" }
     ],
     "says": "Mehmet: “22 years I've waited for a meter cabinet that doesn't hum. It doesn't hum!”"
   },
@@ -116,10 +116,10 @@
   {
     "id": "sk_shower_wall", "who": "keller", "rank": 1, "needs": "plumbing",
     "title": "Build Frau Keller a walk-in shower wall", "task": "wall", "pay": 65, "energy": 1, "rep": 2,
-    "params": { "at": "keller_house", "bricks": 12 },
+    "params": { "at": "keller_house" },
     "twists": [
-      { "id": "audience", "text": "Frau Keller supervises from the doorway, with notes" },
-      { "id": "wonky", "text": "The old floor slopes; keep every row level" }
+      { "id": "cracked", "text": "Frau Keller spotted a cracked brick, with notes" },
+      { "id": "hurry", "text": "Frau Keller wants her bath by teatime: be quick" }
     ],
     "says": "Frau Keller: “No more climbing into the bath like a mountaineer. Thank you, dear.”"
   },
@@ -136,10 +136,10 @@
   {
     "id": "sk_bus_shelter", "who": "amira", "rank": 1, "once": true,
     "title": "Rebuild the bus shelter properly for Amira's route", "task": "wall", "pay": 60, "energy": 1, "rep": 3,
-    "params": { "at": "bus_stop", "bricks": 12 },
+    "params": { "at": "bus_stop" },
     "twists": [
       { "id": "rain", "text": "Rain: the mortar sets faster (fitting, for a bus stop)" },
-      { "id": "audience", "text": "The whole 7:15 queue is watching" }
+      { "id": "hurry", "text": "The 7:15 is due: be quick" }
     ],
     "fix": "bus_stop", "label": "Bus shelter – rebuilt by you",
     "says": "Amira: “A shelter with a roof and a wall. People will wait for the bus on purpose now.”",

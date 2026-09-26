@@ -40,11 +40,12 @@ test('every reference resolves: people, buildings, skills', () => {
   }
 });
 
-test('jobs fit the tasks: wall 8-12 bricks, delivery 3-4 stops in 45 s, 2+ twists each', () => {
+test('jobs fit the tasks: wall twists the world plays, delivery 3-4 stops in 45 s, 2+ twists each', () => {
   for (const j of c.jobs) {
     assert.ok(['wall', 'delivery'].includes(j.task), j.id);
     assert.ok(j.twists.length >= 2, `${j.id}: twists`);
-    if (j.task === 'wall') assert.ok(j.params.bricks >= 8 && j.params.bricks <= 12, `${j.id}: bricks`);
+    // ASSETS.md: the wall is always 11 bricks, twists rain / cracked / hurry
+    if (j.task === 'wall') assert.ok(j.twists.every(t => ['rain', 'cracked', 'hurry'].includes(t.id)), `${j.id}: twists`);
     else assert.ok(j.params.stops.length >= 3 && j.params.stops.length <= 4 && j.params.seconds <= 45, `${j.id}: stops`);
   }
   // Skilled pays +30-60% over Labourer (REAL-WORLD §2.2)
@@ -61,6 +62,26 @@ test('counts match the build plan', () => {
   assert.ok(c.town.every(b => Number.isInteger(b.x) && Number.isInteger(b.z) && ['ok', 'broken'].includes(b.state)), '1 m grid');
   assert.deepEqual(c.ranks.slice(0, 2).map(r => r.title), ['Labourer', 'Skilled']);
   assert.ok(c.ranks.slice(2).every(r => r.locked), 'later ranks locked');
+});
+
+test('town: footprints from ASSETS.md never overlap (1 m apart at least)', () => {
+  // w × d in metres, front towards +z; the bridge includes its 36 m stream. Unknown types draw a house.
+  const FOOT = { house: [6, 5], garden: [7, 5], cafe: [7, 5], shop: [7, 5], busstop: [3.6, 1.6], bridge: [36, 12],
+    townhall: [12, 8], school: [12, 6], park: [12, 10], playground: [8, 8], statue: [2, 2], streetlight: [0.6, 0.6], tree: [2, 2] };
+  const ALIAS = { hall: 'townhall', stop: 'busstop', store: 'shop', lamp: 'streetlight', gardenwall: 'garden' };
+  const box = b => {
+    const k = b.type.toLowerCase().replace(/[^a-z]/g, '');
+    const [w, d] = FOOT[ALIAS[k] ?? k] ?? FOOT.house;
+    assert.equal(b.rot % 90, 0, `${b.id}: rot`);
+    const [hx, hz] = b.rot % 180 ? [d / 2, w / 2] : [w / 2, d / 2];
+    return { id: b.id, x0: b.x - hx - 0.5, x1: b.x + hx + 0.5, z0: b.z - hz - 0.5, z1: b.z + hz + 0.5 };
+  };
+  const boxes = c.town.map(box);
+  const hits = [];
+  boxes.forEach((a, i) => boxes.slice(i + 1).forEach(b => {
+    if (a.x0 < b.x1 && b.x0 < a.x1 && a.z0 < b.z1 && b.z0 < a.z1) hits.push(`${a.id} × ${b.id}`);
+  }));
+  assert.deepEqual(hits, []);
 });
 
 test('no problem or event option is best on every effect (dominance check)', () => {
