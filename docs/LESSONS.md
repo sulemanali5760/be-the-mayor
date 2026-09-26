@@ -12,6 +12,7 @@ Entries marked **BbB** were carried over from our first game, *Brick by Brick* (
 | D2 BbB | The bot aced mechanics with 100% Perfect | Mechanics had no cost | Every mechanic gets a **bot balance run in CI**; if the bot aces it, it isn't a skill yet. Every choice needs a cost (time, money, energy, reputation). |
 | D3 BbB | Automation (the robot) cut pay, and then the player just watched | Faster wasn't also better; waiting had nothing to do | An upgrade must **change what you do**, not only how fast. Never leave the player waiting with nothing to decide. |
 | D4 BbB | Too much effort went into 3D fidelity for one mechanic | Depth before breadth | **Breadth first.** Reuse models and use simple shapes; content (jobs, people, problems) lives in data files. |
+| D6 | 0.1 bots found two boredom traps before any human played: first 3 walls and 3 deliveries, then (after quick shifts) 30 tap-jobs | A real-time course timer made jobs the filler | **Days pace everything (3 action slots); no real-time timers.** CI tracks per-verb repeats, jobs before each rank, and action types a day. |
 | D5 BbB | Upgrades interacted with job parameters in surprising ways | No overview | Read the balance table every build. |
 
 ## Hosting and delivery (BbB)

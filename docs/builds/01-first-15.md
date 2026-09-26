@@ -1,6 +1,6 @@
 # Build 0.1: "First 15 minutes"
 
-Status: in progress (studio build) · base: master plan only · roadmap row 0.1
+Status: closed · 0.1.0 released (studio build) · base: master plan only · roadmap row 0.1
 
 ## 1. Goal
 
@@ -168,4 +168,26 @@ net.inbox(since)                  // { likes, signs, helps } for the newspaper
 
 ## 6. Meeting minutes
 
-_(director fills this in when all lanes have reported)_
+**Meetings 1–3 (2026-09-26/27).** The lanes were paused once by the owner and resumed from local WIP commits without losing work.
+
+| Lane | Result | Cost (tokens, approx.) |
+|---|---|---|
+| S systems | 29 tests. Balance (200 runs): **Skilled median 13.1 min, day 5; jobs median 8 (p90 12); 2.42 action types a day; 97% of runs ≤ 2 first-person tasks per kind**; dominance and money-destination checks pass. Content: 16 jobs, 18 people, 10 problems, 15 events (6 with later consequences), 11 upgrades, 20 signs, 15 buildings. | ~490k across 3 rounds |
+| W world | Town camera (pan, pinch, tap in screen space). Wall: 11 bricks, ≤ 90 s, can't fail; twists rain, cracked, hurry. Delivery route with closed road and rush. Smoke test in headless Chrome, which caught a real bug (the van stuck at a barrier). 8 models 9,952 triangles; town about 2,400. | ~410k across 2 rounds |
+| U shell | QA B1–B4 green at 3 sizes; db 10/10 policies; online and offline visits; promotion PNG; quick shift; slot pips; Study tonight. | ~660k across 3 rounds |
+
+**Decisions (contract changes 1–4):**
+1. Repeatable upgrades, and `msg` on success.
+2. **The quick shift**: QA found 3 walls and 3 deliveries on the way to Skilled.
+3. Lane W's file ownership, QA hooks, footprints.
+4. **3 slots a day, and courses by evenings.** With quick shifts, the bot did 30 jobs, because a real-time course timer made jobs filler. Now it's 8.
+
+Also: at most one study evening a day (Lane S, accepted). Every delivery has 3–4 real stops.
+
+**Lesson for LESSONS:** balance bots found the two design traps (repetition, then timer filler) **before any human played**. Keep the per-verb and per-day metrics in CI.
+
+**Known for 0.2:**
+- The QA bot finishes first-person tasks instantly, so QA's 9.3 min is a lower bound; the balance bot owns the median.
+- QA's day 1 has jobs only.
+- Delivery twists `rain` and `dog` are flavour only.
+- `anchors()` has no people yet.
