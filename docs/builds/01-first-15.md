@@ -191,3 +191,4 @@ Also: at most one study evening a day (Lane S, accepted). Every delivery has 3â€
 - QA's day 1 has jobs only.
 - Delivery twists `rain` and `dog` are flavour only.
 - `anchors()` has no people yet.
+- Text bug seen on Pages: the speaker name is doubled ("Frau Hilde Keller: Frau Keller: â€¦"). The content lines carry a name prefix and the UI adds `who` too. Fix one side.
