@@ -6,6 +6,7 @@ import { migrate } from './save.js';
 export const CONTENT = ['jobs', 'people', 'problems', 'events', 'upgrades', 'ranks', 'signs', 'town'];
 
 const STAR_PAY = [0.5, 0.75, 0.9, 1]; // share of the offered pay, by stars
+const QUICK_PAY = 0.8;                // quick shift: no first-person task, no stars
 const MAX_PROBLEMS = 2;               // open problem cards at once
 const PROBLEM_GAP = 90;               // play seconds between new problems
 const EVENT_GAP = [150, 270];         // play seconds between surprise events (min, max)
@@ -73,8 +74,10 @@ export function createLife(content, save, rand = Math.random) {
       if (!j) break;
       s.offers.push(makeOffer(j));
     }
+    // quick shift (contract change 2): a kind you've done with 2+ stars can be done off-screen for 80 %
+    for (const o of s.offers) o.quick = (s.best[o.task] ?? 0) >= 2;
   }
-  if (s.offers.length < 2) fillBoard();
+  fillBoard();
 
   // ---- cards ----
   const card = c => ({
@@ -127,17 +130,24 @@ export function createLife(content, save, rand = Math.random) {
       if (!o) return fail('That job is gone.');
       if (s.energy < o.energy) return fail('Too tired. Sleep first.');
       const j = find(content.jobs, o.job);
+      const quick = !!result?.quick;
+      if (quick && !o.quick) return fail('Do this kind of job in person first.');
       const stars = Math.max(0, Math.min(3, Math.round(result?.stars ?? 0)));
-      const effects = {
-        money: Math.round(o.pay * STAR_PAY[stars]),
-        rep: (j.rep ?? 0) + (stars === 3 ? 1 : 0),
-        energy: -o.energy,
-        skill: { [o.task]: stars },
-      };
+      const effects = quick
+        ? { money: Math.round(o.pay * QUICK_PAY), rep: j.rep ?? 0, energy: -o.energy }
+        : {
+          money: Math.round(o.pay * STAR_PAY[stars]),
+          rep: (j.rep ?? 0) + (stars === 3 ? 1 : 0),
+          energy: -o.energy,
+          skill: { [o.task]: stars },
+        };
       if (j.fix) Object.assign(effects, { fix: j.fix, label: j.label });
       apply(effects);
       s.jobs.push(j.id);
-      s.lastTwist[o.task] = o.params.twist;
+      if (!quick) {
+        s.lastTwist[o.task] = o.params.twist;
+        s.best[o.task] = Math.max(s.best[o.task] ?? 0, stars);
+      }
       s.offers = s.offers.filter(x => x !== o);
       fillBoard();
       if (j.headline) s.headlines.push(fmt(j.headline));

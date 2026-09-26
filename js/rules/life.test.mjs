@@ -55,8 +55,9 @@ test('board: starts with the two story jobs, two different verbs, contract shape
     const offers = fresh(seed).offers();
     assert.deepEqual(offers.map(o => o.job).sort(), ['keller_wall', 'lindner_cakes']);
     for (const o of offers) {
-      assert.deepEqual(Object.keys(o).sort(), ['energy', 'id', 'job', 'params', 'pay', 'task', 'title', 'twist', 'who']);
+      assert.deepEqual(Object.keys(o).sort(), ['energy', 'id', 'job', 'params', 'pay', 'quick', 'task', 'title', 'twist', 'who']);
       assert.ok(o.twist && o.params.twist);
+      assert.equal(o.quick, false);
     }
   }
 });
@@ -91,6 +92,47 @@ test('job: the next task of the same verb never repeats the last twist', () => {
     assert.ok(next, 'a new wall job is offered');
     assert.notEqual(next.params.twist, life.state.lastTwist.wall);
   }
+});
+
+test('quick shift: a kind done with 2+ stars can be done off-screen for 80 %, no stars', () => {
+  const life = fresh();
+  const s = life.state;
+  life.doJob(offerOf(life, 'keller_wall').id, { stars: 2, seconds: 70 }, 80);
+  assert.equal(s.best.wall, 2);
+  const wall = life.offers().find(o => o.task === 'wall');
+  assert.equal(wall.quick, true);
+  assert.equal(offerOf(life, 'lindner_cakes').quick, false);
+  assert.equal(life.doJob(offerOf(life, 'lindner_cakes').id, { quick: true }, 90).msg, 'Do this kind of job in person first.');
+
+  const before = { skill: s.skills.wall, twist: s.lastTwist.wall, rep: s.rep, money: s.money };
+  const r = life.doJob(wall.id, { quick: true }, 100);
+  const job = content.jobs.find(j => j.id === wall.job);
+  assert.equal(r.ok, true);
+  assert.equal(r.effects.money, Math.round(wall.pay * 0.8));
+  assert.equal(r.effects.rep, job.rep);
+  assert.equal(r.effects.energy, -1);
+  assert.equal(r.effects.skill, undefined);
+  assert.equal(s.money, before.money + r.effects.money);
+  assert.equal(s.skills.wall, before.skill);
+  assert.equal(s.lastTwist.wall, before.twist);
+  assert.equal(s.best.wall, 2);
+  assert.ok(life.offers().filter(o => o.task === 'wall').every(o => o.quick), 'later walls stay quick');
+});
+
+test('quick shift: a 1-star first try does not unlock it, a later 2-star one does', () => {
+  const life = fresh();
+  const s = life.state;
+  life.doJob(offerOf(life, 'lindner_cakes').id, { stars: 1, seconds: 45 }, 60);
+  assert.ok(life.offers().filter(o => o.task === 'delivery').every(o => !o.quick));
+  s.energy = 3;
+  s.offers = [];
+  const deliveryOffer = () => {
+    for (let i = 0; i < 20 && !life.offers().some(o => o.task === 'delivery'); i++) life.endDay(70 + i);
+    return life.offers().find(o => o.task === 'delivery');
+  };
+  life.doJob(deliveryOffer().id, { stars: 3, seconds: 40 }, 120);
+  assert.equal(s.best.delivery, 3);
+  assert.equal(deliveryOffer().quick, true);
 });
 
 test('problem: appears on time, effects before choosing, money and skill checks', () => {
@@ -154,10 +196,10 @@ test('upgrade: cost, timer on the game clock, skill, locks with reasons', () => 
   assert.deepEqual(life.startUpgrade('night_school', 10), { ok: true });
   assert.equal(s.money, 80);
   assert.equal(status('night_school').status, 'running');
-  assert.equal(status('night_school').endsAt, 490);
+  assert.equal(status('night_school').endsAt, 610);
   assert.equal(life.startUpgrade('night_school', 11).msg, 'Already yours.');
-  assert.ok(!types(life.tick(489)).includes('upgradeDone'));
-  const done = life.tick(490).find(x => x.type === 'upgradeDone');
+  assert.ok(!types(life.tick(609)).includes('upgradeDone'));
+  const done = life.tick(610).find(x => x.type === 'upgradeDone');
   assert.equal(done.id, 'night_school');
   assert.equal(s.skills.electric, 1);
   assert.equal(status('night_school').status, 'done');

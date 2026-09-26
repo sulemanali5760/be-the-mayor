@@ -1,6 +1,6 @@
 [
   {
-    "id": "night_school", "who": "okafor", "title": "Night school: electrician", "cost": 120, "seconds": 480, "gives": "electric",
+    "id": "night_school", "who": "okafor", "title": "Night school: electrician", "cost": 120, "seconds": 600, "gives": "electric",
     "text": "Three evenings a week with Grace Okafor. Bring a torch and a sense of humour.",
     "says": "Grace: “You passed. You only shocked yourself once, which is a class record.”"
   },
@@ -10,7 +10,7 @@
     "says": "Ravi: “Gustav is yours. Be kind to him. He's been through a lot of cat photos.”"
   },
   {
-    "id": "online_plumbing", "who": "yilmaz", "title": "Online course: plumbing", "cost": 50, "seconds": 480, "gives": "plumbing", "needs": "computer",
+    "id": "online_plumbing", "who": "yilmaz", "title": "Online course: plumbing", "cost": 50, "seconds": 600, "gives": "plumbing", "needs": "computer",
     "text": "Mehmet recommends it: “I learned everything from videos. And from floods.”",
     "says": "Certificate unlocked. Mehmet prints it out and pins it on the school noticeboard."
   },

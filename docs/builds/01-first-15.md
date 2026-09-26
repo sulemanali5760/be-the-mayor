@@ -51,6 +51,11 @@ life.snapshot()                       // public town snapshot, see 3.4
 - **Contract change 1 (director, from Lane S):**
   - `upgrades()` items carry `repeat: true|false`. A repeatable upgrade (e.g. `bridge_fund`, €20 → +1 Reputation) is always buyable, never `done`, applies its effect at once, and emits no `upgradeDone`.
   - Any `{ ok: true }` result may carry `msg`, a person's line that the UI shows as a toast.
+- **Contract change 2 (director, rule D1):** QA showed 3 walls and 3 deliveries on the way to Skilled.
+  - A **quick shift** fixes it: once you have finished a task kind with **≥ 2 stars**, later offers of that kind carry `quick: true`.
+  - `life.doJob(offerId, { quick: true }, now)` pays **80%**, takes no first-person time, and gives no stars or skill-star progress.
+  - The UI offers both buttons: "Do it (first person)" and "Quick shift · 80%".
+  - The QA bot and the balance bot take the quick shift whenever it's offered. **Target: at most 2 first-person tasks per kind** on the way to Skilled, with Skilled still in 12–18 min.
 - `save.js`: `newSave(name, town)`, `migrate(save)`. Old or partial saves always load.
 
 ### 3.2 Content (`data/`, Lane S)

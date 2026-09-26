@@ -17,6 +17,7 @@ export function newSave(name, town) {
     skills: {},        // { wall: stars, delivery: stars, electric: 1, computer: 1, ... }
     jobs: [],          // ids of jobs done, in order
     lastTwist: {},     // { wall: 'rain' } so a verb never repeats with the same twist
+    best: {},          // best first-person stars per kind; 2+ unlocks the quick shift
     offers: [],        // the job board
     seq: 0,            // offer id counter
     problems: [],      // open problem ids
