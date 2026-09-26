@@ -14,7 +14,7 @@ All models are ours, in metres at real-world scale, self-contained `.gltf` with 
 |---|---|---|
 | One model file | ≤ 5,000 | 4,264 max (`fp_arms`) |
 | All model files | ≤ 15,000 | 9,952 |
-| Town view, about 12 buildings | ≤ 5,000 | about 2,000 |
+| Town view, Lane S's 15-building `town.json` | ≤ 5,000 | about 2,400 |
 | Delivery overlay (van, stops, barrier, route dots) | ≤ 3,000 | about 700 + 6 per queued metre (400 m max) |
 | Wall scene (models, pallet stack, wall, garden) | ≤ 20,000 | about 13,000 |
 
@@ -51,6 +51,8 @@ Each building is centred on its `x, z`, with its front towards +z; `rot` is in d
 | `park` | 12 × 10 | 3.5 | no | 288 | the fountain is dry |
 | `playground` | 8 × 8 | 3 | no | 136 | the swings are gone |
 | `statue` | 2 × 2 | 4.2 | yes | 44 | grey |
+| `dump_pile` | 6 × 5 | 2 | no | 204 broken, 96 ok | a messy heap (bags, mattress, tyres, fridge) vs a clean patch with a bench and flowers |
+| `yard` | 10 × 8 | 4 | no | 120 | a builder's yard: gravel, shed, pallets, bricks, skip; grey when broken |
 | `streetlight` | 0.6 × 0.6 | 4.8 | no | 44 | unlit |
 | `tree` | 2 × 2 | 3.8 | no | 40 | |
 
@@ -58,20 +60,22 @@ Type names are forgiving: `bus_stop`, `Bus-Stop` and `stop` all mean `busstop`, 
 
 ## Task parameters and twists
 
-`world.playTask(kind, params)`: main.js passes `{ ...offer.params, twist: offer.twist }`. The twist may be a string or `{ id, label }`; it's matched case-insensitively, ignoring spaces and punctuation.
+`world.playTask(kind, params)`: main.js passes `offer.params` unchanged; the twist id is `params.twist` (its text is `offer.twist`, shown by the UI). The id is matched case-insensitively, ignoring spaces and punctuation, so `closed_road` and `closed road` are the same.
 
 | Task | Params | Twists |
 |---|---|---|
-| `wall` | `title?` | `rain` (the mortar goes off in 12 s instead of 30), `cracked` (one brick is cracked: swap it or cap at 2 stars), `hurry` (3 stars need 35 s instead of 45) |
-| `delivery` | `stops?` (a count of 3–4, or a list of building ids), `from?` (the start building, default the café), `title?` | `closed road` (a barrier across the longest leg) |
+| `wall` | `title?`; `at` is ignored, and the wall is always 11 bricks | `rain` (the mortar goes off in 12 s instead of 30), `cracked` (one brick is cracked: swap it or cap at 2 stars), `hurry` (3 stars need 35 s instead of 45) |
+| `delivery` | `stops?` (a list of building ids whose **first is the pickup** where the van starts, or a count), `from?` (names the pickup instead; default the café), `seconds?` (the clock, at most 45), `title?` | `closed_road` (a barrier across the longest leg), `rush` (10 s less on the clock). `rain` and `dog` are **flavour only in 0.1**: their line shows on the HUD, and play is unchanged. |
+
+The delivery always has 3–4 stops. If the list names fewer, it's topped up with other buildings.
 
 - **Wall:** 11 bricks in 2 courses. Tap to lay a brick, then tap the high end or hold to knock until it's level.
   - The mortar sets a proud brick for you, and a brick knocked too low is re-bedded.
   - At 90 s the foreman lays the rest, so every wall finishes with at least 1 star.
 - **Delivery:** drag from the van to draw its route. The van follows it at 14 m/s and stops at walls and the barrier.
   - A stop counts within 2.5 m of the building.
-  - Stars: all stops, a route within 1.4 × the shortest tour, and done in 27 s or less gives 3 stars.
-  - It ends when every stop is done or at 45 s.
+  - Stars: all stops, a route within 1.4 × the shortest tour, and done within 60% of the clock (27 s of 45) gives 3 stars.
+  - It ends when every stop is done or when the clock runs out (45 s, or 35 s with `rush`).
 
 ## QA hooks: `window.__btmWorld`
 
@@ -79,7 +83,7 @@ Type names are forgiving: `bus_stop`, `Bus-Stop` and `stop` all mean `busstop`, 
 |---|---|
 | `tap(id)` | fires `onPick({ id })` as if the building were tapped; returns false for an unknown id |
 | `finish(stars)` | ends the running task at once with 0–3 stars; `seconds` is the game time so far (≤ 90) |
-| `task()` | the running task's state or null. The wall gives `{ kind, twist, t, next, aim, laid, total, hand, setting }`, where `aim` is the current brick in canvas px (tap there); the delivery gives `{ kind, twist, t, van, queued, pathLen, best, delivered, total, stops, barrier }` |
+| `task()` | the running task's state or null. The wall gives `{ kind, twist, t, next, aim, laid, total, hand, setting }`, where `aim` is the current brick in canvas px (tap there); the delivery gives `{ kind, twist, closed, limit, t, van, queued, pathLen, best, delivered, total, stops, barrier }` |
 | `screen(x, z)` | a ground point in canvas px under the town camera; draw a delivery route through the stops' `x, z` with it |
 | `view` | the town camera: `{ x, z, d }` |
 | `stats()` | draw calls, triangles, the building count and the world's game time |
