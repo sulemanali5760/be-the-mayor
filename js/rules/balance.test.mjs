@@ -1,6 +1,7 @@
 // Balance bot: plays the first 20 minutes 200 times with random-but-sane choices (build plan §4, LESSONS D2/D5).
-// Play-time model: a task takes its own seconds plus 10 s at the board; a card 8 s; an upgrade 5 s; sleep and
-// the paper 12 s; one visit to another town (90 s) after 9:00, as in GAMES §5.1.
+// Play-time model: a first-person task takes its own seconds plus 10 s at the board; a quick shift 10 s (taken
+// whenever offered, contract change 2); a card 8 s; an upgrade 5 s; sleep and the paper 12 s; one visit to another
+// town (90 s) after 9:00, as in GAMES §5.1.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { appendFileSync } from 'node:fs';
@@ -22,7 +23,8 @@ function play(seed) {
   const can = o => has(o.needs) && s.money + (o.effects.money ?? 0) >= 0 && s.energy + (o.effects.energy ?? 0) >= 0;
   const path = pick(COURSES);
   const m = { skilledAt: null, jobs: 0, jobsToSkilled: null, choices15: 0, events15: 0, later15: 0, bought: 0,
-    broke: 0, brokeAt: null, verbs15: new Set(), moneyAtSkilled: null };
+    broke: 0, brokeAt: null, verbs15: new Set(), moneyAtSkilled: null, fp: { wall: 0, delivery: 0 }, fpMax: null,
+    quick: 0, quickToSkilled: null, daysToSkilled: null };
   let now = 0;
   let visited = false;
 
@@ -33,6 +35,9 @@ function play(seed) {
         m.skilledAt = now;
         m.jobsToSkilled = m.jobs;
         m.moneyAtSkilled = s.money;
+        m.fpMax = Math.max(m.fp.wall, m.fp.delivery);
+        m.quickToSkilled = m.quick;
+        m.daysToSkilled = s.day - 1;
       }
       if (e.type === 'consequence' && now <= 900) m.later15 += 1;
     }
@@ -89,12 +94,19 @@ function play(seed) {
     const ready = life.offers().filter(o => o.energy <= s.energy);
     if (ready.length) {
       const offer = pick(ready);
-      const x = r();
-      const stars = x < 0.5 ? 3 : x < 0.85 ? 2 : 1;
-      const seconds = offer.task === 'wall' ? 50 + r() * 40 : 25 + r() * 20;
       if (now <= 900) m.verbs15.add(offer.task);
-      now += seconds + 10; // the task takes over the screen; the world ticks again when it ends
-      assert.ok(life.doJob(offer.id, { stars, seconds }, now).ok);
+      if (offer.quick) {
+        now += 10;
+        assert.ok(life.doJob(offer.id, { quick: true }, now).ok);
+        m.quick += 1;
+      } else {
+        const x = r();
+        const stars = x < 0.5 ? 3 : x < 0.85 ? 2 : 1;
+        const seconds = offer.task === 'wall' ? 50 + r() * 40 : 25 + r() * 20;
+        now += seconds + 10; // the task takes over the screen; the world ticks again when it ends
+        assert.ok(life.doJob(offer.id, { stars, seconds }, now).ok);
+        if (m.skilledAt === null) m.fp[offer.task] += 1;
+      }
       m.jobs += 1;
       step(0);
       continue;
@@ -123,6 +135,13 @@ test('balance bot: 200 runs of the first 20 minutes', () => {
     ['Skilled reached (p10 / p90)', `${min(pct(skilled, 0.1))} / ${min(pct(skilled, 0.9))}`, ''],
     ['Runs reaching Skilled by 20 min', `${reached.length}/${RUNS}`, ''],
     ['Jobs done by Skilled (median)', median(reached.map(x => x.jobsToSkilled)), ''],
+    ['First-person tasks per kind before Skilled (runs with max 1 / 2 / 3 / 4+)',
+      [1, 2, 3].map(n => reached.filter(x => x.fpMax === n).length).concat(reached.filter(x => x.fpMax >= 4).length).join(' / '),
+      'max 2'],
+    ['Walls / deliveries in first person before Skilled (median)',
+      `${median(reached.map(x => x.fp.wall))} / ${median(reached.map(x => x.fp.delivery))}`, ''],
+    ['Quick shifts by Skilled (median)', median(reached.map(x => x.quickToSkilled)), ''],
+    ['Days slept by Skilled (median)', median(reached.map(x => x.daysToSkilled)), ''],
     ['Money in hand at Skilled (median)', `€${median(reached.map(x => x.moneyAtSkilled))}`, ''],
     ['Choices in the first 15 min (median)', median(runs.map(x => x.choices15)), '≥ 3'],
     ['Events in the first 15 min (median)', median(runs.map(x => x.events15)), '≥ 1'],
@@ -142,4 +161,7 @@ test('balance bot: 200 runs of the first 20 minutes', () => {
   assert.equal(brokeRuns.length, 0, `money had nowhere to go: ${brokeRuns[0]?.brokeAt}`);
   assert.ok(median(runs.map(x => x.choices15)) >= 3, 'at least 3 choices in 15 min');
   assert.ok(median(runs.map(x => x.events15)) >= 1, 'at least 1 event in 15 min');
+  // two 1-star results in a row can force a third try, so the D1 target is held for 95 % of runs
+  const within = reached.filter(x => x.fpMax <= 2).length;
+  assert.ok(within >= 0.95 * reached.length, `max 2 first-person tasks per kind in only ${within}/${reached.length} runs`);
 });
