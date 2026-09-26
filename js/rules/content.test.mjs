@@ -46,12 +46,27 @@ test('jobs fit the tasks: wall twists the world plays, delivery 3-4 stops in 45 
     assert.ok(j.twists.length >= 2, `${j.id}: twists`);
     // ASSETS.md: the wall is always 11 bricks, twists rain / cracked / hurry
     if (j.task === 'wall') assert.ok(j.twists.every(t => ['rain', 'cracked', 'hurry'].includes(t.id)), `${j.id}: twists`);
-    else assert.ok(j.params.stops.length >= 3 && j.params.stops.length <= 4 && j.params.seconds <= 45, `${j.id}: stops`);
+    else {
+      // the first stop is the pickup unless params.from is set; 3-4 drops after it
+      const drops = j.params.stops.length - (j.params.from ? 0 : 1);
+      assert.ok(drops >= 3 && drops <= 4 && j.params.seconds <= 45, `${j.id}: ${drops} drops`);
+    }
   }
   // Skilled pays +30-60% over Labourer (REAL-WORLD §2.2)
   const avg = list => list.reduce((a, j) => a + j.pay, 0) / list.length;
   const gain = avg(c.jobs.filter(j => j.rank === 1)) / avg(c.jobs.filter(j => !j.rank)) - 1;
   assert.ok(gain >= 0.3 && gain <= 0.6, `skilled pay gain ${gain.toFixed(2)}`);
+});
+
+test('upgrades are buy or course (with evenings), no timers; help options show their slot', () => {
+  for (const u of c.upgrades) {
+    assert.ok(u.kind === 'buy' || (u.kind === 'course' && Number.isInteger(u.evenings) && u.evenings > 0), u.id);
+    assert.ok(!('seconds' in u) && !('endsAt' in u), `${u.id}: no timers`);
+  }
+  assert.equal(c.upgrades.find(u => u.id === 'night_school').evenings, 4);
+  const help = c.problems.flatMap(p => p.options.filter(o => o.help).map(o => [p.id, o]));
+  assert.ok(help.length >= 8, 'help options marked');
+  for (const [id, o] of help) assert.equal(o.effects.energy, -1, `${id}/${o.id}: help uses a slot`);
 });
 
 test('counts match the build plan', () => {

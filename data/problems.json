@@ -4,8 +4,8 @@
     "title": "The bus stop roof leaks, again",
     "text": "Marta waits here at 5 a.m. after every night shift. “It's not a bus stop, it's a shower with a timetable.”",
     "options": [
-      { "id": "tarp", "label": "Patch it with a tarp and cable ties",
-        "effects": { "money": -20, "rep": 4, "fix": "bus_stop", "label": "Bus stop roof – patched by you" },
+      { "id": "tarp", "help": true, "label": "Patch it with a tarp and cable ties",
+        "effects": { "money": -20, "energy": -1, "rep": 4, "fix": "bus_stop", "label": "Bus stop roof – patched by you" },
         "says": "Marta: “Dry! I'm going to stand here for fun now.”",
         "headline": "Bus stop dry for the first time since 2019" },
       { "id": "report", "label": "Report it to the town hall",
@@ -18,7 +18,7 @@
     "title": "Someone dumped a sofa by the bottle bank",
     "text": "Hassan: “It's been there so long people sit on it to wait for the bus. The bus doesn't stop there.”",
     "options": [
-      { "id": "haul", "label": "Haul it away yourself",
+      { "id": "haul", "help": true, "label": "Haul it away yourself",
         "effects": { "energy": -1, "rep": 4, "fix": "dump", "label": "Corner cleared by you" },
         "says": "Hassan: “You carried a sofa alone. I have never respected anyone more.”",
         "headline": "Mystery sofa finally leaves the bottle bank" },
@@ -41,7 +41,7 @@
       { "id": "torch", "label": "Buy Dieter a head torch",
         "effects": { "money": -12, "rep": 3 },
         "says": "Dieter now looks like a very small miner. He loves it." },
-      { "id": "fix", "label": "Fix the wiring yourself", "needs": "electric",
+      { "id": "fix", "help": true, "label": "Fix the wiring yourself", "needs": "electric",
         "effects": { "energy": -1, "rep": 6, "skill": { "electric": 1 }, "fix": "streetlight", "label": "Main Street light – fixed by you" },
         "says": "Dieter: “Light! I can see the pothole again. Marvellous.”",
         "headline": "Main Street light back on; post box relieved" }
@@ -52,11 +52,11 @@
     "title": "The swing chain snapped",
     "text": "Leni: “I was nearly at the moon.”",
     "options": [
-      { "id": "chain", "label": "Buy a new chain and fit it",
+      { "id": "chain", "help": true, "label": "Buy a new chain and fit it",
         "effects": { "money": -30, "energy": -1, "rep": 6, "fix": "playground", "label": "Leni's swing – fixed by you" },
         "says": "Leni: “Higher! No, higher! No, that's too high. Higher!”",
         "headline": "Swing fixed; local girl ‘nearly reaches moon’" },
-      { "id": "cake_sale", "label": "Bake for a cake sale with Tomasz",
+      { "id": "cake_sale", "help": true, "label": "Bake for a cake sale with Tomasz",
         "effects": { "money": -8, "energy": -1, "rep": 4, "fix": "playground", "label": "Swing fixed by the cake sale" },
         "says": "Tomasz sells your lopsided muffins as ‘rustic’. The swing is fixed by teatime.",
         "headline": "Cake sale saves the swing" },
@@ -70,7 +70,7 @@
     "title": "The school toilets are flooding",
     "text": "Mehmet: “The drain is blocked with, I think, a whole sandwich. Maybe a lunch box. Maybe a child's hopes.”",
     "options": [
-      { "id": "fix", "label": "Clear the drain properly", "needs": "plumbing",
+      { "id": "fix", "help": true, "label": "Clear the drain properly", "needs": "plumbing",
         "effects": { "energy": -1, "rep": 6, "skill": { "plumbing": 1 } },
         "says": "Mehmet: “22 years and nobody has fixed it first try. You're hired. Unofficially.”" },
       { "id": "snake", "label": "Buy the school a drain snake",
@@ -86,7 +86,7 @@
     "title": "Potholes on the bridge road",
     "text": "Amira: “I've named them. That big one is Gerhard.”",
     "options": [
-      { "id": "patch", "label": "Cold-patch them with Rolf's shovel",
+      { "id": "patch", "help": true, "label": "Cold-patch them with Rolf's shovel",
         "effects": { "energy": -1, "rep": 4, "skill": { "wall": 1 } },
         "says": "Amira honks twice as she drives over the smooth bit. That's bus for ‘thank you’." },
       { "id": "paint", "label": "Paint bright warning circles round them",
@@ -102,7 +102,7 @@
     "title": "The students upstairs are partying. On a Tuesday. Again.",
     "text": "Marta, through the wall: “Leni has a spelling test tomorrow. I have a night shift. The bass has neither.”",
     "options": [
-      { "id": "talk", "label": "Knock and ask them nicely",
+      { "id": "talk", "help": true, "label": "Knock and ask them nicely",
         "effects": { "energy": -1, "rep": 3 },
         "says": "They turn it down and give you pizza. Diplomacy!" },
       { "id": "ordnungsamt", "label": "Call the Ordnungsamt",
@@ -115,7 +115,7 @@
     "title": "Rats behind Café Lindner",
     "text": "Tomasz: “One of them looked at my Streuselkuchen like it had a plan.”",
     "options": [
-      { "id": "seal", "label": "Brick up the gap under the bins",
+      { "id": "seal", "help": true, "label": "Brick up the gap under the bins",
         "effects": { "money": -10, "energy": -1, "rep": 4, "skill": { "wall": 1 } },
         "says": "Tomasz: “Sealed! Fort Lindner stands.”" },
       { "id": "pest", "label": "Pay for pest control",
@@ -144,7 +144,7 @@
     "title": "Frau Keller's heating is out",
     "text": "Frau Keller: “I'm wearing both cardigans. I haven't worn both cardigans since 1987.”",
     "options": [
-      { "id": "fix", "label": "Fix the boiler (she insists on paying)", "needs": "plumbing",
+      { "id": "fix", "help": true, "label": "Fix the boiler (she insists on paying)", "needs": "plumbing",
         "effects": { "energy": -1, "money": 20, "rep": 6 },
         "says": "Frau Keller: “Warm! Take the money, and take this cake, and take off your shoes.”" },
       { "id": "heater", "label": "Lend her your electric heater",

@@ -1,56 +1,56 @@
 [
   {
-    "id": "night_school", "who": "okafor", "title": "Night school: electrician", "cost": 120, "seconds": 600, "gives": "electric",
-    "text": "Three evenings a week with Grace Okafor. Bring a torch and a sense of humour.",
+    "id": "night_school", "who": "okafor", "title": "Night school: electrician", "cost": 120, "kind": "course", "evenings": 4, "gives": "electric",
+    "text": "Four evenings with Grace Okafor. Bring a torch and a sense of humour.",
     "says": "Grace: “You passed. You only shocked yourself once, which is a class record.”"
   },
   {
-    "id": "computer", "who": "ravi", "title": "Second-hand computer", "cost": 60, "seconds": 30, "gives": "computer",
+    "id": "computer", "who": "ravi", "title": "Second-hand computer", "cost": 60, "kind": "buy", "gives": "computer",
     "text": "Ravi is wiping the last owner's 4,000 holiday photos. Mostly of a cat. Opens online courses and the town's online group.",
     "says": "Ravi: “Gustav is yours. Be kind to him. He's been through a lot of cat photos.”"
   },
   {
-    "id": "online_plumbing", "who": "yilmaz", "title": "Online course: plumbing", "cost": 50, "seconds": 600, "gives": "plumbing", "needs": "computer",
+    "id": "online_plumbing", "who": "yilmaz", "title": "Online course: plumbing", "cost": 50, "kind": "course", "evenings": 4, "gives": "plumbing", "needs": "computer",
     "text": "Mehmet recommends it: “I learned everything from videos. And from floods.”",
     "says": "Certificate unlocked. Mehmet prints it out and pins it on the school noticeboard."
   },
   {
-    "id": "bike", "who": "qureshi", "title": "Rusty cargo bike", "cost": 40, "seconds": 15, "gives": "bike",
+    "id": "bike", "who": "qureshi", "title": "Rusty cargo bike", "cost": 40, "kind": "buy", "gives": "bike",
     "text": "Hassan's cousin's bike. Brakes: optional. Basket: enormous. Opens bigger delivery jobs.",
     "says": "Hassan: “My cousin says it pulls slightly left. Politically, too.”"
   },
   {
-    "id": "trowel", "who": "brandt", "title": "A proper trowel set", "cost": 35, "seconds": 15, "gives": "trowel",
+    "id": "trowel", "who": "brandt", "title": "A proper trowel set", "cost": 35, "kind": "buy", "gives": "trowel",
     "text": "Rolf's old set. “They've built half this town. The good half.” Opens bigger building jobs.",
     "says": "Rolf: “Look after them. And don't tell anyone I'm sentimental.”"
   },
   {
-    "id": "driving_licence", "who": "amira", "title": "Driving lessons with Amira", "cost": 150, "seconds": 300, "gives": "licence",
+    "id": "driving_licence", "who": "amira", "title": "Driving lessons with Amira", "cost": 150, "kind": "course", "evenings": 3, "gives": "licence",
     "text": "Amira teaches on the bus route. You've never been so aware of potholes. Opens van work.",
     "says": "Amira: “You passed! You braked for Gerhard the pothole like a professional.”"
   },
   {
-    "id": "electric_kit", "who": "okafor", "title": "Electrician's toolkit", "cost": 90, "seconds": 20, "gives": "electric_kit", "needs": "electric", "rank": 1,
+    "id": "electric_kit", "who": "okafor", "title": "Electrician's toolkit", "cost": 90, "kind": "buy", "gives": "electric_kit", "needs": "electric", "rank": 1,
     "text": "A real voltage tester, not the ‘lick it and see’ method. Opens lighting jobs.",
     "says": "Grace: “Now you look like an electrician. Next: act like one.”"
   },
   {
-    "id": "pipe_kit", "who": "yilmaz", "title": "Plumber's toolbag", "cost": 90, "seconds": 20, "gives": "pipe_kit", "needs": "plumbing", "rank": 1,
+    "id": "pipe_kit", "who": "yilmaz", "title": "Plumber's toolbag", "cost": 90, "kind": "buy", "gives": "pipe_kit", "needs": "plumbing", "rank": 1,
     "text": "Pipe wrenches, a blowtorch and a towel. Mostly the towel. Opens heating jobs.",
     "says": "Mehmet: “The towel is the most important tool. I'll say no more.”"
   },
   {
-    "id": "suit", "who": "lindner", "title": "A suit that fits", "cost": 80, "seconds": 60, "gives": "suit", "rank": 1,
+    "id": "suit", "who": "lindner", "title": "A suit that fits", "cost": 80, "kind": "buy", "gives": "suit", "rank": 1,
     "text": "For the council by-election. Tomasz's tailor cousin says you have ‘a councillor's shoulders’.",
     "says": "You look like someone who could chair a meeting. Or at least find one."
   },
   {
-    "id": "meister_prep", "who": "okafor", "title": "Meister prep course, part 1", "cost": 250, "seconds": 600, "gives": "meister", "rank": 1,
+    "id": "meister_prep", "who": "okafor", "title": "Meister prep course, part 1", "cost": 250, "kind": "course", "evenings": 6, "gives": "meister", "rank": 1,
     "text": "The first step to running your own crew. Grace says the exam is ‘only mildly terrifying’.",
     "says": "Part 1 done. Grace: “Part 2 is where they make you do paperwork. Stay strong.”"
   },
   {
-    "id": "bridge_fund", "who": "voss", "title": "Chip in to the bridge fund", "cost": 20, "seconds": 0, "repeat": true,
+    "id": "bridge_fund", "who": "voss", "title": "Chip in to the bridge fund", "cost": 20, "kind": "buy", "repeat": true,
     "effects": { "rep": 1 },
     "text": "Jens Voss keeps the tin on the broken bridge. A new one costs about €400,000; the tin holds €312 and a button. Every €20 puts your name on the list.",
     "says": "Jens rattles the tin: “The bridge thanks you. The fish don't care.” Your name goes on the list."

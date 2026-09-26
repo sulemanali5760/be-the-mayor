@@ -14,7 +14,7 @@
   {
     "id": "lindner_cakes", "who": "lindner", "start": true, "maxRank": 0,
     "title": "Deliver Café Lindner's cakes before the cream melts", "task": "delivery", "pay": 35, "energy": 1, "rep": 1,
-    "params": { "stops": ["cafe", "keller_house", "school"], "seconds": 45 },
+    "params": { "stops": ["cafe", "keller_house", "school", "town_hall"], "seconds": 45 },
     "twists": [
       { "id": "rush", "text": "Hot day: the cream gives you 10 seconds less" },
       { "id": "rain", "text": "Rain: slippery corners" }
@@ -44,7 +44,7 @@
   {
     "id": "nair_pills", "who": "nair", "maxRank": 0,
     "title": "Take Priya's prescriptions to people who can't get out", "task": "delivery", "pay": 40, "energy": 1, "rep": 2,
-    "params": { "stops": ["pharmacy", "keller_house", "flat"], "seconds": 45 },
+    "params": { "stops": ["pharmacy", "keller_house", "flat", "kiosk"], "seconds": 45 },
     "twists": [
       { "id": "rain", "text": "Rain: slippery corners" },
       { "id": "closed_road", "text": "The bridge road is closed" }
@@ -106,7 +106,7 @@
   {
     "id": "sk_callouts", "who": "okafor", "rank": 1, "needs": "electric",
     "title": "Emergency call-outs: three flats with no power", "task": "delivery", "pay": 60, "energy": 1, "rep": 2,
-    "params": { "stops": ["flat", "keller_house", "cafe"], "seconds": 45 },
+    "params": { "stops": ["flat", "keller_house", "cafe", "kiosk"], "seconds": 45 },
     "twists": [
       { "id": "rain", "text": "Rain: slippery corners (and no puddles near the fuse box)" },
       { "id": "closed_road", "text": "The road by the town hall is closed" }
