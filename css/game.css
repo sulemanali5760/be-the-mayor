@@ -53,7 +53,7 @@ body.task #top,body.task #dock,body.task #bubbles,body.task #sheet,body.task #to
 body.visiting #dock,body.visiting #goal{display:none}
 
 /* toasts: named people reacting, results */
-#toasts{position:absolute;left:var(--gut);right:var(--gut);bottom:calc(var(--dockH) + 2*var(--gut) + env(safe-area-inset-bottom,0px));display:grid;gap:6px;pointer-events:none}
+#toasts{position:absolute;left:var(--gut);right:var(--gut);bottom:calc(var(--barH,var(--dockH)) + 2*var(--gut) + env(safe-area-inset-bottom,0px));display:grid;gap:6px;pointer-events:none}
 .toast{padding:8px 12px;font-size:14px;line-height:1.35;animation:pop .25s ease-out}
 .toast b{font-family:var(--label);color:var(--hivis)}
 @keyframes pop{from{transform:translateY(8px);opacity:0}}

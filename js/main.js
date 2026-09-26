@@ -280,6 +280,7 @@ async function visit(id) {
   $('visitbar').hidden = false;
   $('dock').hidden = true;
   $('visitName').textContent = `${t.snapshot.town} · ${t.snapshot.title} ${t.snapshot.mayor}`;
+  document.documentElement.style.setProperty('--barH', $('visitbar').offsetHeight + 'px'); // toasts sit above the taller visit bar
   for (const b of document.querySelectorAll('[data-visit]')) b.disabled = false;
   world.showTown(t.snapshot);
   toast(`❤️ ${esc(t.likes)} likes · 🤝 ${esc(t.helps)} helps${t.signs[0] ? `<div>A sign here: “${esc(signText(t.signs[0].phrase))}”</div>` : ''}`);
@@ -292,6 +293,7 @@ async function visitAct(kind, btn) {
     document.body.classList.remove('visiting');
     $('visitbar').hidden = true;
     $('dock').hidden = false;
+    document.documentElement.style.removeProperty('--barH');
     world.showTown(life.state);
     refresh();
     return;

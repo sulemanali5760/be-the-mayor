@@ -42,7 +42,7 @@ const snapshotState = () => {
   const b = __btm, L = b.life, l = L.ladder();
   return {
     rank: l.rank, mode: b.mode, t: +b.clock.t.toFixed(1), ...b.stats(), visits: b.meta.visits, hook: b.meta.hook,
-    card: !document.getElementById('modal').hidden,
+    card: !document.getElementById('modal').hidden, promoCard: document.getElementById('card').classList.contains('promo'),
     cardOpts: [...document.querySelectorAll('#card [data-opt]')].map(x => ({ id: x.dataset.opt, disabled: x.disabled })),
     offers: L.offers().map(o => ({ id: o.id, energy: o.energy ?? 0, task: o.task })),
     problems: L.problems().map(p => ({ id: p.id, options: p.options.map(o => ({ id: o.id, money: o.effects?.money || 0, rep: o.effects?.rep || 0 })) })),
@@ -78,9 +78,11 @@ async function goHome(page) {
   await page.waitForFunction(() => __btm.mode === 'town', null, { timeout: 30000 });
 }
 
+const botLog = []; // kept outside the bot so a failure report can show its last steps
 // B1 bot: plays through the real UI with sane choices until the ladder says Skilled
 async function playToSkilled(page, v) {
-  const log = [];
+  const log = botLog, tried = {};
+  log.length = 0;
   let want = null, promo = null, downloaded = '';
   for (let step = 0; step < 160; step++) {
     const s = await page.evaluate(snapshotState);
@@ -88,7 +90,7 @@ async function playToSkilled(page, v) {
     let did;
     if (s.card) {
       const ids = s.cardOpts.filter(o => !o.disabled).map(o => o.id);
-      if (ids.includes('save')) {
+      if (s.promoCard) {
         promo = await page.evaluate(() => __btm.qa.promo?.toDataURL('image/png').length || 0);
         await shot(page, `${v}-5-promotion`);
         const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 15000 }).catch(() => null), page.click('#card [data-opt="save"]')]);
@@ -115,7 +117,9 @@ async function playToSkilled(page, v) {
       const offers = s.offers.filter(o => o.energy <= s.energy);
       const last = log.filter(l => l.startsWith('job ')).pop();
       const offer = offers.find(o => !last || !last.endsWith(o.task)) || offers[0];
-      const prob = s.problems.map(p => ({ p, o: p.options.filter(o => s.money + o.money >= 0).sort((a, b) => b.rep - a.rep)[0] })).find(x => x.o);
+      // a sane player takes a problem once they can afford an option that helps (rep up), and gives up after 2 tries
+      const prob = s.problems.filter(p => (tried[p.id] || 0) < 2)
+        .map(p => ({ p, o: p.options.filter(o => s.money + o.money >= 0 && o.rep > 0).sort((a, b) => b.rep - a.rep)[0] })).find(x => x.o);
       if (up) {
         await openPanel(page, 'upgrades');
         await page.click(`#sheetBody [data-upgrade="${up.id}"]`);
@@ -129,6 +133,7 @@ async function playToSkilled(page, v) {
         await openPanel(page, 'problems');
         await page.click(`#sheetBody [data-problem="${prob.p.id}"]`);
         want = prob.o.id;
+        tried[prob.p.id] = (tried[prob.p.id] || 0) + 1;
         did = `problem ${prob.p.id}`;
       } else if (offer) {
         await openPanel(page, 'jobs');
@@ -214,7 +219,8 @@ for (const v of VIEWS) {
     const bad = [...b4a.bad, ...b4b.bad.map(x => 'jobs sheet: ' + x), ...b4c.bad.map(x => 'visit: ' + x)];
     check(v.name, 'B4 layout: no overlaps', bad.length === 0, bad.join('; ') || `checked ${[...new Set([...b4a.seen, ...b4b.seen, ...b4c.seen])].join(' ')}`);
   } catch (e) {
-    check(v.name, 'run', false, String(e.message).split('\n')[0]);
+    // the first lines of a Playwright error carry the call log (e.g. which element intercepts the click)
+    check(v.name, 'run', false, `${String(e.message).split('\n').slice(0, 5).join(' / ')}; bot: ${botLog.slice(-6).join(' · ')}`);
     await shot(page, `${v.name}-x-failure`);
   }
   check(v.name, 'no page errors', errors.length === 0, errors.slice(0, 3).join(' | '));
