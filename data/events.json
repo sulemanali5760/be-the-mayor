@@ -1,0 +1,189 @@
+[
+  {
+    "id": "cut_corners", "who": "brandt", "after": 200,
+    "text": "Rolf leans on your shovel. “Skip the damp-proof layer on the garage wall. Nobody looks under walls. Thirty euros for being quick.”",
+    "options": [
+      { "id": "skip", "label": "Skip it, take the €30", "effects": { "money": 30 },
+        "says": "Rolf: “Now you're thinking like a professional.” That was not the compliment he thinks it was.",
+        "later": { "after": 300, "who": "brandt", "effects": { "rep": -5 },
+          "text": "The garage wall you rushed now leans like it had a long night. Rolf tells the whole pub it was your idea.",
+          "headline": "Garage wall found leaning; foreman blames ‘the new kid’" } },
+      { "id": "proper", "label": "Do it properly", "effects": { "money": -10, "rep": 3 },
+        "says": "Rolf docks you €10 for “being a professor about it”. Frau Keller heard, and approves loudly." }
+    ]
+  },
+  {
+    "id": "lottery", "who": "qureshi", "after": 300,
+    "text": "Hassan holds up a scratch card. “This one is warm. I can feel it. Five euros.”",
+    "options": [
+      { "id": "scratch", "label": "Buy it (support local business)", "effects": { "money": -5, "rep": 1 },
+        "says": "Hassan: “You won't regret this. Statistically you will, but emotionally, no.”",
+        "later": { "after": 120, "effects": { "money": 2 },
+          "text": "You scratched the card. You won €2. Hassan calls that basically a profit and asks for a coffee." } },
+      { "id": "pass", "label": "Keep your €5", "effects": {},
+        "says": "Hassan: “Your loss. Probably. Statistically, no.”" }
+    ]
+  },
+  {
+    "id": "benno_sausage", "who": "benno", "after": 360,
+    "text": "Benno has stolen a whole Bratwurst from the market stall and is refusing to negotiate.",
+    "options": [
+      { "id": "chase", "label": "Chase him", "effects": { "energy": -1, "rep": 3 },
+        "says": "You win. The Bratwurst does not. The stall owner laughs so hard she forgives everyone." },
+      { "id": "pay", "label": "Pay the stall for the sausage", "effects": { "money": -4, "rep": 2 },
+        "says": "Dieter: “He's never done anything like this before.” Benno has done this eleven times." },
+      { "id": "film", "label": "Film it for the town group", "effects": { "rep": 1 },
+        "says": "The video gets more views than the town's website has had since 2011." }
+    ]
+  },
+  {
+    "id": "vlogger", "who": "kai", "after": 420,
+    "text": "Kai Sturm is filming “Europe's Most Boring Town” and points the camera at you. “Say something boring about {town}!”",
+    "options": [
+      { "id": "defend", "label": "Defend {town} with passion", "effects": { "rep": 2 },
+        "says": "Kai: “Insane energy. Insane.” He posts it anyway.",
+        "later": { "after": 240, "who": "lindner", "effects": { "rep": 3, "money": 10 },
+          "text": "Your rant went viral: “Boring outside, stubborn inside!” Three tourists came. Tomasz sold out of cake and gave you a cut.",
+          "headline": "Local's rant goes viral; tourists confused but delighted" } },
+      { "id": "cash", "label": "Agree it's boring, for €40", "effects": { "money": 40, "rep": -3 },
+        "says": "Kai: “Truly boring. Thanks!” The whole town has seen it by dinner." }
+    ]
+  },
+  {
+    "id": "marta_sitter", "who": "marta", "after": 420,
+    "text": "Marta's babysitter cancelled and she's on the night shift at the care home. Leni is looking at you with enormous eyes.",
+    "options": [
+      { "id": "sit", "label": "Babysit Leni tonight", "effects": { "energy": -1, "rep": 5 },
+        "says": "Leni teaches you six card games and cheats at all of them. Marta brings breakfast." },
+      { "id": "pay", "label": "Chip in for a sitter", "effects": { "money": -15, "rep": 3 },
+        "says": "Marta pays you back on Friday, with interest, in the form of a cake." },
+      { "id": "no", "label": "“I can't tonight, sorry”", "effects": {},
+        "says": "Marta: “No worries, Frau Keller owes me a favour.” Frau Keller did not know that." }
+    ]
+  },
+  {
+    "id": "storm", "who": "voss", "after": 560,
+    "text": "A storm rips through {town}. The bridge railing is in the river, and so is Jens Voss's hat.",
+    "options": [
+      { "id": "help", "label": "Help clear the branches", "effects": { "energy": -1, "rep": 6 },
+        "says": "Jens: “You worked like a fisherman. That's the highest thing I can say about anyone.”",
+        "headline": "Local hero? Volunteers clear storm damage by lunchtime" },
+      { "id": "shift", "label": "Take Rolf's paid storm shift", "effects": { "energy": -1, "money": 35 },
+        "says": "Rolf pays storm rates. Double, minus ‘admin’.",
+        "headline": "Where was everyone? Brandt Bau crew clears storm damage, invoices town" },
+      { "id": "hat", "label": "Fish out Jens's hat", "effects": { "rep": 2 },
+        "says": "Jens: “Forty years that hat and I have been through. Thirty-nine of them dry.”" }
+    ]
+  },
+  {
+    "id": "wallet", "who": "pfennig", "after": 480,
+    "text": "You find a wallet with €80 in it. The ID says Gerhard Pfennig. Even the photo looks smug.",
+    "options": [
+      { "id": "return", "label": "Return it to the town hall", "effects": { "rep": 4 },
+        "says": "Mayor Pfennig rewards you with a signed photo of himself. It's the same smug photo." },
+      { "id": "keep", "label": "Keep the cash, post the wallet back", "effects": { "money": 80 },
+        "says": "The €80 feels heavier than €80 should.",
+        "later": { "after": 360, "who": "fink", "effects": { "rep": -8 },
+          "text": "The Gazette: “Mayor's wallet returned empty. Police suspect ‘the youth’.” You are the youth. People look at you funny.",
+          "headline": "Mayor's wallet returned empty; town suspects ‘the youth’" } }
+    ]
+  },
+  {
+    "id": "proposal", "who": "lindner", "after": 500,
+    "text": "Tomasz wants to propose to Amira and asks you to hide the ring in a Streuselkuchen. “She eats them in one bite. It's romantic.”",
+    "options": [
+      { "id": "hide", "label": "Hide the ring in the cake", "effects": { "energy": -1, "rep": 3 },
+        "says": "You spend an hour building a ring-shaped cavity in a cake. It's your finest work.",
+        "later": { "after": 200, "who": "amira", "effects": { "rep": 3 },
+          "text": "Amira said yes! She also nearly swallowed the ring. You're invited to the wedding, seated next to Dieter.",
+          "headline": "Bus driver and baker engaged; ring ‘mostly not eaten’" } },
+      { "id": "warn", "label": "Suggest a less swallowable plan", "effects": { "rep": 2 },
+        "says": "Tomasz proposes on the bus. Amira says yes and misses a stop for the first time in 14 years." }
+    ]
+  },
+  {
+    "id": "goat", "who": "helga", "after": 400,
+    "text": "Helga the goat has escaped the petting zoo and is standing on the bus stop roof, looking pleased with herself.",
+    "options": [
+      { "id": "coax", "label": "Coax her down with Tomasz's cake", "effects": { "money": -6, "rep": 3 },
+        "says": "Helga eats the cake, the paper plate and part of your sleeve. Then she climbs down." },
+      { "id": "photos", "label": "Charge €1 a photo", "effects": { "money": 12, "rep": -1 },
+        "says": "Twelve photos. Helga poses like a professional. Dieter calls it ‘goat exploitation’." },
+      { "id": "leave", "label": "Leave her. She's the bus stop's problem now.", "effects": {},
+        "says": "Amira's bus waits 20 minutes. Nobody complains. Everyone has photos." }
+    ]
+  },
+  {
+    "id": "poster", "who": "pfennig", "after": 600,
+    "text": "Mayor Pfennig's re-election posters are going up. One is glued to your front door. He's winking.",
+    "options": [
+      { "id": "tache", "label": "Give him a moustache (€2 marker)", "effects": { "money": -2, "rep": 2 },
+        "says": "It's a magnificent moustache. It suits him better than the office.",
+        "later": { "after": 180, "who": "fink", "effects": { "rep": 2 },
+          "text": "The Gazette prints a photo of the moustache. Pfennig is not amused. Dieter frames it.",
+          "headline": "Mayor's poster gains moustache, public support" } },
+      { "id": "leave", "label": "Leave it. It covers the crack in the door.", "effects": {},
+        "says": "Pfennig winks at you every morning now. You'll get used to it. You won't." }
+    ]
+  },
+  {
+    "id": "photo_op", "who": "pfennig", "after": 400, "requires": "keller_garden",
+    "text": "Mayor Pfennig wants a photo shaking your hand in front of Frau Keller's new wall. “For the newsletter. I'll pay for your time.”",
+    "options": [
+      { "id": "shake", "label": "Smile and take the €20", "effects": { "money": 20, "rep": -2 },
+        "says": "The newsletter says ‘Mayor's building programme delivers’. Frau Keller writes a furious letter in perfect grammar." },
+      { "id": "refuse", "label": "Politely refuse", "effects": { "rep": 2 },
+        "says": "Frau Keller: “Good. He returned a library book eleven years late. I was the librarian.”" }
+    ]
+  },
+  {
+    "id": "charity_run", "who": "nair", "after": 700,
+    "text": "Priya is organising a sponsored run for the care home minibus. She's two runners short, and she's looking at you.",
+    "options": [
+      { "id": "run", "label": "Run", "effects": { "energy": -1, "rep": 4 },
+        "says": "You finish fourth, behind two pensioners and Benno. The minibus fund grows." },
+      { "id": "sponsor", "label": "Sponsor a runner with €10", "effects": { "money": -10, "rep": 2 },
+        "says": "Your runner is Dieter. He walks it. It takes four hours. He is very proud." },
+      { "id": "cheer", "label": "Cheer very loudly", "effects": { "rep": 1 },
+        "says": "Your sign says GO SOMEONE. It is a hit." }
+    ]
+  },
+  {
+    "id": "wrong_delivery", "who": "nair", "after": 300, "needs": "delivery",
+    "text": "Mix-up! Frau Keller got a bag of dog food and Benno got Frau Keller's new reading glasses. Priya is on the phone.",
+    "options": [
+      { "id": "swap", "label": "Run back and swap them", "effects": { "energy": -1, "rep": 2 },
+        "says": "Priya: “Everyone's fine. Benno has had the best day of his life.”" },
+      { "id": "flowers", "label": "Swap them, with flowers and an apology", "effects": { "money": -8, "rep": 3 },
+        "says": "Frau Keller: “Apology accepted. Your handwriting on the card, however, is not.”" },
+      { "id": "blame", "label": "Blame Benno", "effects": { "rep": -1 },
+        "says": "Benno accepts full responsibility. He's a very good boy. Nobody believes you." }
+    ]
+  },
+  {
+    "id": "power_cut", "who": "okafor", "rank": 1, "needs": "electric", "after": 0,
+    "text": "Power cut on Lindenstraße. Grace is at a wedding in Leipzig and texts: “You know what to do. Probably.”",
+    "options": [
+      { "id": "fix", "label": "Find the fault and fix it", "effects": { "energy": -1, "rep": 6, "skill": { "electric": 1 } },
+        "says": "Lights on. Twelve fridges hum. Grace texts back a single thumbs up, which from her is a parade.",
+        "headline": "Lindenstraße back on the grid thanks to local electrician" },
+      { "id": "candles", "label": "Hand out candles", "effects": { "money": -10, "rep": 3 },
+        "says": "Lindenstraße has its most romantic evening in years." },
+      { "id": "sell", "label": "Sell candles", "effects": { "money": 15, "rep": -2 },
+        "says": "Business is booming. Your neighbours' opinion of you is not." }
+    ]
+  },
+  {
+    "id": "flood", "who": "yilmaz", "rank": 1, "needs": "plumbing", "after": 0,
+    "text": "The school basement is flooding. Mehmet is bailing with a lunch box. “It's a big lunch box, but still.”",
+    "options": [
+      { "id": "fix", "label": "Find the burst pipe and fix it", "effects": { "energy": -1, "rep": 6, "skill": { "plumbing": 1 } },
+        "says": "Mehmet: “Dry! I'm keeping the lunch box as a memorial.”",
+        "headline": "School basement saved by local plumber" },
+      { "id": "pump", "label": "Rent a pump for him", "effects": { "money": -25, "rep": 4 },
+        "says": "The pump roars all night. So does Mehmet, with gratitude." },
+      { "id": "tip", "label": "Tell him to call the water board", "effects": { "rep": 1 },
+        "says": "The water board's hold music is ‘Singing in the Rain’. Mehmet does not laugh." }
+    ]
+  }
+]

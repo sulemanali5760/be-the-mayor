@@ -1,0 +1,158 @@
+[
+  {
+    "id": "bus_stop_roof", "who": "marta", "at": "bus_stop", "after": 90,
+    "title": "The bus stop roof leaks, again",
+    "text": "Marta waits here at 5 a.m. after every night shift. “It's not a bus stop, it's a shower with a timetable.”",
+    "options": [
+      { "id": "tarp", "label": "Patch it with a tarp and cable ties",
+        "effects": { "money": -20, "rep": 4, "fix": "bus_stop", "label": "Bus stop roof – patched by you" },
+        "says": "Marta: “Dry! I'm going to stand here for fun now.”",
+        "headline": "Bus stop dry for the first time since 2019" },
+      { "id": "report", "label": "Report it to the town hall",
+        "effects": { "rep": 1 },
+        "says": "Town hall: “Your concern is important to us.” The roof keeps leaking, importantly." }
+    ]
+  },
+  {
+    "id": "dump_pile", "who": "qureshi", "at": "dump", "after": 200,
+    "title": "Someone dumped a sofa by the bottle bank",
+    "text": "Hassan: “It's been there so long people sit on it to wait for the bus. The bus doesn't stop there.”",
+    "options": [
+      { "id": "haul", "label": "Haul it away yourself",
+        "effects": { "energy": -1, "rep": 4, "fix": "dump", "label": "Corner cleared by you" },
+        "says": "Hassan: “You carried a sofa alone. I have never respected anyone more.”",
+        "headline": "Mystery sofa finally leaves the bottle bank" },
+      { "id": "scrap", "label": "Tip off the scrap dealer about the metal frame",
+        "effects": { "money": 10 },
+        "says": "The scrap dealer takes the frame and pays you a €10 finder's fee. The cushions stay, judging you." },
+      { "id": "post", "label": "Post a photo in the town's online group", "needs": "computer",
+        "effects": { "rep": 2 },
+        "says": "143 angry emojis. Nobody moves the sofa, but everyone feels heard." }
+    ]
+  },
+  {
+    "id": "streetlight_out", "who": "dieter", "at": "streetlight", "after": 330,
+    "title": "The light on Main Street is out",
+    "text": "Dieter: “Third week. I walked into the post box. The post box was fine.”",
+    "options": [
+      { "id": "report", "label": "Report it to the town hall",
+        "effects": { "rep": 1 },
+        "says": "Dieter files your report in the folder, under ‘Hope’." },
+      { "id": "torch", "label": "Buy Dieter a head torch",
+        "effects": { "money": -12, "rep": 3 },
+        "says": "Dieter now looks like a very small miner. He loves it." },
+      { "id": "fix", "label": "Fix the wiring yourself", "needs": "electric",
+        "effects": { "energy": -1, "rep": 6, "skill": { "electric": 1 }, "fix": "streetlight", "label": "Main Street light – fixed by you" },
+        "says": "Dieter: “Light! I can see the pothole again. Marvellous.”",
+        "headline": "Main Street light back on; post box relieved" }
+    ]
+  },
+  {
+    "id": "playground_swing", "who": "leni", "at": "playground", "after": 450,
+    "title": "The swing chain snapped",
+    "text": "Leni: “I was nearly at the moon.”",
+    "options": [
+      { "id": "chain", "label": "Buy a new chain and fit it",
+        "effects": { "money": -30, "energy": -1, "rep": 6, "fix": "playground", "label": "Leni's swing – fixed by you" },
+        "says": "Leni: “Higher! No, higher! No, that's too high. Higher!”",
+        "headline": "Swing fixed; local girl ‘nearly reaches moon’" },
+      { "id": "cake_sale", "label": "Bake for a cake sale with Tomasz",
+        "effects": { "money": -8, "energy": -1, "rep": 4, "fix": "playground", "label": "Swing fixed by the cake sale" },
+        "says": "Tomasz sells your lopsided muffins as ‘rustic’. The swing is fixed by teatime.",
+        "headline": "Cake sale saves the swing" },
+      { "id": "push", "label": "Push Leni on the other swing instead",
+        "effects": { "rep": 2 },
+        "says": "Leni: “This one's slower. But you do good sound effects.”" }
+    ]
+  },
+  {
+    "id": "school_drain", "who": "yilmaz", "at": "school", "after": 500,
+    "title": "The school toilets are flooding",
+    "text": "Mehmet: “The drain is blocked with, I think, a whole sandwich. Maybe a lunch box. Maybe a child's hopes.”",
+    "options": [
+      { "id": "fix", "label": "Clear the drain properly", "needs": "plumbing",
+        "effects": { "energy": -1, "rep": 6, "skill": { "plumbing": 1 } },
+        "says": "Mehmet: “22 years and nobody has fixed it first try. You're hired. Unofficially.”" },
+      { "id": "snake", "label": "Buy the school a drain snake",
+        "effects": { "money": -25, "rep": 4 },
+        "says": "Mehmet names the drain snake Kevin and uses it daily." },
+      { "id": "mop", "label": "Lend Mehmet your mop",
+        "effects": { "rep": 2 },
+        "says": "Mehmet: “A mop. Of course. Why didn't I think of—” He has four mops." }
+    ]
+  },
+  {
+    "id": "bridge_potholes", "who": "amira", "at": "bridge", "after": 560,
+    "title": "Potholes on the bridge road",
+    "text": "Amira: “I've named them. That big one is Gerhard.”",
+    "options": [
+      { "id": "patch", "label": "Cold-patch them with Rolf's shovel",
+        "effects": { "energy": -1, "rep": 4, "skill": { "wall": 1 } },
+        "says": "Amira honks twice as she drives over the smooth bit. That's bus for ‘thank you’." },
+      { "id": "paint", "label": "Paint bright warning circles round them",
+        "effects": { "money": -5, "rep": 3 },
+        "says": "Now the potholes are dangerous AND festive." },
+      { "id": "petition", "label": "Start an online petition for a new bridge", "needs": "computer",
+        "effects": { "rep": 2 },
+        "says": "212 signatures. Dieter signed four times, once as Benno." }
+    ]
+  },
+  {
+    "id": "party_noise", "who": "marta", "at": "flat", "after": 640,
+    "title": "The students upstairs are partying. On a Tuesday. Again.",
+    "text": "Marta, through the wall: “Leni has a spelling test tomorrow. I have a night shift. The bass has neither.”",
+    "options": [
+      { "id": "talk", "label": "Knock and ask them nicely",
+        "effects": { "energy": -1, "rep": 3 },
+        "says": "They turn it down and give you pizza. Diplomacy!" },
+      { "id": "ordnungsamt", "label": "Call the Ordnungsamt",
+        "effects": { "rep": 1 },
+        "says": "The Ordnungsamt arrives in 90 minutes, exactly as the party ends. Efficient, in its way." }
+    ]
+  },
+  {
+    "id": "cafe_rats", "who": "lindner", "at": "cafe", "after": 760,
+    "title": "Rats behind Café Lindner",
+    "text": "Tomasz: “One of them looked at my Streuselkuchen like it had a plan.”",
+    "options": [
+      { "id": "seal", "label": "Brick up the gap under the bins",
+        "effects": { "money": -10, "energy": -1, "rep": 4, "skill": { "wall": 1 } },
+        "says": "Tomasz: “Sealed! Fort Lindner stands.”" },
+      { "id": "pest", "label": "Pay for pest control",
+        "effects": { "money": -35, "rep": 5 },
+        "says": "The pest controller is gone in an hour. So are the rats. So is your €35." },
+      { "id": "kevin", "label": "Name the rat Kevin and move on",
+        "effects": { "rep": -1 },
+        "says": "Tomasz: “Kevin has been seen in the kitchen. Kevin is fired.”" }
+    ]
+  },
+  {
+    "id": "town_hall_graffiti", "who": "pfennig", "at": "town_hall", "after": 880,
+    "title": "Someone painted ‘PFENNIG OUT’ on the town hall",
+    "text": "Mayor Pfennig: “€20 to whoever removes it. Discreetly.” Dieter notes that the spelling is correct.",
+    "options": [
+      { "id": "scrub", "label": "Scrub it off for the €20",
+        "effects": { "energy": -1, "money": 20, "rep": -1 },
+        "says": "Half the town watches you scrub. Dieter boos, then brings you tea." },
+      { "id": "leave", "label": "Leave it. It's spelled correctly.",
+        "effects": { "rep": 2 },
+        "says": "The town quietly agrees with the wall." }
+    ]
+  },
+  {
+    "id": "keller_heating", "who": "keller", "at": "keller_house", "rank": 1,
+    "title": "Frau Keller's heating is out",
+    "text": "Frau Keller: “I'm wearing both cardigans. I haven't worn both cardigans since 1987.”",
+    "options": [
+      { "id": "fix", "label": "Fix the boiler (she insists on paying)", "needs": "plumbing",
+        "effects": { "energy": -1, "money": 20, "rep": 6 },
+        "says": "Frau Keller: “Warm! Take the money, and take this cake, and take off your shoes.”" },
+      { "id": "heater", "label": "Lend her your electric heater",
+        "effects": { "rep": 3 },
+        "says": "Your flat is freezing. Frau Keller's is lovely. She sends a postcard about it." },
+      { "id": "soup", "label": "Bring her soup and call the landlord for her",
+        "effects": { "money": -4, "rep": 4 },
+        "says": "The landlord promises Thursday. Frau Keller promises to ring him every hour until Thursday." }
+    ]
+  }
+]

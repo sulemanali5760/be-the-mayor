@@ -1,0 +1,25 @@
+[
+  { "rank": 0, "title": "Labourer" },
+  {
+    "rank": 1, "title": "Skilled",
+    "checklist": [
+      { "type": "upgrade", "ids": ["night_school", "online_plumbing"], "label": "Finish a trade course" },
+      { "type": "rep", "n": 15, "label": "Reputation 15" },
+      { "type": "jobs", "n": 4, "label": "Do 4 jobs" }
+    ],
+    "card": "Promoted: Skilled! You can now fix the things that used to fix you. Better jobs pay about half as much again, just like a real qualification.",
+    "hook": "Council by-election in 3 days. You need Reputation 100 and 2 group endorsements.",
+    "headline": "{name} qualifies; {town} gains a tradesperson and loses an excuse"
+  },
+  {
+    "rank": 2, "title": "Community helper", "locked": true,
+    "checklist": [
+      { "type": "rep", "n": 100, "label": "Reputation 100" },
+      { "type": "locked", "label": "2 group endorsements (coming in 0.2)" }
+    ]
+  },
+  { "rank": 3, "title": "Councillor", "locked": true },
+  { "rank": 4, "title": "Mayor", "locked": true },
+  { "rank": 5, "title": "Governor", "locked": true },
+  { "rank": 6, "title": "President", "locked": true }
+]
