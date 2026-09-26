@@ -48,6 +48,29 @@ life.snapshot()                       // public town snapshot, see 3.4
 ```
 
 - `effects` = `{ money?, rep?, energy?, skill?: { id: n }, fix?: buildingId, label?: string }`, always shown **before** you choose (pillar 2).
+- **Contract change 1 (director, from Lane S):**
+  - `upgrades()` items carry `repeat: true|false`. A repeatable upgrade (e.g. `bridge_fund`, €20 → +1 Reputation) is always buyable, never `done`, applies its effect at once, and emits no `upgradeDone`.
+  - Any `{ ok: true }` result may carry `msg`, a person's line that the UI shows as a toast.
+- **Contract change 4 (director, rule D1 again).** With quick shifts, the bot did 30 jobs (28 quick) to reach Skilled, because a real-time course timer made jobs the filler. Days now pace everything, the way Stardew's energy does (GAMES §5.2):
+  - **A day has 3 action slots** (`state.slots`). A job (first person or quick), **Study** (one evening of a course), **Help** (a problem option marked `help`), and any option with an energy cost each use 1 slot. When slots are 0, the only action is `endDay` (sleep → newspaper). The player can also sleep early.
+  - **Courses progress by evenings, not seconds.** Upgrades are either `buy` (instant, e.g. a second-hand computer, `bridge_fund`) or `course` with `evenings: n` (night school = 4). `life.study(courseId, now)` uses a slot and adds 1 evening. The upgrade's `seconds` and `endsAt` fields are removed, and `status: 'running'` means "enrolled, n/total evenings".
+  - **No real-time timers anywhere in 0.1** (LESSONS D3: never wait with nothing to decide).
+  - **Targets:**
+    - Skilled median 12–18 min;
+    - **≤ 12 jobs in total** before Skilled;
+    - on average at least 2 different action types per day;
+    - still ≤ 2 first-person tasks per kind in ≥ 95% of runs.
+- **Contract change 3 (director, from Lane W):**
+  - Lane W also owns `tools/smoke_world.mjs`, and `wall.js` lives in `js/world/`, not `js/world/fp/`.
+  - The QA hooks are `__btmWorld.tap(id)`, `finish(stars)`, `task()` and `screen(x, z)`.
+  - The wall is always 11 bricks (`params.bricks` is ignored).
+  - `town.json` follows the footprints table in ASSETS.md.
+  - `anchors()` covers buildings only; people get positions in 0.2.
+- **Contract change 2 (director, rule D1):** QA showed 3 walls and 3 deliveries on the way to Skilled.
+  - A **quick shift** fixes it: once you have finished a task kind with **≥ 2 stars**, later offers of that kind carry `quick: true`.
+  - `life.doJob(offerId, { quick: true }, now)` pays **80%**, takes no first-person time, and gives no stars or skill-star progress.
+  - The UI offers both buttons: "Do it (first person)" and "Quick shift · 80%".
+  - The QA bot and the balance bot take the quick shift whenever it's offered. **Target: at most 2 first-person tasks per kind** on the way to Skilled, with Skilled still in 12–18 min.
 - `save.js`: `newSave(name, town)`, `migrate(save)`. Old or partial saves always load.
 
 ### 3.2 Content (`data/`, Lane S)
