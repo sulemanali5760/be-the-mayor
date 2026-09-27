@@ -97,6 +97,9 @@ async function playToSkilled(page, v) {
   log.length = 0;
   let want = null, promo = null, downloaded = '', walked = 0;
   for (let step = 0; step < 160; step++) {
+    // let the game run two frames first: an event card opens on the frame after the last one closed, and with 0.2's
+    // heavier world a frame can outlast the bot's pause (a stale "no card" sent a click into the modal on desktop)
+    await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
     const s = await page.evaluate(snapshotState);
     if (s.mode === 'town' && !s.card && (s.tod !== s.todWant || s.worldTod !== s.todWant)) todBad.push(`d${s.day}/${s.slots} slots: ${s.tod}, world ${s.worldTod}`);
     if (s.rank >= 1 && promo && !s.card) return { ok: true, s, log, promo, downloaded, acts, todBad };
