@@ -112,14 +112,14 @@ async function walkTo(id) {
 }
 
 // ---- the character creator: skin, hair and face, one tap each, shown on the avatar at once ----------------------
-// the looks in data/wardrobe.json are in the order of js/world/avatar.js SKINS, HAIRS and FACES (the avatar takes indices)
+// the looks in data/wardrobe.json are in the order of the manifest's character skins, hairs and faces (the avatar takes indices)
 function lookPicker(look, onChange) {
   const { skins, hairs, faces } = content.wardrobe.looks;
   const dot = c => `<i style="background:${esc(c)}"></i>`;
   const row = (k, label, list, cell, cls = 'sw') => `<div class="looks"><span>${label}</span>${list.map((v, i) =>
     `<button type="button" class="${cls}" data-k="${k}" data-i="${i}" aria-pressed="${look[k] === i}" aria-label="${label} ${i + 1}">${cell(v)}</button>`).join('')}</div>`;
   return {
-    html: row('skin', 'Skin', skins, dot) + row('hair', 'Hair', hairs, h => dot(h.color) + esc(h.label), 'sw pill') + row('face', 'Face', faces, esc),
+    html: row('skin', 'Skin', skins, dot) + row('hair', 'Hair', hairs, h => (h.color ? dot(h.color) : '') + esc(h.label), 'sw pill') + row('face', 'Face', faces, esc),
     bind: el => {
       for (const b of el.querySelectorAll('.sw')) b.onclick = () => {
         look[b.dataset.k] = +b.dataset.i;

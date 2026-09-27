@@ -4,7 +4,7 @@
     "signs": [{ "phrase": 0 }, { "phrase": 3 }],
     "snapshot": {
       "v": 1, "town": "Lindenau", "mayor": "Greta Brandt", "rank": 4, "title": "Mayor", "day": 41,
-      "avatar": { "skin": 1, "hair": 2, "face": 1, "extra": "flowers", "rank": 4 },
+      "avatar": { "skin": 1, "hair": 2, "face": 1, "extra": "flower", "rank": 4 },
       "buildings": [
         { "id": "town_hall", "type": "townhall", "x": 0, "z": -10, "rot": 0, "state": "ok", "label": "Town hall, renovated by Mayor Brandt" },
         { "id": "cafe", "type": "cafe", "x": -12, "z": -7, "rot": 0, "state": "ok", "label": "Café am Markt" },

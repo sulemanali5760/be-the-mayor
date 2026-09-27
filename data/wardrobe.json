@@ -1,16 +1,17 @@
 {
   "looks": {
-    "skins": ["#F6D7BD", "#E8B894", "#C98F63", "#9C6440", "#6B4128", "#47291A"],
+    "skins": ["#F9DCC4", "#F1C27D", "#E0AC69", "#C68642", "#8D5524", "#5C3A21"],
     "hairs": [
-      { "label": "Short", "color": "#3B2618" }, { "label": "Long", "color": "#6B3F1F" }, { "label": "Bun", "color": "#1E1712" },
-      { "label": "Curly", "color": "#2A1C14" }, { "label": "Blond", "color": "#D8B26A" }, { "label": "Buzz", "color": "#4A4A4A" }
+      { "label": "Short", "color": "#5B3A29" }, { "label": "Long", "color": "#2E2A28" }, { "label": "Bun", "color": "#C9A15B" },
+      { "label": "Curly", "color": "#3A2A22" }, { "label": "None", "color": null }
     ],
     "faces": ["🙂", "😄", "😐"]
   },
   "extras": [
-    { "id": "flowers", "title": "Buttonhole flowers", "cost": 15, "who": "keller", "says": "Frau Keller: “Finally, a young person with standards.”" },
+    { "id": "flower", "title": "A flower for your hair", "cost": 15, "who": "keller", "says": "Frau Keller: “Finally, a young person with standards.”" },
+    { "id": "beanie", "title": "Knitted beanie", "cost": 20, "who": "marta", "says": "Marta knitted it on night shifts. One side is longer. That's the charm." },
     { "id": "cap", "title": "Brandt Bau cap", "cost": 25, "who": "brandt", "says": "Rolf: “Free advertising. I should be charging you.” He charges you." },
-    { "id": "scarf", "title": "Hand-knitted scarf", "cost": 30, "who": "marta", "says": "Marta knitted it on night shifts. One end is longer. That's the charm." },
+    { "id": "scarf", "title": "Stripy scarf", "cost": 30, "who": "leni", "says": "Leni picked the colours. All of them." },
     { "id": "sunglasses", "title": "Sunglasses", "cost": 40, "who": "kai", "says": "Kai: “Insane look. Insane.” You look like a vlogger. Dieter looks away." },
     { "id": "bowtie", "title": "Bow tie", "cost": 60, "who": "pfennig", "says": "Mayor Pfennig: “A future politician, I see.” He means it as a threat." }
   ]
