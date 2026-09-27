@@ -1,20 +1,20 @@
 // Content checks: every id resolves, counts match the build plan (§3.2), and no card has a dominant option.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { loadContent } from './testkit.mjs';
 
 const c = loadContent();
 const ids = list => new Set(list.map(x => x.id));
 const people = ids(c.people);
-const buildings = ids(c.town);
+const buildings = ids(c.town.buildings);
 const skills = new Set(['wall', 'delivery', ...c.upgrades.map(u => u.gives)]);
 const cards = [...c.problems, ...c.events];
 const EFFECT_KEYS = new Set(['money', 'rep', 'energy', 'skill', 'fix', 'label']);
 
 test('ids are unique in every file', () => {
-  for (const n of ['jobs', 'people', 'problems', 'events', 'upgrades', 'town']) {
-    assert.equal(ids(c[n]).size, c[n].length, n);
-  }
+  const lists = { jobs: c.jobs, people: c.people, problems: c.problems, events: c.events, upgrades: c.upgrades, town: c.town.buildings, wardrobe: c.wardrobe.extras };
+  for (const [n, list] of Object.entries(lists)) assert.equal(ids(list).size, list.length, n);
   for (const k of cards) assert.equal(ids(k.options).size, k.options.length, k.id);
 });
 
@@ -73,30 +73,113 @@ test('counts match the build plan', () => {
   assert.ok(c.events.length >= 15, 'about 15 events');
   assert.ok(c.events.filter(e => e.options.some(o => o.later)).length >= 2, '2+ events with later');
   assert.ok(c.signs.length >= 20 && c.signs.every(s => typeof s === 'string' && s.length <= 60), 'about 20 signs');
-  assert.ok(c.town.length >= 12, 'about 12 buildings');
-  assert.ok(c.town.every(b => Number.isInteger(b.x) && Number.isInteger(b.z) && ['ok', 'broken'].includes(b.state)), '1 m grid');
+  assert.ok(c.town.buildings.length >= 12, 'about 12 buildings');
+  assert.ok(c.town.buildings.every(b => Number.isInteger(b.x) && Number.isInteger(b.z) && ['ok', 'broken'].includes(b.state)), '1 m grid');
   assert.deepEqual(c.ranks.slice(0, 2).map(r => r.title), ['Labourer', 'Skilled']);
   assert.ok(c.ranks.slice(2).every(r => r.locked), 'later ranks locked');
 });
 
-test('town: footprints from ASSETS.md never overlap (1 m apart at least)', () => {
-  // w × d in metres, front towards +z; the bridge includes its 36 m stream. Unknown types draw a house.
-  const FOOT = { house: [6, 5], garden: [7, 5], cafe: [7, 5], shop: [7, 5], busstop: [3.6, 1.6], bridge: [36, 12],
-    townhall: [12, 8], school: [12, 6], park: [12, 10], playground: [8, 8], statue: [2, 2], streetlight: [0.6, 0.6], tree: [2, 2] };
-  const ALIAS = { hall: 'townhall', stop: 'busstop', store: 'shop', lamp: 'streetlight', gardenwall: 'garden' };
-  const box = b => {
-    const k = b.type.toLowerCase().replace(/[^a-z]/g, '');
-    const [w, d] = FOOT[ALIAS[k] ?? k] ?? FOOT.house;
-    assert.equal(b.rot % 90, 0, `${b.id}: rot`);
-    const [hx, hz] = b.rot % 180 ? [d / 2, w / 2] : [w / 2, d / 2];
-    return { id: b.id, x0: b.x - hx - 0.5, x1: b.x + hx + 0.5, z0: b.z - hz - 0.5, z1: b.z + hz + 0.5 };
-  };
-  const boxes = c.town.map(box);
-  const hits = [];
-  boxes.forEach((a, i) => boxes.slice(i + 1).forEach(b => {
-    if (a.x0 < b.x1 && b.x0 < a.x1 && a.z0 < b.z1 && b.z0 < a.z1) hits.push(`${a.id} × ${b.id}`);
-  }));
-  assert.deepEqual(hits, []);
+// ---- the town's layout: Brookfield (data/town.json) and the curated towns (data/seed-towns.json) share it ----
+// w × d in metres, front towards +z; the bridge includes its 36 m stream. Unknown types draw a house.
+const FOOT = { house: [6, 5], garden: [7, 5], cafe: [7, 5], shop: [7, 5], busstop: [3.6, 1.6], bridge: [36, 12],
+  townhall: [12, 8], school: [12, 6], park: [12, 10], playground: [8, 8], statue: [2, 2], streetlight: [0.6, 0.6], tree: [2, 2],
+  yard: [10, 8], dumppile: [6, 5] };
+const ALIAS = { hall: 'townhall', stop: 'busstop', store: 'shop', lamp: 'streetlight', gardenwall: 'garden' };
+const SOLID = new Set(['house', 'cafe', 'shop', 'busstop', 'townhall', 'school', 'statue']); // paths never cross these
+const kindOf = b => { const k = b.type.toLowerCase().replace(/[^a-z]/g, ''); return ALIAS[k] ?? k; };
+const box = (b, m) => {
+  const [w, d] = FOOT[kindOf(b)] ?? FOOT.house;
+  assert.equal(b.rot % 90, 0, `${b.id}: rot`);
+  const [hx, hz] = b.rot % 180 ? [d / 2, w / 2] : [w / 2, d / 2];
+  return { id: b.id, x0: b.x - hx - m, x1: b.x + hx + m, z0: b.z - hz - m, z1: b.z + hz + m };
+};
+const EPS = 1e-9;
+const away = (p, r) => Math.hypot(Math.max(r.x0 - p[0], 0, p[0] - r.x1), Math.max(r.z0 - p[1], 0, p[1] - r.z1));
+const inside = (p, r) => p[0] > r.x0 + EPS && p[0] < r.x1 - EPS && p[1] > r.z0 + EPS && p[1] < r.z1 - EPS;
+// points every 25 cm along a polyline
+const along = line => line.slice(1).flatMap((q, i) => {
+  const p = line[i], n = Math.max(1, Math.ceil(Math.hypot(q[0] - p[0], q[1] - p[1]) / 0.25));
+  return Array.from({ length: n + 1 }, (_, k) => [p[0] + (q[0] - p[0]) * k / n, p[1] + (q[1] - p[1]) * k / n]);
+});
+const toLine = (p, line) => Math.min(...along(line).map(q => Math.hypot(p[0] - q[0], p[1] - q[1])));
+const seeds = JSON.parse(readFileSync(new URL('../../data/seed-towns.json', import.meta.url), 'utf8'));
+const towns = [['Brookfield', c.town.buildings], ...seeds.map(t => [t.town, t.snapshot.buildings])];
+
+test('town: footprints from ASSETS.md never overlap (1 m apart at least), in every town', () => {
+  for (const [name, list] of towns) {
+    const boxes = list.map(b => box(b, 0.5));
+    const hits = [];
+    boxes.forEach((a, i) => boxes.slice(i + 1).forEach(b => {
+      if (a.x0 < b.x1 && b.x0 < a.x1 && a.z0 < b.z1 && b.z0 < a.z1) hits.push(`${a.id} × ${b.id}`);
+    }));
+    assert.deepEqual(hits, [], name);
+  }
+});
+
+test('town layout: roads (4 m) clear of buildings, paths never through solid ones, props off both, a node near every building', () => {
+  const { roads, paths, props } = c.town;
+  for (const line of [...roads, ...paths]) assert.ok(line.length >= 2 && line.every(p => p.length === 2 && p.every(Number.isFinite)), 'polyline of [x, z]');
+  for (const [name, list] of towns) {
+    const bad = new Set();
+    const raw = list.map(b => ({ b, r: box(b, 0), k: kindOf(b) }));
+    roads.forEach((line, i) => { for (const p of along(line)) for (const { b, r, k } of raw) if (k !== 'bridge' && away(p, r) < 2 - EPS) bad.add(`road ${i} × ${b.id}`); });
+    paths.forEach((line, i) => { for (const p of along(line)) for (const { b, r, k } of raw) if (SOLID.has(k) && inside(p, r)) bad.add(`path ${i} × ${b.id}`); });
+    for (const pr of props) {
+      const p = [pr.x, pr.z], at = `${pr.type} at ${p}`;
+      for (const { b, r } of raw) if (away(p, r) < 1 - EPS) bad.add(`${at} × ${b.id}`);
+      if (roads.some(l => toLine(p, l) < 2.5 - EPS)) bad.add(`${at} on a road`);
+      if (paths.some(l => toLine(p, l) < 1 - EPS)) bad.add(`${at} on a path`);
+    }
+    const nodes = [...roads, ...paths].flat();
+    for (const b of list) if (!nodes.some(n => Math.hypot(n[0] - b.x, n[1] - b.z) <= 6)) bad.add(`${b.id}: no node within 6 m`);
+    assert.deepEqual([...bad], [], name);
+  }
+  assert.ok(props.every(p => ['tree', 'bench', 'lamp', 'flowers', 'bin', 'fence'].includes(p.type) && Number.isFinite(p.rot)), 'prop types');
+});
+
+test('town layout: one connected graph, every junction a shared vertex (walkTo can reach every building)', () => {
+  const lines = [...c.town.roads, ...c.town.paths], key = p => p.join();
+  const joined = new Set([0]);
+  for (let grew = true; grew;) {
+    grew = false;
+    lines.forEach((l, i) => {
+      if (joined.has(i)) return;
+      const ks = new Set(l.map(key));
+      if ([...joined].some(j => lines[j].some(p => ks.has(key(p))))) { joined.add(i); grew = true; }
+    });
+  }
+  assert.equal(joined.size, lines.length);
+});
+
+test('routines: named people live and work at real buildings, at times of day between 0 and 1', () => {
+  assert.ok(c.town.routines.length >= 6);
+  for (const r of c.town.routines) {
+    assert.ok(people.has(r.who) && buildings.has(r.home) && buildings.has(r.work), r.who);
+    const [a, b] = r.hours;
+    assert.ok(a >= 0 && a < b && b <= 1, `${r.who}: hours`);
+  }
+  assert.equal(new Set(c.town.routines.map(r => r.who)).size, c.town.routines.length, 'one routine each');
+});
+
+test('seed towns share the layout: same id, same place; each shows an avatar', () => {
+  const home = new Map(c.town.buildings.map(b => [b.id, b]));
+  for (const t of seeds) {
+    for (const b of t.snapshot.buildings) {
+      const h = home.get(b.id);
+      if (h) assert.deepEqual([b.type, b.x, b.z, b.rot], [h.type, h.x, h.z, h.rot], `${t.town}/${b.id}`);
+    }
+    const a = t.snapshot.avatar;
+    assert.ok([a.skin, a.hair, a.face].every(Number.isInteger), t.town);
+    assert.ok(a.extra === null || c.wardrobe.extras.some(x => x.id === a.extra), `${t.town}: extra`);
+    assert.equal(a.rank, t.snapshot.rank, t.town);
+  }
+});
+
+test('wardrobe: 4-6 extras from named people with prices, and the looks for the creator', () => {
+  const { extras, looks } = c.wardrobe;
+  assert.ok(extras.length >= 4 && extras.length <= 6);
+  for (const x of extras) assert.ok(Number.isInteger(x.cost) && x.cost > 0 && people.has(x.who) && x.title && x.says, x.id);
+  for (const k of ['skins', 'hairs', 'faces']) assert.ok(looks[k].length >= 2 && looks[k].length <= 32, k);
 });
 
 test('no problem or event option is best on every effect (dominance check)', () => {

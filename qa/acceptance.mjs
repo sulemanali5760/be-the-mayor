@@ -1,11 +1,14 @@
 // Automated acceptance run (GitHub Actions): headless Chrome plays the first 15 minutes at desktop,
-// small-window and phone sizes, checks B1–B4 of build 0.1 and saves screenshots to qa/out/.
+// small-window and phone sizes, checks B1–B4 of build 0.1 and C1–C4 of build 0.2, and saves screenshots to qa/out/.
 //   node qa/acceptance.mjs http://localhost:8080/
 // Offline mode (?offline=1): CI never talks to the live Supabase project. Time is the game clock (LESSONS T6).
 import { chromium } from 'playwright';
 import { mkdirSync, writeFileSync, appendFileSync } from 'node:fs';
 
 const BASE = (process.argv[2] || 'http://localhost:8080/') + '?q=low&offline=1';
+const FULL = (process.argv[2] || 'http://localhost:8080/') + '?offline=1'; // C3: the real phone look (outlines, shadows)
+const LOOK = { skin: 2, hair: 1, face: 1 }; // the creator's 3 taps
+const BUDGET = { ms: 8, calls: 150, triangles: 60000 }; // C3, build 0.2 §3.1
 const OUT = 'qa/out';
 mkdirSync(OUT, { recursive: true });
 
@@ -15,7 +18,8 @@ const VIEWS = [
   { name: 'phone', viewport: { width: 375, height: 812 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 },
 ];
 const results = [];
-const check = (view, id, ok, note) => results.push({ view, id, ok: !!ok, note: String(note) });
+let low = null; // C3: the phone's frame JS at ?q=low, measured after its play-through
+const check =(view, id, ok, note) => results.push({ view, id, ok: !!ok, note: String(note) });
 async function shot(page, name) {
   try { await page.screenshot({ path: `${OUT}/${name}.png`, timeout: 45000 }); } catch (e) { console.log('screenshot failed', name, String(e.message).split('\n')[0]); }
 }
@@ -41,7 +45,7 @@ function layout(sels) {
 const snapshotState = () => {
   const b = __btm, L = b.life, l = L.ladder();
   return {
-    rank: l.rank, mode: b.mode, t: +b.clock.t.toFixed(1), ...b.stats(), visits: b.meta.visits, hook: b.meta.hook,
+    rank: l.rank, mode: b.mode, t: +b.clock.t.toFixed(1), ...b.stats(), visits: b.meta.visits, hook: b.meta.hook, tod: b.tod, todWant: b.TOD[b.stats().slots],
     card: !document.getElementById('modal').hidden, promoCard: document.getElementById('card').classList.contains('promo'),
     cardOpts: [...document.querySelectorAll('#card [data-opt]')].map(x => ({ id: x.dataset.opt, disabled: x.disabled })),
     cardKind: document.querySelector('#card .eyebrow')?.textContent || '', studiedDay: L.state.studiedDay,
@@ -88,13 +92,23 @@ const pace = (page, sec) => page.evaluate(x => __btm.advance(x), sec);
 // B1 bot: plays through the real UI with sane choices until the ladder says Skilled
 async function playToSkilled(page, v) {
   const log = botLog, tried = {}, acts = []; // acts: [{ day, type }] for the action types per day
+  const todBad = []; // C2: town steps whose time of day doesn't match the slots left
   log.length = 0;
-  let want = null, promo = null, downloaded = '';
+  let want = null, promo = null, downloaded = '', walked = 0;
   for (let step = 0; step < 160; step++) {
     const s = await page.evaluate(snapshotState);
-    if (s.rank >= 1 && promo && !s.card) return { ok: true, s, log, promo, downloaded, acts };
+    if (s.mode === 'town' && !s.card && s.tod !== s.todWant) todBad.push(`d${s.day}/${s.slots} slots: ${s.tod}`);
+    if (s.rank >= 1 && promo && !s.card) return { ok: true, s, log, promo, downloaded, acts, todBad };
     let did;
-    if (s.card && !s.promoCard && /Something happened|Town problem/.test(s.cardKind)) {
+    if (s.mode === 'walk') {
+      // build 0.2: the avatar walks to the building first. Watch the first walk end by itself, tap to skip the others
+      if (walked++) {
+        const box = await page.locator('#view').boundingBox();
+        await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+      } else await shot(page, `${v}-4a-walk`);
+      await page.waitForFunction(() => __btm.mode !== 'walk', null, { timeout: 60000 });
+      did = walked > 1 ? 'walk (tap)' : 'walk (watched)';
+    } else if (s.card && !s.promoCard && /Something happened|Town problem/.test(s.cardKind)) {
       // an event or a problem: pick the planned option, else the first one that can be taken
       const ids = s.cardOpts.filter(o => !o.disabled).map(o => o.id);
       const id = want && ids.includes(want) ? want : ids.find(x => x !== '') ?? ids[0];
@@ -195,8 +209,20 @@ async function playToSkilled(page, v) {
     log.push(did);
     await page.waitForTimeout(350);
   }
-  return { ok: false, s: await page.evaluate(snapshotState), log, promo, downloaded, acts };
+  return { ok: false, s: await page.evaluate(snapshotState), log, promo, downloaded, acts, todBad };
 }
+
+// C3: frame JS (median of n town frames, measured by main.js) and the world's draw calls and triangles
+async function perf(page, n = 60) {
+  return page.evaluate(async n => {
+    __btm.qa.ms.length = 0;
+    for (let i = 0; i < 400 && __btm.qa.ms.length < n; i++) await new Promise(r => requestAnimationFrame(r));
+    const ms = [...__btm.qa.ms].sort((a, b) => a - b);
+    const st = __btmWorld.stats();
+    return { ms: +(ms[ms.length >> 1] ?? NaN).toFixed(2), n: ms.length, calls: st.calls, triangles: st.triangles };
+  }, n);
+}
+const perfNote = p => `JS ${p.ms} ms (median of ${p.n}), ${p.calls} draw calls, ${p.triangles} triangles`;
 
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 for (const v of VIEWS) {
@@ -209,6 +235,7 @@ for (const v of VIEWS) {
   try {
     await page.goto(BASE);
     await page.waitForSelector('#inName', { timeout: 120000 });
+    for (const [k, i] of Object.entries(LOOK)) await page.click(`#card .sw[data-k="${k}"][data-i="${i}"]`); // the creator: 3 taps
     await shot(page, `${v.name}-1-intro`);
     await page.click('#card [data-opt="go"]');
     await page.waitForFunction(() => window.__btm && __btm.life, null, { timeout: 60000 });
@@ -245,14 +272,47 @@ for (const v of VIEWS) {
       Object.entries(days).map(([d, set]) => `d${d}: ${b1.acts.filter(a => a.day == d).map(a => a.type).join('+')}`).join(' · '));
     check(v.name, 'B2 first-person tasks ≤ 90 s game time', tasks.length >= 2 && kinds.size >= 2 && tasks.every(t => t.game <= 90 && t.seconds <= 90),
       tasks.map(t => `${t.kind} ${t.game}s/${t.seconds}s`).join(', ') || 'no tasks played');
+
+    // C1: your look from the creator, in the Labourer outfit, then the Skilled one after the promotion
+    const ev = await page.evaluate(() => ({ av: __btm.qa.avatar, walks: __btm.qa.walks, tod: __btm.qa.tod, stubs: __btm.stubs, seen: window.__btmWorld?.avatar?.() ?? null }));
+    const stub = k => ev.stubs.includes(k) ? ` (world.${k} is a stub)` : '';
+    const home = ev.av.filter(a => !a.visit), r0 = home.findIndex(a => a.rank === 0), r1 = home.findIndex(a => a.rank === 1);
+    const mine = r0 >= 0 && Object.entries(LOOK).every(([k, i]) => home[r0][k] === i);
+    check(v.name, 'C1 avatar: your look, outfit changes at Skilled', mine && r1 > r0 && (stub('setAvatar') || ev.seen?.visible),
+      `look ${JSON.stringify(home[r0] || {})}; Skilled at call ${r1} of ${home.length}; world ${JSON.stringify(ev.seen)}${stub('setAvatar')}`);
+    const walkNote = ev.walks.map(w => `${w.id} ${w.how} ${w.game}s`).join(', ');
+    check(v.name, 'C1 walk before a task or card (≤ 3 s, a tap skips)', ev.walks.length >= 3 && ev.walks.every(w => w.game <= 3.1) && (stub('walkTo') || ev.walks.some(w => w.how === 'tap')),
+      `${ev.walks.length} walks: ${walkNote}${stub('walkTo')}`);
+    // C2: every town step matched the slots (checked in the bot), and a night fell and turned to morning
+    const seq = ev.tod.map(x => x.t), slept = seq.some((t, i) => t === 1 && seq[i + 1] === 0);
+    check(v.name, 'C2 time of day follows the slots', !b1.todBad.length && slept && [0, 0.3, 0.55, 0.75].every(t => seq.includes(t)),
+      `${seq.length} changes: ${seq.slice(0, 12).join(' → ')}…; mismatches: ${b1.todBad.slice(0, 3).join(', ') || 'none'}${stub('setTimeOfDay')}`);
+
     await page.click('#ladder');
     await page.waitForTimeout(200);
     await shot(page, `${v.name}-7-ladder`);
     await page.click('#sheetClose');
 
+    // C1 wardrobe: buy the cheapest extra in the Learn sheet's Wardrobe tab; the avatar wears it
+    const x = await page.evaluate(() => [...__btm.life.wardrobe()].sort((a, b) => a.cost - b.cost)[0]);
+    const topUp = await page.evaluate(c => { const s = __btm.life.state, n = Math.max(0, c - s.money); s.money += n; return n; }, x.cost);
+    await openPanel(page, 'upgrades');
+    await page.click('#sheetBody [data-tab="wardrobe"]');
+    await page.click(`#sheetBody [data-extra="${x.id}"]`);
+    await page.waitForTimeout(200);
+    await shot(page, `${v.name}-7b-wardrobe`);
+    const worn = await page.evaluate(() => ({ a: __btm.life.state.avatar, last: __btm.qa.avatar.at(-1) }));
+    check(v.name, 'C1 wardrobe: buy and wear an extra', worn.a.extra === x.id && worn.a.owned.includes(x.id) && worn.last.extra === x.id,
+      `${x.title} €${x.cost}${topUp ? ` (QA topped up €${topUp})` : ''}; avatar ${JSON.stringify(worn.last)}`);
+    await page.click('#sheetClose');
+
     // B3: offline visit, like (and the once-per-day rule), sign, help, home
     const id = await visitFirst(page, 1);
     const b4c = await page.evaluate(layout, ['#top', '#visitbar', '#toasts .toast']);
+    // C4: the visited town's avatar (from its snapshot), then yours again at home
+    const theirs = await page.evaluate(i => __btm.net.getTown(i).then(t => t.snapshot.avatar), id);
+    const shown = await page.evaluate(() => ({ last: __btm.qa.avatar.at(-1), seen: window.__btmWorld?.avatar?.() ?? null }));
+    await shot(page, `${v.name}-8a-visit-avatar`);
     await page.click('[data-visit="like"]');
     await page.waitForTimeout(200);
     const again = await page.evaluate(i => __btm.net.like(i), id);
@@ -268,6 +328,13 @@ for (const v of VIEWS) {
     await goHome(page);
     const ok3 = acts.length === 3 && acts.every(a => a.ok) && acts.map(a => a.kind).join() === 'like,sign,help' && /already done/i.test(again.msg || '');
     check(v.name, 'B3 offline visit, like, sign, help', ok3, `${acts.map(a => `${a.kind}:${a.ok ? 'ok' : a.msg}`).join(', ')}; second like: “${again.msg}”`);
+    const back = await page.evaluate(() => __btm.qa.avatar.at(-1));
+    const same = (a, b) => ['skin', 'hair', 'face', 'extra', 'rank'].every(k => a?.[k] === b?.[k]);
+    check(v.name, 'C4 a visit shows the other avatar', shown.last.visit && same(shown.last, theirs) && !back.visit && back.rank === 1 && (stub('setAvatar') || shown.seen?.visible),
+      `visit ${JSON.stringify(shown.last)} vs snapshot ${JSON.stringify(theirs)}; home ${JSON.stringify(back)}; world ${JSON.stringify(shown.seen)}${stub('setAvatar')}`);
+
+    // C3 (phone): frame JS here at ?q=low; draw calls and triangles below at full quality
+    if (v.name === 'phone') low = await perf(page);
 
     const bad = [...b4a.bad, ...b4b.bad.map(x => 'jobs sheet: ' + x), ...b4c.bad.map(x => 'visit: ' + x)];
     check(v.name, 'B4 layout: no overlaps', bad.length === 0, bad.join('; ') || `checked ${[...new Set([...b4a.seen, ...b4b.seen, ...b4c.seen])].join(' ')}`);
@@ -279,10 +346,31 @@ for (const v of VIEWS) {
   check(v.name, 'no page errors', errors.length === 0, errors.slice(0, 3).join(' | '));
   await ctx.close();
 }
+
+// C3: a phone at full quality (no ?q=low): a new game's town, then the world's draw calls and triangles
+{
+  const v = VIEWS.find(x => x.name === 'phone');
+  const ctx = await browser.newContext({ viewport: v.viewport, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
+  const page = await ctx.newPage();
+  try {
+    await page.goto(FULL);
+    await page.waitForSelector('#inName', { timeout: 120000 });
+    await page.click('#card [data-opt="go"]');
+    await page.waitForFunction(() => window.__btm?.life && __btm.mode === 'town', null, { timeout: 60000 });
+    const full = await perf(page, 8); // software GL is slow at full quality; draw calls and triangles are per frame
+    await shot(page, 'phone-9-full-quality');
+    const ok = low && low.ms <= BUDGET.ms && full.calls <= BUDGET.calls && full.triangles <= BUDGET.triangles;
+    check('phone', 'C3 phone perf (JS ≤ 8 ms, ≤ 150 draw calls, ≤ 60k triangles)', ok,
+      `q=low: ${low ? perfNote(low) : 'not measured'}; full quality: ${perfNote(full)}`);
+  } catch (e) {
+    check('phone', 'C3 phone perf', false, String(e.message).split('\n')[0]);
+  }
+  await ctx.close();
+}
 await browser.close();
 
 const table = ['| view | check | result | notes |', '|---|---|---|---|', ...results.map(r => `| ${r.view} | ${r.id} | ${r.ok ? '✅' : '❌'} | ${r.note.replace(/\|/g, '/')} |`)].join('\n');
 console.log(table);
 writeFileSync(`${OUT}/results.json`, JSON.stringify(results, null, 2));
-if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `## Acceptance run (0.1)\n\n${table}\n\nScreenshots: the qa-screenshots artifact.\n`);
+if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `## Acceptance run (0.2)\n\n${table}\n\nScreenshots: the qa-screenshots artifact.\n`);
 process.exit(results.every(r => r.ok) ? 0 : 1);

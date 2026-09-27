@@ -4,14 +4,24 @@
     "signs": [{ "phrase": 0 }, { "phrase": 3 }],
     "snapshot": {
       "v": 1, "town": "Lindenau", "mayor": "Greta Brandt", "rank": 4, "title": "Mayor", "day": 41,
+      "avatar": { "skin": 1, "hair": 2, "face": 1, "extra": "flowers", "rank": 4 },
       "buildings": [
-        { "id": "townhall", "type": "townhall", "x": 0, "z": 0, "rot": 0, "state": "ok", "label": "Town hall, renovated by Mayor Brandt" },
-        { "id": "statue", "type": "statue", "x": 0, "z": 8, "rot": 0, "state": "ok", "label": "Mayor statue" },
-        { "id": "bridge", "type": "bridge", "x": 20, "z": -6, "rot": 0, "state": "ok", "label": "The bridge – rebuilt in 3 days" },
-        { "id": "busstop", "type": "busstop", "x": -10, "z": 6, "rot": 90, "state": "ok", "label": "Dry bus stop" },
-        { "id": "cafe", "type": "cafe", "x": -12, "z": -4, "rot": 0, "state": "ok" },
-        { "id": "school", "type": "school", "x": 10, "z": 10, "rot": 0, "state": "ok" },
-        { "id": "park", "type": "park", "x": -14, "z": -16, "rot": 0, "state": "ok", "label": "Playground, repainted by 40 neighbours" }
+        { "id": "town_hall", "type": "townhall", "x": 0, "z": -10, "rot": 0, "state": "ok", "label": "Town hall, renovated by Mayor Brandt" },
+        { "id": "cafe", "type": "cafe", "x": -12, "z": -7, "rot": 0, "state": "ok", "label": "Café am Markt" },
+        { "id": "pharmacy", "type": "shop", "x": 12, "z": -7, "rot": 0, "state": "ok", "label": "Pharmacy" },
+        { "id": "kiosk", "type": "shop", "x": 22, "z": -7, "rot": 0, "state": "ok", "label": "Kiosk" },
+        { "id": "dump", "type": "dump_pile", "x": -22, "z": -7, "rot": 0, "state": "ok", "label": "Pocket garden – was a dump" },
+        { "id": "bus_stop", "type": "busstop", "x": 6, "z": -2, "rot": 0, "state": "ok", "label": "Dry bus stop" },
+        { "id": "streetlight", "type": "streetlight", "x": -5, "z": -2, "rot": 0, "state": "ok" },
+        { "id": "flat", "type": "house", "x": 22, "z": 8, "rot": 180, "state": "ok" },
+        { "id": "school", "type": "school", "x": 8, "z": 8, "rot": 180, "state": "ok", "label": "School" },
+        { "id": "park", "type": "park", "x": -8, "z": 10, "rot": 0, "state": "ok", "label": "Park – replanted by 40 neighbours" },
+        { "id": "keller_house", "type": "house", "x": -22, "z": 8, "rot": 90, "state": "ok" },
+        { "id": "keller_garden", "type": "garden", "x": -22, "z": 17, "rot": 90, "state": "ok" },
+        { "id": "playground", "type": "playground", "x": 8, "z": 18, "rot": 0, "state": "ok", "label": "Playground, repainted by 40 neighbours" },
+        { "id": "yard", "type": "yard", "x": 22, "z": 20, "rot": 180, "state": "ok" },
+        { "id": "bridge", "type": "bridge", "x": 0, "z": 32, "rot": 0, "state": "ok", "label": "The bridge – rebuilt in 3 days" },
+        { "id": "statue", "type": "statue", "x": 34, "z": 1, "rot": 270, "state": "ok", "label": "Mayor statue" }
       ],
       "posted": [{ "id": "p-railing", "title": "Repaint the bridge railing" }, { "id": "p-lights", "title": "Street lights on Mill Lane" }]
     }
@@ -21,12 +31,23 @@
     "signs": [{ "phrase": 1 }],
     "snapshot": {
       "v": 1, "town": "Millbrook", "mayor": "Tomasz Nowak", "rank": 3, "title": "Councillor", "day": 12,
+      "avatar": { "skin": 0, "hair": 1, "face": 0, "extra": "cap", "rank": 3 },
       "buildings": [
-        { "id": "townhall", "type": "townhall", "x": 0, "z": 0, "rot": 0, "state": "broken" },
-        { "id": "bridge", "type": "bridge", "x": 20, "z": -6, "rot": 0, "state": "ok", "label": "Bridge railing – fixed by Tomasz" },
-        { "id": "busstop", "type": "busstop", "x": -10, "z": 6, "rot": 90, "state": "ok" },
-        { "id": "cafe", "type": "cafe", "x": -12, "z": -4, "rot": 0, "state": "ok" },
-        { "id": "park", "type": "park", "x": -14, "z": -16, "rot": 0, "state": "broken" }
+        { "id": "town_hall", "type": "townhall", "x": 0, "z": -10, "rot": 0, "state": "broken" },
+        { "id": "cafe", "type": "cafe", "x": -12, "z": -7, "rot": 0, "state": "ok" },
+        { "id": "pharmacy", "type": "shop", "x": 12, "z": -7, "rot": 0, "state": "ok" },
+        { "id": "kiosk", "type": "shop", "x": 22, "z": -7, "rot": 0, "state": "ok" },
+        { "id": "dump", "type": "dump_pile", "x": -22, "z": -7, "rot": 0, "state": "broken" },
+        { "id": "bus_stop", "type": "busstop", "x": 6, "z": -2, "rot": 0, "state": "ok" },
+        { "id": "streetlight", "type": "streetlight", "x": -5, "z": -2, "rot": 0, "state": "ok", "label": "Street light – fixed by Tomasz" },
+        { "id": "flat", "type": "house", "x": 22, "z": 8, "rot": 180, "state": "ok" },
+        { "id": "school", "type": "school", "x": 8, "z": 8, "rot": 180, "state": "ok" },
+        { "id": "park", "type": "park", "x": -8, "z": 10, "rot": 0, "state": "broken" },
+        { "id": "keller_house", "type": "house", "x": -22, "z": 8, "rot": 90, "state": "ok" },
+        { "id": "keller_garden", "type": "garden", "x": -22, "z": 17, "rot": 90, "state": "ok", "label": "Garden wall – built by Tomasz" },
+        { "id": "playground", "type": "playground", "x": 8, "z": 18, "rot": 0, "state": "ok" },
+        { "id": "yard", "type": "yard", "x": 22, "z": 20, "rot": 180, "state": "ok" },
+        { "id": "bridge", "type": "bridge", "x": 0, "z": 32, "rot": 0, "state": "ok", "label": "Bridge railing – fixed by Tomasz" }
       ],
       "posted": [{ "id": "p-dumping", "title": "Clear the dumping behind the park" }]
     }
@@ -36,11 +57,23 @@
     "signs": [],
     "snapshot": {
       "v": 1, "town": "Harbourside", "mayor": "Aisha Rahman", "rank": 2, "title": "Community helper", "day": 5,
+      "avatar": { "skin": 3, "hair": 0, "face": 2, "extra": "scarf", "rank": 2 },
       "buildings": [
-        { "id": "townhall", "type": "townhall", "x": 0, "z": 0, "rot": 0, "state": "broken" },
-        { "id": "busstop", "type": "busstop", "x": -10, "z": 6, "rot": 90, "state": "ok", "label": "Bus stop roof – fixed by Aisha" },
-        { "id": "cafe", "type": "cafe", "x": -12, "z": -4, "rot": 0, "state": "ok" },
-        { "id": "house-keller", "type": "house", "x": 11, "z": -6, "rot": 0, "state": "ok", "label": "Garden wall – built by Aisha" }
+        { "id": "town_hall", "type": "townhall", "x": 0, "z": -10, "rot": 0, "state": "broken" },
+        { "id": "cafe", "type": "cafe", "x": -12, "z": -7, "rot": 0, "state": "ok" },
+        { "id": "pharmacy", "type": "shop", "x": 12, "z": -7, "rot": 0, "state": "ok" },
+        { "id": "kiosk", "type": "shop", "x": 22, "z": -7, "rot": 0, "state": "ok" },
+        { "id": "dump", "type": "dump_pile", "x": -22, "z": -7, "rot": 0, "state": "broken" },
+        { "id": "bus_stop", "type": "busstop", "x": 6, "z": -2, "rot": 0, "state": "ok", "label": "Bus stop roof – fixed by Aisha" },
+        { "id": "streetlight", "type": "streetlight", "x": -5, "z": -2, "rot": 0, "state": "broken" },
+        { "id": "flat", "type": "house", "x": 22, "z": 8, "rot": 180, "state": "ok" },
+        { "id": "school", "type": "school", "x": 8, "z": 8, "rot": 180, "state": "ok" },
+        { "id": "park", "type": "park", "x": -8, "z": 10, "rot": 0, "state": "broken" },
+        { "id": "keller_house", "type": "house", "x": -22, "z": 8, "rot": 90, "state": "ok" },
+        { "id": "keller_garden", "type": "garden", "x": -22, "z": 17, "rot": 90, "state": "ok", "label": "Garden wall – built by Aisha" },
+        { "id": "playground", "type": "playground", "x": 8, "z": 18, "rot": 0, "state": "broken" },
+        { "id": "yard", "type": "yard", "x": 22, "z": 20, "rot": 180, "state": "ok" },
+        { "id": "bridge", "type": "bridge", "x": 0, "z": 32, "rot": 0, "state": "broken" }
       ],
       "posted": [{ "id": "p-water", "title": "Water tank for the school" }]
     }
@@ -50,10 +83,23 @@
     "signs": [{ "phrase": 2 }],
     "snapshot": {
       "v": 1, "town": "Oak Ridge", "mayor": "Leo Martins", "rank": 1, "title": "Skilled", "day": 3,
+      "avatar": { "skin": 2, "hair": 3, "face": 0, "extra": null, "rank": 1 },
       "buildings": [
-        { "id": "townhall", "type": "townhall", "x": 0, "z": 0, "rot": 0, "state": "broken" },
-        { "id": "busstop", "type": "busstop", "x": -10, "z": 6, "rot": 90, "state": "broken" },
-        { "id": "house-keller", "type": "house", "x": 11, "z": -6, "rot": 0, "state": "ok", "label": "Garden wall – built by Leo" }
+        { "id": "town_hall", "type": "townhall", "x": 0, "z": -10, "rot": 0, "state": "broken" },
+        { "id": "cafe", "type": "cafe", "x": -12, "z": -7, "rot": 0, "state": "ok" },
+        { "id": "pharmacy", "type": "shop", "x": 12, "z": -7, "rot": 0, "state": "ok" },
+        { "id": "kiosk", "type": "shop", "x": 22, "z": -7, "rot": 0, "state": "ok" },
+        { "id": "dump", "type": "dump_pile", "x": -22, "z": -7, "rot": 0, "state": "broken" },
+        { "id": "bus_stop", "type": "busstop", "x": 6, "z": -2, "rot": 0, "state": "broken" },
+        { "id": "streetlight", "type": "streetlight", "x": -5, "z": -2, "rot": 0, "state": "broken" },
+        { "id": "flat", "type": "house", "x": 22, "z": 8, "rot": 180, "state": "ok" },
+        { "id": "school", "type": "school", "x": 8, "z": 8, "rot": 180, "state": "ok" },
+        { "id": "park", "type": "park", "x": -8, "z": 10, "rot": 0, "state": "broken" },
+        { "id": "keller_house", "type": "house", "x": -22, "z": 8, "rot": 90, "state": "ok" },
+        { "id": "keller_garden", "type": "garden", "x": -22, "z": 17, "rot": 90, "state": "ok", "label": "Garden wall – built by Leo" },
+        { "id": "playground", "type": "playground", "x": 8, "z": 18, "rot": 0, "state": "broken" },
+        { "id": "yard", "type": "yard", "x": 22, "z": 20, "rot": 180, "state": "ok" },
+        { "id": "bridge", "type": "bridge", "x": 0, "z": 32, "rot": 0, "state": "broken" }
       ],
       "posted": [{ "id": "p-potholes", "title": "Potholes on Station Road" }]
     }

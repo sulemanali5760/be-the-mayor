@@ -35,7 +35,7 @@ test('save: stale content ids are dropped and new buildings are added', () => {
   assert.equal(s.event, null);
   assert.deepEqual(s.problems, []);
   assert.equal(life.offers().length, 2);
-  assert.equal(s.buildings.length, content.town.length);
+  assert.equal(s.buildings.length, content.town.buildings.length);
   assert.equal(s.buildings.find(b => b.id === 'bus_stop').label, 'Mine');
   assert.equal(life.ladder().title, 'Labourer');
 });
@@ -331,13 +331,47 @@ test('snapshot: the public shape from contract §3.4', () => {
   const life = fresh();
   life.tick(90);
   const snap = life.snapshot();
-  assert.deepEqual(Object.keys(snap).sort(), ['buildings', 'day', 'mayor', 'posted', 'rank', 'title', 'town', 'v']);
+  assert.deepEqual(Object.keys(snap).sort(), ['avatar', 'buildings', 'day', 'mayor', 'posted', 'rank', 'title', 'town', 'v']);
   assert.equal(snap.v, 1);
   assert.equal(snap.mayor, 'Ana');
-  assert.equal(snap.buildings.length, content.town.length);
+  assert.equal(snap.buildings.length, content.town.buildings.length);
   for (const b of snap.buildings) assert.deepEqual(Object.keys(b), ['id', 'type', 'x', 'z', 'rot', 'state', 'label']);
   assert.deepEqual(snap.posted, [{ id: 'bus_stop_roof', title: 'The bus stop roof leaks, again' }]);
   assert.doesNotThrow(() => JSON.stringify(snap));
+});
+
+test('avatar: new saves get the look, 0.1 and broken saves the default, stale extras are dropped', () => {
+  const def = { skin: 0, hair: 0, face: 0, extra: null, owned: [] };
+  assert.deepEqual(newSave('A', 'B').avatar, def);
+  assert.deepEqual(newSave('A', 'B', { skin: 3, hair: 2, face: 1 }).avatar, { ...def, skin: 3, hair: 2, face: 1 });
+  assert.deepEqual(migrate({ name: 'Old', money: 5 }).avatar, def); // a 0.1 save
+  assert.deepEqual(migrate({ avatar: { skin: -1, hair: 2.5, face: 'x', extra: 7, owned: 'cap' } }).avatar, def);
+  const life = createLife(content, { name: 'Old', avatar: { skin: 1, extra: 'jetpack', owned: ['jetpack', 'cap'] } }, rng(1));
+  assert.deepEqual(life.state.avatar, { ...def, skin: 1, owned: ['cap'] });
+});
+
+test('wardrobe: extras cost money and no slot, are worn at once, can be swapped and taken off', () => {
+  const life = fresh();
+  const s = life.state;
+  const cap = content.wardrobe.extras.find(x => x.id === 'cap');
+  assert.equal(life.buyExtra('cap').ok, false, 'no money yet');
+  s.money = 100;
+  const r = life.buyExtra('cap');
+  assert.equal(r.ok, true);
+  assert.ok(r.msg);
+  assert.equal(s.money, 100 - cap.cost);
+  assert.equal(s.slots, 3);
+  assert.deepEqual(s.avatar.owned, ['cap']);
+  assert.equal(s.avatar.extra, 'cap');
+  assert.deepEqual(life.wardrobe().find(x => x.id === 'cap'), { id: 'cap', who: cap.who, title: cap.title, cost: cap.cost, owned: true, worn: true });
+  assert.equal(life.buyExtra('cap').msg, 'Already yours.');
+  assert.equal(life.wear('scarf').ok, false, 'not owned');
+  assert.equal(life.wear(null).ok, true);
+  assert.equal(s.avatar.extra, null);
+  assert.equal(life.wear('cap').ok, true);
+  life.setLook({ skin: 4, hair: 1, face: 2 });
+  assert.deepEqual(s.avatar, { skin: 4, hair: 1, face: 2, extra: 'cap', owned: ['cap'] });
+  assert.deepEqual(life.snapshot().avatar, { skin: 4, hair: 1, face: 2, extra: 'cap', rank: 0 });
 });
 
 test('determinism: the same seed and inputs give the same life', () => {

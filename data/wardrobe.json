@@ -1,0 +1,14 @@
+{
+  "looks": {
+    "skins": ["#F3D5B5", "#E0AC85", "#C68642", "#8D5524", "#5C3A21"],
+    "hairs": ["#2B2118", "#6A4E33", "#C9A66B", "#A33B20", "#9E9E9E"],
+    "faces": ["🙂", "😄", "😐"]
+  },
+  "extras": [
+    { "id": "flowers", "title": "Buttonhole flowers", "cost": 15, "who": "keller", "says": "Frau Keller: “Finally, a young person with standards.”" },
+    { "id": "cap", "title": "Brandt Bau cap", "cost": 25, "who": "brandt", "says": "Rolf: “Free advertising. I should be charging you.” He charges you." },
+    { "id": "scarf", "title": "Hand-knitted scarf", "cost": 30, "who": "marta", "says": "Marta knitted it on night shifts. One end is longer. That's the charm." },
+    { "id": "sunglasses", "title": "Sunglasses", "cost": 40, "who": "kai", "says": "Kai: “Insane look. Insane.” You look like a vlogger. Dieter looks away." },
+    { "id": "bowtie", "title": "Bow tie", "cost": 60, "who": "pfennig", "says": "Mayor Pfennig: “A future politician, I see.” He means it as a threat." }
+  ]
+}

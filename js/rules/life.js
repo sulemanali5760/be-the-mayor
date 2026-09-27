@@ -1,9 +1,9 @@
 // Be the Mayor: the rules of a life. Pure JS: no DOM, no Three.js. Contract: docs/builds/01-first-15.md §3.1.
 // Time is always `now` = seconds of play from main.js's game clock (LESSONS T6). Nothing here reads real time.
-import { migrate } from './save.js';
+import { migrate, cleanAvatar } from './save.js';
 
 // `content` = { [name]: parsed data/<name>.json } for each of these
-export const CONTENT = ['jobs', 'people', 'problems', 'events', 'upgrades', 'ranks', 'signs', 'town'];
+export const CONTENT = ['jobs', 'people', 'problems', 'events', 'upgrades', 'ranks', 'signs', 'town', 'wardrobe'];
 
 const STAR_PAY = [0.5, 0.75, 0.9, 1]; // share of the offered pay, by stars
 const QUICK_PAY = 0.8;                // quick shift: no first-person task, no stars
@@ -19,7 +19,10 @@ export function createLife(content, save, rand = Math.random) {
 
   // content changes between versions must never break an old save
   s.buildings ??= [];
-  for (const b of content.town) if (!find(s.buildings, b.id)) s.buildings.push({ ...b });
+  for (const b of content.town.buildings) if (!find(s.buildings, b.id)) s.buildings.push({ ...b });
+  const extras = content.wardrobe.extras;
+  s.avatar.owned = s.avatar.owned.filter(id => find(extras, id));
+  if (!s.avatar.owned.includes(s.avatar.extra)) s.avatar.extra = null;
   s.offers = s.offers.filter(o => find(content.jobs, o.job));
   s.problems = s.problems.filter(id => find(content.problems, id));
   if (s.event && !find(content.events, s.event)) s.event = null;
@@ -293,6 +296,32 @@ export function createLife(content, save, rand = Math.random) {
       return out;
     },
 
+    // ---- the wardrobe (build 0.2): extras are a money sink; buying one costs no slot and wears it at once ----
+    wardrobe: () => extras.map(x => ({ id: x.id, who: x.who, title: x.title, cost: x.cost,
+      owned: s.avatar.owned.includes(x.id), worn: s.avatar.extra === x.id })),
+
+    buyExtra(id) {
+      const x = find(extras, id);
+      if (!x) return fail('No such thing.');
+      if (s.avatar.owned.includes(id)) return fail('Already yours.');
+      if (s.money < x.cost) return fail('Not enough money.');
+      s.money -= x.cost;
+      s.avatar.owned.push(id);
+      s.avatar.extra = id;
+      return { ok: true, msg: fmt(x.says), effects: { money: -x.cost }, news: [] };
+    },
+
+    wear(id) { // null takes the extra off
+      if (id !== null && !s.avatar.owned.includes(id)) return fail('Buy it first.');
+      s.avatar.extra = id;
+      return { ok: true };
+    },
+
+    setLook(look) { // the character creator: skin, hair and face; extras stay
+      s.avatar = { ...cleanAvatar({ ...s.avatar, ...look }), extra: s.avatar.extra, owned: s.avatar.owned };
+      return { ok: true };
+    },
+
     endDay(now) {
       s.day += 1;
       s.slots = SLOTS;
@@ -307,6 +336,7 @@ export function createLife(content, save, rand = Math.random) {
       v: 1, town: s.town, mayor: s.name, rank: s.rank, title: rankOf(s.rank).title, day: s.day,
       buildings: s.buildings.map(({ id, type, x, z, rot, state, label }) => ({ id, type, x, z, rot, state, label: label ?? null })),
       posted: s.problems.map(id => ({ id, title: fmt(find(content.problems, id).title) })),
+      avatar: { skin: s.avatar.skin, hair: s.avatar.hair, face: s.avatar.face, extra: s.avatar.extra, rank: s.rank }, // what world.setAvatar takes
     }),
   };
 }

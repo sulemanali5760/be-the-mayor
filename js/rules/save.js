@@ -2,8 +2,20 @@
 export const SAVE_VERSION = 1;
 
 const clean = (v, fallback) => (typeof v === 'string' && v.trim() ? v.trim() : fallback);
+const pick = n => (Number.isInteger(n) && n >= 0 && n < 32 ? n : 0);
 
-export function newSave(name, town) {
+// the avatar (build 0.2 §3.3): look indices into data/wardrobe.json `looks`, the worn extra and the owned ones.
+// The outfit is not saved: it follows state.rank.
+export function cleanAvatar(a) {
+  const ok = a && typeof a === 'object';
+  return {
+    skin: pick(ok && a.skin), hair: pick(ok && a.hair), face: pick(ok && a.face),
+    extra: ok && typeof a.extra === 'string' ? a.extra : null,
+    owned: ok && Array.isArray(a.owned) ? a.owned.filter(x => typeof x === 'string') : [],
+  };
+}
+
+export function newSave(name, town, look) {
   return {
     v: SAVE_VERSION,
     name: clean(name, 'You'),
@@ -29,6 +41,7 @@ export function newSave(name, town) {
     later: [],         // delayed consequences: [{ at, who, text, effects, headline }]
     headlines: [],     // for the next newspaper
     buildings: null,   // filled from data/town.json by createLife
+    avatar: cleanAvatar(look),
   };
 }
 
@@ -47,5 +60,6 @@ export function migrate(save) {
       : kind(v) === kind(def);
     if (ok) s[k] = v;
   }
+  s.avatar = cleanAvatar(save.avatar); // 0.1 saves have none: the default look
   return s;
 }

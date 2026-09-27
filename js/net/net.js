@@ -44,9 +44,12 @@ async function init(config) {
 
 // Snapshots come from other players' clients: keep only known fields, sane types and sizes.
 const str = (s, n) => (typeof s === 'string' || typeof s === 'number' ? String(s) : '').slice(0, n);
+const look = n => (Number.isInteger(n) && n >= 0 && n < 32 ? n : 0);
 export function cleanSnapshot(s = {}) {
+  const rank = Math.max(0, Math.min(6, s.rank | 0)), a = s.avatar || {}; // 0.1 snapshots have no avatar: the default look
   return {
-    v: 1, town: str(s.town, 24), mayor: str(s.mayor, 24), rank: Math.max(0, Math.min(6, s.rank | 0)), title: str(s.title, 32), day: Math.max(1, s.day | 0),
+    v: 1, town: str(s.town, 24), mayor: str(s.mayor, 24), rank, title: str(s.title, 32), day: Math.max(1, s.day | 0),
+    avatar: { skin: look(a.skin), hair: look(a.hair), face: look(a.face), extra: typeof a.extra === 'string' ? str(a.extra, 24) : null, rank },
     buildings: (Array.isArray(s.buildings) ? s.buildings : []).slice(0, 60).map(b => ({
       id: str(b?.id, 40), type: str(b?.type, 40), x: +b?.x || 0, z: +b?.z || 0, rot: +b?.rot || 0,
       state: b?.state === 'ok' ? 'ok' : 'broken', ...(b?.label ? { label: str(b.label, 60) } : {}),
