@@ -1,0 +1,13 @@
+{
+ "models": {
+  "brick_nf": {"kind": "task", "url": "https://github.com/sulemanali5760/brick-by-brick/blob/main/blender/make_assets.py"},
+  "brick_half": {"kind": "task", "url": "https://github.com/sulemanali5760/brick-by-brick/blob/main/blender/make_assets.py"},
+  "trowel": {"kind": "task", "url": "https://github.com/sulemanali5760/brick-by-brick/blob/main/blender/make_assets.py"},
+  "fp_arms": {"kind": "task", "url": "https://github.com/sulemanali5760/brick-by-brick/blob/main/blender/make_assets.py"},
+  "mortar_tub": {"kind": "task", "url": "https://github.com/sulemanali5760/brick-by-brick/blob/main/blender/make_assets.py"},
+  "pallet_euro": {"kind": "task", "url": "https://github.com/sulemanali5760/brick-by-brick/blob/main/blender/make_assets.py"},
+  "line_pin": {"kind": "task", "url": "https://github.com/sulemanali5760/brick-by-brick/blob/main/blender/make_assets.py"},
+  "spirit_level": {"kind": "task", "url": "https://github.com/sulemanali5760/brick-by-brick/blob/main/blender/make_assets.py"}
+ },
+ "character": null
+}
