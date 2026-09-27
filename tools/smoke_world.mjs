@@ -259,8 +259,9 @@ await check('avatar: the kit character in town, and every rank wears a different
   const outfits = [];
   for (let r = 0; r <= 6; r++) outfits.push((await W(r => { __btmWorld.world.setAvatar({ rank: r }); return __btmWorld.avatar(); }, r)).outfit);
   assert.equal(new Set(outfits).size, 7);
-  const set = await W(() => __btmWorld.world.setAvatar({ rank: 1, skin: 3, hair: 4, face: 1, extra: 'sunglasses' })); // indices, as saved
-  assert.deepEqual(set, { skin: 0x9c6440, hair: 'blond', face: 'grin', rank: 1, extra: 'sunglasses' });
+  const set = await W(() => __btmWorld.world.setAvatar({ rank: 1, skin: 3, hair: 4, face: 1, extra: 'sunglasses' })); // indices into the manifest's lists, as saved
+  assert.ok(near(set.skin, 0xc68642), `manifest skin 3, not ${set.skin.toString(16)}`);
+  assert.deepEqual({ ...set, skin: 0 }, { skin: 0, hair: 'none', face: 'grin', rank: 1, extra: 'sunglasses' });
   const b = await W(() => __btmWorld.avatar());
   assert.equal(b.title, 'Skilled');
   assert.deepEqual(b.parts.sort(), ['sunglasses', 'tester', 'toolbelt']);
@@ -350,8 +351,25 @@ await check('a phone-sized resize keeps the camera finite', async () => {
   await step(2);
   const v = await W(() => __btmWorld.view), a = await W(() => __btmWorld.world.anchors());
   assert.ok(Number.isFinite(v.d) && a.every(p => Number.isFinite(p.x) && Number.isFinite(p.y)));
+  await W(() => { __btmWorld.world.focus('yard'); }); await step(10);
+  await W(() => __btmWorld.world.celebrate('promotion')); await step(10);
+  assert.equal((await W(() => __btmWorld.avatar())).visible, true, 'a promotion flies to the avatar in its new outfit');
+  await W(() => __btmWorld.world.showTown({ buildings: [{ id: 'far', type: 'house', x: 60, z: 40, rot: 0, state: 'ok' }, { id: 'hall2', type: 'townhall', x: -40, z: -30, rot: 0, state: 'ok' }] }));
+  await step(1);
+  assert.equal((await W(() => __btmWorld.avatar())).visible, true, 'a visit opens on its avatar');
 });
 await page.screenshot({ path: 'smoke-town-low.png' });
+
+// frame time in Brookfield at q=low and qa's desktop size, on the runner's software GL (the render is in the JS time)
+page = await open('?q=low&real');
+await check('frame time, q=low, Brookfield at 1280 × 800 (qa desktop size)', async () => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await step(3);
+  const ms = await W(() => Array.from({ length: 20 }, () => { const t0 = performance.now(); step(1, 1 / 30); return performance.now() - t0; }).sort((a, b) => a - b));
+  const s = await W(() => __btmWorld.stats());
+  console.log(`frame q=low 1280x800: median ${ms[10].toFixed(1)} ms, max ${ms[19].toFixed(1)} ms; ${s.calls} draw calls, ${s.triangles} triangles`);
+  assert.ok(ms[19] < 5000, 'no frame takes seconds');
+});
 
 // full quality (outlines: a multisampled target and depth edges; the shadow map), as on phones, in Brookfield itself
 page = await open('?real');

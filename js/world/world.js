@@ -141,6 +141,10 @@ export function createWorld(canvas, content = {}) {
       fitTown();
       life.build(items, layoutOf(state));
       placeHome();
+      // a new town (the start, a visit) opens on its avatar: same zoom, centred on them, so a phone shows them too
+      view.x = avatar.root.position.x; view.z = avatar.root.position.z;
+      clampView();
+      placeCamera();
     } else life.refresh();
     for (const [id, { b, group }] of items) {
       const z = zones.get(id), r = Math.hypot(...group.userData.foot) / 2 + 0.5;
@@ -239,10 +243,10 @@ export function createWorld(canvas, content = {}) {
     clampView();
   }, { passive: false });
 
+  const flyTo = (x, z, d) => { tween = { t: 0, dur: 0.8, from: { x: view.x, z: view.z, d: view.d }, to: { x, z, d: Math.min(view.d, d) } }; };
   function focus(id) {
     const it = items.get(id);
-    if (!it) return;
-    tween = { t: 0, dur: 0.8, from: { x: view.x, z: view.z, d: view.d }, to: { x: it.b.x, z: it.b.z, d: Math.min(view.d, 55) } };
+    if (it) flyTo(it.b.x, it.b.z, 55);
   }
 
   /* ---------- the avatar ---------- */
@@ -263,6 +267,7 @@ export function createWorld(canvas, content = {}) {
     life.confetti(it ? [it.b.x, it.group.userData.h + 1, it.b.z] : [p.x, 2.6, p.z], kind === 'promotion' ? 170 : kind === 'like' ? 60 : 110,
       kind === 'like' ? [0xe8505b, 0xf28cb1, 0xffffff] : undefined);
     if (it) bounces.push({ g: it.group, t: 0 });
+    if (kind === 'promotion') flyTo(p.x, p.z, 40); // come and see the new outfit
     avatar.play(kind === 'like' ? 'wave' : 'cheer');
   }
   // the town hall clock shows the time of day (look.js hours); its hands turn about z, clockwise seen from the front

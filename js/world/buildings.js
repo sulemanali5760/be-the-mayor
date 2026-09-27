@@ -87,9 +87,7 @@ const TYPES = {
     cyl(g, m('metal'), 0.05, 2.6, 2.3, 0, 0.4, 4);
     box(g, m('yellow'), 0.55, 0.55, 0.06, 2.3, 2.3, 0.4);
   } },
-  bridge: { foot: [4, 12], h: 1.6, solid: false, build(g, m, broken) {
-    box(g, m('water'), 36, 0.04, 7, 0, 0.01, 0); // the stream it crosses
-    for (const z of [-3.9, 3.9]) box(g, m('grass'), 36, 0.1, 0.8, 0, 0, z);
+  bridge: { foot: [4, 12], h: 1.6, solid: false, build(g, m, broken) { // (the stream it crosses: stream() below)
     const deck = (z, len) => box(g, m('stone'), 4, 0.35, len, 0, 0.25, z);
     if (broken) { deck(-3.7, 4.6); deck(3.7, 4.6); box(g, m('wood'), 0.15, 0.9, 4.6, -1.9, 0.6, -3.7); }
     else { deck(0, 12); for (const x of [-1.9, 1.9]) box(g, m('wood'), 0.15, 0.9, 12, x, 0.6, 0); }
@@ -206,6 +204,17 @@ function codeBuilt(T, broken) {
   const g = new THREE.Group();
   T.build(g, mat, broken);
   if (broken) for (const [x, z, s] of [[0, 0.5, 0.6], [0.8, 0.9, 0.4], [1.4, 0.3, 0.5]]) box(g, mat('stone'), s, s * 0.6, s, T.foot[0] / 2 - 1.2 + x, 0, T.foot[1] / 2 + z, x + z);
+  return baked(g, broken);
+}
+// the stream a bridge crosses, with its banks: terrain, so it's drawn under the kit's bridge too
+function stream() {
+  const g = new THREE.Group();
+  box(g, mat('water'), 36, 0.04, 7, 0, 0.01, 0);
+  for (const z of [-3.9, 3.9]) box(g, mat('grass'), 36, 0.1, 0.8, 0, 0, z);
+  return baked(g, false);
+}
+// a group's meshes baked into one vertex-coloured mesh
+function baked(g, broken) {
   const parts = g.children.filter(o => o.isMesh);
   const body = new THREE.Mesh(L.bake(parts.map(o => {
     o.updateMatrix();
@@ -253,6 +262,7 @@ export function makeBuilding(b, kit = null) {
   const type = typeOf(b.type), T = TYPES[type], broken = b.state === 'broken';
   const model = kit && kitModel(b, type, broken, kit);
   const { g, h, hands } = model ? fromKit(T, broken, model, kit) : { g: codeBuilt(T, broken), h: T.h, hands: [] };
+  if (type === 'bridge') g.add(stream());
   if (!broken && b.label) g.add(label(b.label, h + 2));
   g.position.set(b.x, 0, b.z);
   g.rotation.y = THREE.MathUtils.degToRad(b.rot || 0);
