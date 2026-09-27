@@ -4,6 +4,7 @@
 name: kits
 on:
   push:
+    branches: ['feat/*-art'] # only the art lane regenerates kits; other branches merge its results (0.2 minutes)
     paths: ['tools/kits/**', 'blender/**', 'assets/palette.json', '.github/workflows/kits.yml']
   workflow_dispatch:
 permissions:

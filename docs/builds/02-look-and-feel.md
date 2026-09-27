@@ -1,6 +1,6 @@
 # Build 0.2: "Look & feel"
 
-Status: in progress (studio build) · base: 0.1.0 · roadmap row 0.2
+Status: closed · 0.2.0 released (studio build) · base: 0.1.0 · roadmap row 0.2
 
 ## 1. Goal
 
@@ -134,4 +134,22 @@ Never open downloaded files locally. To inspect results, read `manifest.json` an
 
 ## 6. Meeting minutes
 
-_(director fills this in when all lanes have reported)_
+**Meeting (2026-09-27/28).** The lanes were stopped twice by API usage limits and resumed with their context intact; no work was lost.
+
+| Lane | Result | Cost (tokens, approx.) |
+|---|---|---|
+| A art | 71 models, 0 validator errors. CC0: KayKit City Builder Bits, Kenney Suburban and Nature, with pinned sha256. Our own Blender models: 17 buildings plus broken variants, and a rigged character with 7 rank outfits, 5 hairs, 3 faces and 6 extras. Assets total 4.2 MB. | ~430k |
+| W world | Toon ramp, outlines, a 1024 shadow map, ACES, time of day, grey broken areas, 12 citizens, cars, birds, `celebrate`, avatar with `walkTo`. Full quality: 98 draw calls, 56k triangles, 1.4 ms JS. Smoke 24/24. | ~640k |
+| G game | Creator, wardrobe, town layout with roads, paths and homes, time of day wired, walk-before-action, avatar in snapshots and visits, doubled-name fix. QA 40/40 rows at 3 sizes; phone 3.6 ms JS, 107 draw calls, 57k triangles. | ~410k |
+
+**Decisions:**
+- Contract change 1 (the manifest fields).
+- `kits.yml` now runs only on `feat/*-art` branches, because it fired on other lanes' branches after they merged the art.
+- Citizens stay code-built for the triangle budget.
+
+**Rule slips (self-reported):** Lane A ran one trivial local `python3 -c print` and made one heredoc edit, then redid it (T3). No downloaded kit file was opened locally, according to all three lanes.
+
+**Carry to 0.3:**
+- The phone is at 57k of 60k triangles, so new props need instancing or LODs.
+- The old desktop QA click can flake on software GL.
+- Kit citizens only if there's budget to spare.
