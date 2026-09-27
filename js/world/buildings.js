@@ -23,7 +23,7 @@ export function mat(name) {
   }
   return cache.get(name);
 }
-const GLOW = { lamp: 1, glass: 0.6 }; // lit at night (look.js), unless broken
+const GLOW = { lamp: 1.2, glass: 1 }; // lit at night (look.js), unless broken
 
 function add(g, geo, m, x, y, z, ry = 0) {
   const o = new THREE.Mesh(geo, m);

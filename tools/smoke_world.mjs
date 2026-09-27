@@ -22,8 +22,10 @@ const town = [
 const content = {
   people: [{ id: 'ann', name: 'Ann', role: 'baker' }, { id: 'bo', name: 'Bo', role: 'teacher' }, { id: 'cy', name: 'Cy', role: 'pensioner' }, { id: 'rex', name: 'Rex', role: "Cy's dachshund" }],
   town: { buildings: town, roads: [[[-45, 8], [45, 8]], [[-45, -36], [45, -36]]], paths: [[[-15, 8], [-15, 3]]],
-    props: [{ type: 'bench', x: -20, z: 5, rot: 0 }, { type: 'lamp', x: 8, z: 5.5 }, { type: 'tree', x: 50, z: 20 }], homes: { ann: 'house' }, work: { ann: 'shop' } },
+    props: [{ type: 'bench', x: -20, z: 5, rot: 0 }, { type: 'lamp', x: 8, z: 5.5 }, { type: 'tree', x: 50, z: 20 }],
+    homes: { ann: 'house' }, work: { ann: 'shop' } },
 };
+const near = (a, b) => [16, 8, 0].every(s => Math.abs((a >> s & 255) - (b >> s & 255)) <= 1); // colours after an sRGB round trip
 // the solid footprints of the front row [x, z, half w, half d]: a walk may never enter one
 const SOLID = [[-30, 0, 3.5, 2.5], [-15, 0, 3, 2.5], [0, 0, 3.5, 2.5], [18, 0, 6, 3], [10, -22, 6, 4]];
 const html = `<!doctype html><html><head><meta charset="utf-8">
@@ -166,7 +168,7 @@ await check('wall (twist rain) in the Mayor\'s sleeves: tapping lays and levels 
   await until(() => __btmWorld.task(), 100);
   const info = await W(() => __btmWorld.task());
   assert.equal(info.kind, 'wall'); assert.equal(info.twist, 'rain'); assert.ok(info.total >= 8 && info.total <= 12);
-  assert.ok([16, 8, 0].every(s => Math.abs((info.sleeve >> s & 255) - (0x3a3d45 >> s & 255)) <= 1), `params.avatar rank 4: the suit sleeve, not ${info.sleeve.toString(16)}`);
+  assert.ok(near(info.sleeve, 0x3a3d45), `params.avatar rank 4: the suit sleeve, not ${info.sleeve.toString(16)}`);
   assert.equal(info.cuffs, 2);
   let laid = 0;
   for (let i = 0; i < 500 && !(await W(() => window.res)); i++) {
@@ -231,11 +233,13 @@ await check('avatar: in town, and every rank wears a different outfit', async ()
   const tops = [];
   for (let r = 0; r <= 6; r++) tops.push((await W(r => { __btmWorld.world.setAvatar({ rank: r }); return __btmWorld.avatar(); }, r)).top);
   assert.equal(new Set(tops).size, 7);
-  const set = await W(() => __btmWorld.world.setAvatar({ rank: 1, skin: 3, hair: 'bun', face: 'grin', extra: 'sunglasses' }));
-  assert.deepEqual(set, { skin: 0x9c6440, hair: 'bun', face: 'grin', rank: 1, extra: 'sunglasses' });
+  const set = await W(() => __btmWorld.world.setAvatar({ rank: 1, skin: 3, hair: 4, face: 1, extra: 'sunglasses' })); // indices, as saved
+  assert.deepEqual(set, { skin: 0x9c6440, hair: 'blond', face: 'grin', rank: 1, extra: 'sunglasses' });
   const b = await W(() => __btmWorld.avatar());
   assert.equal(b.title, 'Skilled');
   assert.deepEqual(b.parts.sort(), ['belt', 'sunglasses', 'tester']);
+  assert.equal((await W(() => __btmWorld.world.setAvatar({ hair: 'bun', rank: undefined }))).hair, 'bun', 'a hair style id works too');
+  assert.equal((await W(() => __btmWorld.avatar())).rank, 1, 'an undefined field keeps what is worn');
   assert.equal((await W(() => __btmWorld.world.setAvatar({ rank: 0, extra: 'cap' }))).extra, 'cap');
   assert.ok(!(await W(() => __btmWorld.avatar())).parts.includes('cap'), 'the hard hat wins over a cap');
   await W(() => __btmWorld.world.setAvatar({ rank: 0, extra: null }));
@@ -280,7 +284,7 @@ await check('a fix brings the colour back; celebrate: confetti, a bounce, the av
   assert.equal((await W(() => __btmWorld.avatar())).clip, 'cheer');
   await step(25);
   assert.ok(!(await W(() => __btmWorld.grey())).some(z => z.id === 'house'), 'the grey has faded');
-  assert.ok((await W(() => __btmWorld.life())).props.shown > before, 'the house got its flowers (and the bench)');
+  assert.ok((await W(() => __btmWorld.life())).props.shown > before, 'the bench by the house appears');
   await step(12);
   assert.equal((await W(() => __btmWorld.avatar())).clip, 'idle');
   assert.equal((await W(() => __btmWorld.life())).confetti, 0);
@@ -293,8 +297,8 @@ await check('a visit to a town without roads: a ring road, the avatar at its doo
     { id: 'home', type: 'house', x: 14, z: 6, rot: 0, state: 'ok' }, { id: 'park', type: 'park', x: -14, z: -16, rot: 0, state: 'broken' }] }));
   const li = await W(() => __btmWorld.life());
   assert.ok(li.ring && li.roads === 1 && li.cars.length === 3, JSON.stringify(li));
-  const a = await W(() => __btmWorld.avatar());
-  assert.ok(Math.hypot(a.x - 14, a.z - (6 + 2.5 + 2.2)) < 0.1, 'at the only house');
+  const a = await W(() => __btmWorld.avatar()), k = Math.SQRT1_2 * (Math.hypot(6, 5) / 2 + 1.2);
+  assert.ok(Math.hypot(a.x - 14 - k, a.z - 6 - k) < 0.1, `by the only house, on the camera's side: ${a.x}, ${a.z}`);
   assert.deepEqual((await W(() => __btmWorld.grey())).map(z => z.id), ['park']);
   await step(5);
   await W(t => __btmWorld.world.showTown({ town: t }), town);

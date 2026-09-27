@@ -8,7 +8,7 @@ const L = await import(`./look.js?v=${V}`);
 const R = await import(`./rules.js?v=${V}`);
 const B = await import(`./buildings.js?v=${V}`);
 
-const ROAD_W = 5, PATH_W = 2, LANE = 1.3, MAX_PEOPLE = 12, CARS = 3, BIRDS = 5, CONFETTI = 180;
+const ROAD_W = 5, PATH_W = 2, LANE = 1.3, MAX_PEOPLE = 12, CARS = 3, BIRDS = 5, CONFETTI = 180; // widths as in docs/GDD.md
 const P = L.piece;
 const rng = seed => () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 const hash = s => [...String(s)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 2147483647, 7) || 1;
@@ -165,7 +165,7 @@ export function createLife(scene, content = {}) {
       for (const { b } of list) { const d = Math.hypot(b.x - pr.x, b.z - pr.z); if (d < bd) { bd = d; owner = b.id; } }
       props.push({ type: PROPS[pr.type] ? pr.type : 'bush', x: pr.x, z: pr.z, rot: THREE.MathUtils.degToRad(pr.rot || 0), owner });
     }
-    for (const { b, group: g } of list) {
+    for (const { b, group: g } of layout.props ? [] : list) { // a town without its own props gets a few
       const t = g.userData.type;
       if (NO_AUTO.has(t)) continue;
       const [w, d] = g.userData.foot, a = g.rotation.y, c = Math.cos(a), s = Math.sin(a);
@@ -181,17 +181,21 @@ export function createLife(scene, content = {}) {
       group.add(m);
     }
 
-    // named citizens: town.json homes/work ({ personId: buildingId }), or spread over houses and workplaces
+    // named citizens: town.json homes and work ({ personId: buildingId }) first, then other people spread over
+    // houses and workplaces. Each keeps a spot of their own by a door, so crowds don't stack.
     const homes = list.filter(it => it.group.userData.type === 'house').map(it => it.b.id);
     const jobs = list.filter(it => it.group.userData.solid && it.group.userData.type !== 'house').map(it => it.b.id);
     const any = list.map(it => it.b.id);
-    const people = (Array.isArray(content.people) ? content.people : []).filter(p => p?.id && !ANIMAL.test(p.role || '')).slice(0, MAX_PEOPLE);
+    const placed = p => items.has(layout.homes?.[p.id]) || items.has(layout.work?.[p.id]);
+    const people = (Array.isArray(content.people) ? content.people : []).filter(p => p?.id && !ANIMAL.test(p.role || ''))
+      .sort((a, b) => placed(b) - placed(a)).slice(0, MAX_PEOPLE);
     const citizens = people.map((p, i) => {
       const home = items.has(layout.homes?.[p.id]) ? layout.homes[p.id] : (homes.length ? homes : any)[i % (homes.length || any.length)];
       const work = items.has(layout.work?.[p.id]) ? layout.work[p.id] : (jobs.length ? jobs : any)[i % (jobs.length || any.length)];
-      const h = hash(p.id), at = B.door(items.get(home).b);
-      return { id: p.id, name: p.name, home, work, x: at[0], z: at[1], dir: rand() * 6, route: null, s: 0, len: 0, step: 0,
-        speed: 1.2 + rand() * 0.4, wait: rand() * 6, plan: i % 3, inside: false,
+      const h = hash(p.id), a = rand() * Math.PI * 2, o = 0.5 + rand() * 1.3, spot = [Math.sin(a) * o, Math.cos(a) * o];
+      const at = B.door(items.get(home).b);
+      return { id: p.id, name: p.name, home, work, spot, x: at[0] + spot[0], z: at[1] + spot[1],
+        dir: rand() * 6, route: null, s: 0, len: 0, step: 0, speed: 1.2 + rand() * 0.4, wait: rand() * 6, plan: i % 2, inside: false,
         shirt: SHIRTS[h % SHIRTS.length], legs: TROUSERS[(h >> 3) % TROUSERS.length], skin: SKIN[(h >> 5) % SKIN.length] };
     });
     const n = citizens.length;
@@ -253,6 +257,15 @@ export function createLife(scene, content = {}) {
   }
   const doorOf = id => { const it = T.items.get(id); return it ? B.door(it.b) : null; };
 
+  // where a citizen goes next: home at night; else work every other trip, or somewhere fixed to be. Nobody goes to
+  // a broken place, so people turn up where you fixed things.
+  function nextGoal(c, night) {
+    if (night) return c.home;
+    if (c.plan++ % 2 === 0 && T.items.get(c.work)?.b.state !== 'broken') return c.work;
+    const fun = T.leisure.filter(id => id !== c.goal);
+    return c.goal !== c.home && Math.random() < 0.4 ? c.home : fun[Math.floor(Math.random() * fun.length)] ?? c.home;
+  }
+
   /* ---------- every frame ---------- */
   function update(dt) {
     clock += dt;
@@ -275,11 +288,10 @@ export function createLife(scene, content = {}) {
       } else if (c.inside) {
         if (!night) { c.inside = false; c.wait = Math.random() * 4; }
       } else if ((c.wait -= dt) <= 0) {
-        const goal = night ? c.home : [c.work, T.leisure[Math.floor(Math.random() * T.leisure.length)], c.home][c.plan++ % 3];
-        const to = goal && (goal === c.home || T.items.get(goal)?.b.state !== 'broken') ? doorOf(goal) : null; // nobody goes to a broken place
+        const goal = nextGoal(c, night), door = doorOf(goal), to = door && [door[0] + c.spot[0], door[1] + c.spot[1]];
         const pts = to && route([c.x, c.z], to);
         const len = pts ? R.pathLength(pts) : 0;
-        if (len > 0.5) { c.route = pts; c.len = len; c.s = 0; c.goal = goal; } else { c.wait = 3; if (night && goal === c.home) c.inside = true; }
+        if (len > 0.5) { c.route = pts; c.len = len; c.s = 0; c.goal = goal; } else { c.wait = 4 + Math.random() * 4; c.goal = goal; if (night && goal === c.home) c.inside = true; }
       }
       const walking = !!c.route, sw = walking ? Math.sin(c.step * 4.5) : 0, bob = walking ? Math.abs(sw) * 0.06 : 0, s = c.inside ? 0 : 1;
       put(T.bodies.torso, i, c.x, bob, c.z, c.dir, s);
