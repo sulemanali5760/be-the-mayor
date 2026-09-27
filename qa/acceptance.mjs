@@ -347,6 +347,10 @@ for (const v of VIEWS) {
   } catch (e) {
     // the first lines of a Playwright error carry the call log (e.g. which element intercepts the click)
     check(v.name, 'run', false, `${String(e.message).split('\n').slice(0, 5).join(' / ')}; bot: ${botLog.slice(-6).join(' · ')}`);
+    console.log(`${v.name} run failed, full call log:\n${String(e.message).split('\n').slice(0, 40).join('\n')}`);
+    console.log('overlays at the failure:', await page.evaluate(() => [...document.querySelectorAll('body *')].filter(el => {
+      const s = getComputedStyle(el); return (s.position === 'fixed' || s.position === 'absolute') && s.display !== 'none' && s.pointerEvents !== 'none' && el.offsetWidth > 100;
+    }).map(el => `${el.tagName.toLowerCase()}#${el.id}.${el.className}`).join(', ')).catch(() => '?'));
     await shot(page, `${v.name}-x-failure`);
   }
   check(v.name, 'no page errors', errors.length === 0, errors.slice(0, 3).join(' | '));
