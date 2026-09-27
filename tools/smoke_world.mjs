@@ -353,6 +353,17 @@ await check('a phone-sized resize keeps the camera finite', async () => {
 });
 await page.screenshot({ path: 'smoke-town-low.png' });
 
+// frame time in Brookfield at q=low and qa's desktop size, on the runner's software GL (the render is in the JS time)
+page = await open('?q=low&real');
+await check('frame time, q=low, Brookfield at 1280 × 800 (qa desktop size)', async () => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await step(3);
+  const ms = await W(() => Array.from({ length: 20 }, () => { const t0 = performance.now(); step(1, 1 / 30); return performance.now() - t0; }).sort((a, b) => a - b));
+  const s = await W(() => __btmWorld.stats());
+  console.log(`frame q=low 1280x800: median ${ms[10].toFixed(1)} ms, max ${ms[19].toFixed(1)} ms; ${s.calls} draw calls, ${s.triangles} triangles`);
+  assert.ok(ms[19] < 5000, 'no frame takes seconds');
+});
+
 // full quality (outlines: a multisampled target and depth edges; the shadow map), as on phones, in Brookfield itself
 page = await open('?real');
 await check('perf, full quality, Brookfield (data/town.json, its people): within the phone budget', async () => {
