@@ -26,7 +26,9 @@ button{font:inherit;cursor:pointer;color:inherit}
 
 /* top bar: stats, the always-visible ladder, the current goal */
 #top{position:absolute;top:calc(var(--gut) + env(safe-area-inset-top,0px));left:var(--gut);right:var(--gut);padding:6px 10px 8px;display:grid;gap:4px}
-.stats{display:flex;gap:14px;font-family:var(--label);font-weight:700;font-size:16px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden}
+.gear{position:absolute;top:2px;right:4px;background:none;border:0;font-size:19px;line-height:1;padding:6px;color:var(--muted)}
+.gear:hover{color:var(--hivis)}
+.stats{padding-right:30px;display:flex;gap:14px;font-family:var(--label);font-weight:700;font-size:16px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden}
 .stats span{display:inline-flex;gap:4px;align-items:baseline}
 .stats small{font-weight:500;color:var(--muted);font-size:12px}
 .stats .pips{align-items:center;gap:5px}
@@ -96,7 +98,8 @@ body.visiting #dock,body.visiting #goal{display:none}
 .card h2{font-family:var(--label);font-size:20px;line-height:1.2;margin:4px 0 8px}
 .card p{margin:0 0 12px;color:#DEDBD3;line-height:1.5}
 .card label{display:grid;gap:4px;margin-bottom:10px;font-family:var(--label);font-weight:600;font-size:14px;color:var(--muted)}
-.card input{font:inherit;font-size:17px;padding:9px 10px;background:rgba(244,242,237,.08);color:var(--paper);border:1.5px solid var(--line)}
+.card input,.card textarea{font:inherit;font-size:17px;padding:9px 10px;background:rgba(244,242,237,.08);color:var(--paper);border:1.5px solid var(--line)}
+.card textarea{display:block;width:100%;margin:0 0 8px;font:12px/1.35 ui-monospace,Consolas,monospace;word-break:break-all;resize:vertical}
 .card .err{color:var(--bad);font-size:13px;min-height:1em;margin:0 0 8px}
 .paper{background:#F4F2ED;color:#1E2226;border:0}
 .paper .mast{font-family:var(--display);font-size:30px;text-align:center;border-bottom:3px double #1E2226;padding-bottom:4px;margin-bottom:8px}

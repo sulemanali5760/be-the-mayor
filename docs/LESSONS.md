@@ -39,6 +39,12 @@ Entries marked **BbB** were carried over from our first game, *Brick by Brick* (
 | T9 | Screenshots in the browser pane: emulate 640×400 at DPR 1.25. A hidden pane pauses `requestAnimationFrame`; for a manual test, override `requestAnimationFrame` with a `setTimeout` and force one frame with a screenshot (BbB L6, L22). |
 | T10 | Docs-only pushes skip the slow QA run (`paths-ignore`); a newer push cancels the older run on the same branch; jobs have timeouts. |
 
+## Saves
+
+| # | Rule |
+|---|---|
+| S1 | **Saves survive every update.** Never delete or rename a saved field without a migration step in `js/rules/save.js`; new fields default, new currencies to 0. Every release adds its real save wrapper to `js/rules/fixtures/saves/<version>.json`, and `save.test.mjs` must pass on all of them. Nothing clears or overwrites progress without a card that asks (build 0.2.2). |
+
 ## Assets and security (BbB)
 
 | # | Rule |

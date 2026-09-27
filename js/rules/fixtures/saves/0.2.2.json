@@ -1,0 +1,63 @@
+{
+  "v": 1,
+  "t": 655.02,
+  "meta": {
+    "jobs": 4,
+    "choices": 2,
+    "visits": 0,
+    "paper": [
+      { "title": "Park wall back up; dachshund unimpressed" },
+      { "title": "Dieter: “Benno has already found a way over it. But it's a beautiful wall.”" }
+    ],
+    "hook": "",
+    "seenAt": 1790700000000,
+    "title": "Labourer"
+  },
+  "save": {
+    "v": 1,
+    "name": "Jürgen",
+    "town": "Neu-Olvenstedt",
+    "day": 3,
+    "money": 95,
+    "rep": 14,
+    "slots": 1,
+    "rank": 0,
+    "skills": { "wall": 3, "delivery": 2 },
+    "jobs": ["keller_wall", "lindner_cakes", "qureshi_papers", "park_wall"],
+    "lastTwist": { "wall": "rain", "delivery": "dog" },
+    "best": { "wall": 3, "delivery": 2 },
+    "offers": [
+      { "id": "brandt_garage-9", "job": "brandt_garage", "who": "brandt", "title": "Lay a garage wall at the Brandt Bau yard", "pay": 50, "energy": 1, "task": "wall", "twist": "Rain: the mortar sets faster", "params": { "at": "yard", "twist": "rain" }, "quick": true },
+      { "id": "nair_pills-10", "job": "nair_pills", "who": "nair", "title": "Take Priya's prescriptions to people who can't get out", "pay": 40, "energy": 1, "task": "delivery", "twist": "Rain: slippery corners", "params": { "stops": ["pharmacy", "keller_house", "flat", "kiosk"], "seconds": 45, "twist": "rain" }, "quick": true }
+    ],
+    "seq": 10,
+    "problems": [],
+    "seen": ["bus_stop_roof", "dump_pile", "cut_corners", "streetlight_out"],
+    "event": null,
+    "nextEventAt": 790,
+    "nextProblemAt": 700,
+    "upgrades": { "night_school": { "studied": 2, "done": false, "told": false } },
+    "studiedDay": 3,
+    "later": [],
+    "headlines": [],
+    "buildings": [
+      { "id": "town_hall", "type": "townhall", "x": 0, "z": -10, "rot": 0, "state": "ok", "label": "Town hall" },
+      { "id": "cafe", "type": "cafe", "x": -12, "z": -7, "rot": 0, "state": "ok", "label": "Café Lindner" },
+      { "id": "pharmacy", "type": "shop", "x": 12, "z": -7, "rot": 0, "state": "ok", "label": "Nair's pharmacy" },
+      { "id": "kiosk", "type": "shop", "x": 22, "z": -7, "rot": 0, "state": "ok", "label": "Qureshi's kiosk" },
+      { "id": "dump", "type": "dump_pile", "x": -22, "z": -7, "rot": 0, "state": "broken" },
+      { "id": "bus_stop", "type": "busstop", "x": 6, "z": -2, "rot": 0, "state": "broken" },
+      { "id": "streetlight", "type": "streetlight", "x": -5, "z": -2, "rot": 0, "state": "broken" },
+      { "id": "flat", "type": "house", "x": 22, "z": 8, "rot": 180, "state": "ok", "label": "Your flat" },
+      { "id": "school", "type": "school", "x": 8, "z": 8, "rot": 180, "state": "ok", "label": "School" },
+      { "id": "park", "type": "park", "x": -8, "z": 10, "rot": 0, "state": "ok", "label": "Park wall – rebuilt by you" },
+      { "id": "keller_house", "type": "house", "x": -22, "z": 8, "rot": 90, "state": "ok", "label": "Frau Keller's house" },
+      { "id": "keller_garden", "type": "garden", "x": -22, "z": 17, "rot": 90, "state": "ok", "label": "Keller's wall – built by you" },
+      { "id": "playground", "type": "playground", "x": 8, "z": 18, "rot": 0, "state": "broken" },
+      { "id": "yard", "type": "yard", "x": 22, "z": 19, "rot": 180, "state": "ok", "label": "Brandt Bau yard" },
+      { "id": "bridge", "type": "bridge", "x": 0, "z": 32, "rot": 0, "state": "broken" }
+    ],
+    "avatar": { "skin": 4, "hair": 3, "face": 0, "extra": null, "owned": [] }
+  },
+  "synced": { "id": "9b2f3c1e-4a57-4d0e-9c1a-2f6d8e7b5a10", "t": 640.5 }
+}

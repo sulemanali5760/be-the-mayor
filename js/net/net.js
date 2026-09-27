@@ -4,12 +4,16 @@
 const V = new URL(import.meta.url).searchParams.get('v') || 'dev';
 const SUPABASE = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
-let sb = null, me = null, seeds = null, lastSave = 0;
-export const net = { online: false, init, saveTown, listTowns, getTown, like, sign, help, inbox };
+let sb = null, me = null, user = null, seeds = null, lastSave = 0;
+export const net = { online: false, init, saveTown, listTowns, getTown, like, sign, help, inbox,
+  account, cloudLoad, cloudSave, linkEmail, signInEmail, signOut };
 
 // server messages → what the player reads
 function friendly(error) {
   const m = String(error?.message || error || '');
+  if (/already (been )?registered|email_exists/i.test(m)) return 'That email already has an account: use "Log in on this device"';
+  if (/invalid.*(email|format)|email.*invalid/i.test(m)) return 'That email address does not look right';
+  if (/security purposes|rate limit|too many/i.test(m)) return 'Too many emails just now, try again in a few minutes';
   if (/already done/i.test(m)) return 'Already done for this town today';
   if (/enough helping|come back tomorrow/i.test(m)) return 'That is enough helping for today, come back tomorrow';
   if (/own town/i.test(m)) return 'That is your own town';
@@ -33,7 +37,11 @@ async function init(config) {
       if (r.error) throw r.error;
       data = r.data;
     }
-    me = data.session.user.id;
+    user = data.session.user;
+    me = user.id;
+    sb.auth.onAuthStateChange((_, session) => { if (session?.user) { user = session.user; me = user.id; } });
+    // the stored user can be stale (e.g. the email was confirmed on another device): ask the server, but never wait on it to play
+    sb.auth.getUser().then(r => { if (r.data?.user?.id === me) user = r.data.user; }, () => {});
     net.online = true;
   } catch (e) {
     console.warn('offline mode:', e?.message || e); // warn, not error: offline play is a normal state
@@ -74,6 +82,63 @@ async function saveTown(snapshot) {
   if (!error && !data.length) ({ error } = await sb.from('towns').insert(row));
   if (error) return { ok: false, msg: friendly(error) };
   lastSave = Date.now();
+  return { ok: true };
+}
+
+// ---- account and cloud save (build 0.2.2 §2.2) ------------------------------------------------------------------
+// Every player starts anonymous. linkEmail makes the same user permanent (same id, so the save row stays theirs);
+// signInEmail sends a magic link for another device. The page reloads with the session from the link.
+const back = () => location.origin + location.pathname; // the page without its query string
+
+function account() {
+  return { signedIn: !!user, anonymous: !!user?.is_anonymous, email: user?.email || null, id: me, pending: user?.new_email || null };
+}
+
+// → { save, version, play_t, updated_at } | null (no save yet); throws when the cloud can't be read, so the
+// caller never mistakes "unreachable" for "empty" and uploads over a save it hasn't seen
+async function cloudLoad() {
+  if (!net.online) throw new Error('offline');
+  const { data, error } = await sb.from('saves').select('save, version, play_t, updated_at').eq('id', me).limit(1);
+  if (error) throw new Error(error.message);
+  const row = data[0];
+  if (!row || typeof row.save?.save !== 'object' || !row.save.save) return null;
+  return { ...row, play_t: +row.play_t || 0 };
+}
+
+// save = the local wrapper { v, t, meta, save, synced }; meta = { version, play_t }. The caller debounces (≥ 20 s).
+async function cloudSave(save, { version, play_t }) {
+  if (!net.online) return { ok: false, offline: true, msg: 'Only on this device while offline' };
+  const row = { save, version: String(version).slice(0, 32), play_t: Math.round(Math.max(0, play_t) * 1000) / 1000 };
+  // no upsert: players may not write the id column; it defaults to auth.uid() on insert
+  let { data, error } = await sb.from('saves').update(row).eq('id', me).select('id');
+  if (!error && !data.length) ({ error } = await sb.from('saves').insert(row));
+  if (error) return { ok: false, msg: /too often/i.test(error.message) ? 'Saving too often' : friendly(error).replace('the other towns', 'the cloud') };
+  return { ok: true, play_t: row.play_t };
+}
+
+async function linkEmail(email) {
+  if (!net.online) return { ok: false, msg: 'You are offline, try again later' };
+  const { data, error } = await sb.auth.updateUser({ email }, { emailRedirectTo: back() });
+  if (error) return { ok: false, msg: friendly(error) };
+  if (data?.user) user = data.user;
+  return { ok: true };
+}
+
+async function signInEmail(email) {
+  if (!net.online) return { ok: false, msg: 'You are offline, try again later' };
+  const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: back() } });
+  return error ? { ok: false, msg: friendly(error) } : { ok: true };
+}
+
+// signs out, then back in anonymously so online towns keep working; the local save stays on this device
+async function signOut() {
+  if (!net.online) return { ok: false, msg: 'You are offline, try again later' };
+  const { error } = await sb.auth.signOut();
+  if (error) return { ok: false, msg: friendly(error) };
+  const r = await sb.auth.signInAnonymously();
+  if (r.error) { user = null; net.online = false; return { ok: true }; } // signed out; playing offline now
+  user = r.data.user;
+  me = user.id;
   return { ok: true };
 }
 

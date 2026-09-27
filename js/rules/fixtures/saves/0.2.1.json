@@ -1,0 +1,72 @@
+{
+  "v": 1,
+  "t": 1712.3,
+  "meta": {
+    "jobs": 9,
+    "choices": 6,
+    "visits": 2,
+    "paper": [
+      { "title": "Sam qualifies; Elbwinkel gains a tradesperson and loses an excuse" },
+      { "title": "Frau Keller: “A shower wall with a shelf for my radio. You're a genius, Sam.”" },
+      { "title": "2 visitors liked your town", "text": "Word gets around." },
+      { "title": "Park wall back up; dachshund unimpressed" },
+      { "title": "Mystery sofa finally leaves the bottle bank" },
+      { "title": "Rolf: “Now you're thinking like a professional.” That was not the compliment he thinks it was." }
+    ],
+    "hook": "Council by-election in 3 days. You need Reputation 100 and 2 group endorsements.",
+    "seenAt": 1790612345678,
+    "title": "Skilled"
+  },
+  "save": {
+    "v": 1,
+    "name": "Sam",
+    "town": "Elbwinkel",
+    "day": 7,
+    "money": 310,
+    "rep": 27,
+    "slots": 2,
+    "rank": 1,
+    "skills": { "wall": 3, "delivery": 3, "computer": 1, "plumbing": 1, "trowel": 1 },
+    "jobs": ["keller_wall", "lindner_cakes", "brandt_garage", "nair_pills", "qureshi_papers", "park_wall", "brandt_garage", "lindner_cakes", "sk_shower_wall"],
+    "lastTwist": { "wall": "cracked", "delivery": "dog" },
+    "best": { "wall": 3, "delivery": 3 },
+    "offers": [
+      { "id": "sk_leak_patrol-19", "job": "sk_leak_patrol", "who": "nair", "title": "Leak patrol: four dripping taps before the water bill comes", "pay": 60, "energy": 1, "task": "delivery", "twist": "The bridge road is closed", "params": { "stops": ["pharmacy", "school", "flat", "keller_house"], "seconds": 45, "twist": "closed_road" }, "quick": true },
+      { "id": "sk_bus_shelter-20", "job": "sk_bus_shelter", "who": "amira", "title": "Rebuild the bus shelter properly for Amira's route", "pay": 60, "energy": 1, "task": "wall", "twist": "The 7:15 is due: be quick", "params": { "at": "bus_stop", "twist": "hurry" }, "quick": true }
+    ],
+    "seq": 20,
+    "problems": ["party_noise"],
+    "seen": ["bus_stop_roof", "dump_pile", "cut_corners", "streetlight_out", "lottery", "playground_swing", "cake_sale", "party_noise"],
+    "event": null,
+    "nextEventAt": 1890,
+    "nextProblemAt": 1780,
+    "upgrades": {
+      "trowel": { "studied": 0, "done": true, "told": true },
+      "computer": { "studied": 0, "done": true, "told": true },
+      "online_plumbing": { "studied": 4, "done": true, "told": true }
+    },
+    "studiedDay": 5,
+    "later": [
+      { "at": 1905, "who": "brandt", "text": "The garage wall you rushed now leans like it had a long night. Rolf tells the whole pub it was your idea.", "effects": { "rep": -5 }, "headline": "Garage wall found leaning; foreman blames ‘the new kid’" }
+    ],
+    "headlines": ["Sam qualifies; Elbwinkel gains a tradesperson and loses an excuse"],
+    "buildings": [
+      { "id": "town_hall", "type": "townhall", "x": 0, "z": -10, "rot": 0, "state": "ok", "label": "Town hall" },
+      { "id": "cafe", "type": "cafe", "x": -12, "z": -7, "rot": 0, "state": "ok", "label": "Café Lindner" },
+      { "id": "pharmacy", "type": "shop", "x": 12, "z": -7, "rot": 0, "state": "ok", "label": "Nair's pharmacy" },
+      { "id": "kiosk", "type": "shop", "x": 22, "z": -7, "rot": 0, "state": "ok", "label": "Qureshi's kiosk" },
+      { "id": "dump", "type": "dump_pile", "x": -22, "z": -7, "rot": 0, "state": "ok", "label": "Corner cleared by you" },
+      { "id": "bus_stop", "type": "busstop", "x": 6, "z": -2, "rot": 0, "state": "ok", "label": "Bus stop roof – patched by you" },
+      { "id": "streetlight", "type": "streetlight", "x": -5, "z": -2, "rot": 0, "state": "broken" },
+      { "id": "flat", "type": "house", "x": 22, "z": 8, "rot": 180, "state": "ok", "label": "Your flat" },
+      { "id": "school", "type": "school", "x": 8, "z": 8, "rot": 180, "state": "ok", "label": "School" },
+      { "id": "park", "type": "park", "x": -8, "z": 10, "rot": 0, "state": "ok", "label": "Park wall – rebuilt by you" },
+      { "id": "keller_house", "type": "house", "x": -22, "z": 8, "rot": 90, "state": "ok", "label": "Frau Keller's house" },
+      { "id": "keller_garden", "type": "garden", "x": -22, "z": 17, "rot": 90, "state": "ok", "label": "Keller's wall – built by you" },
+      { "id": "playground", "type": "playground", "x": 8, "z": 18, "rot": 0, "state": "broken" },
+      { "id": "yard", "type": "yard", "x": 22, "z": 19, "rot": 180, "state": "ok", "label": "Brandt Bau yard" },
+      { "id": "bridge", "type": "bridge", "x": 0, "z": 32, "rot": 0, "state": "broken" }
+    ],
+    "avatar": { "skin": 2, "hair": 1, "face": 1, "extra": "cap", "owned": ["flower", "cap"] }
+  }
+}

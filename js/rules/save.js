@@ -63,3 +63,42 @@ export function migrate(save) {
   s.avatar = cleanAvatar(save.avatar); // 0.1 saves have none: the default look
   return s;
 }
+
+// ---- the save wrapper (build 0.2.2): main.js keeps { v, t, meta, save, synced } in localStorage, the cloud a copy of it ----
+// t is the game clock; synced = { id, t }: the user and the cloud play_t this device last wrote or loaded.
+
+// real progress: something a player would miss
+export function progress(w) {
+  const s = w && w.save;
+  return kind(s) === 'object' && (s.day > 1 || s.money > 0 || s.rank > 0 || (Array.isArray(s.jobs) && s.jobs.length > 0));
+}
+
+// which save to play when both exist: 'local', 'cloud' or 'ask' (the choice card). cloud = net.cloudLoad()'s row.
+// Never silently drops a save with more progress: only an ancestor (by the synced mark) or an empty save loses.
+export function pickSave(local, cloud, uid) {
+  if (!cloud) return 'local';
+  if (!local) return 'cloud';
+  const near = (a, b) => Math.abs(a - b) < 0.01;
+  const mark = local.synced && local.synced.id === uid ? +local.synced.t : NaN;
+  if (near(+cloud.play_t, mark)) return 'local';  // the cloud hasn't moved since this device synced
+  if (near(+local.t, mark)) return 'cloud';       // this device hasn't moved since
+  if (!progress(cloud.save)) return 'local';
+  if (!progress(local)) return 'cloud';
+  if (JSON.stringify(local.save) === JSON.stringify(cloud.save.save)) return 'local';
+  return 'ask';
+}
+
+// export / import codes: base64 of the wrapper's JSON (UTF-8, so names like "Jürgen" survive); imports go through migrate
+export function encodeSave(w) {
+  let bin = '';
+  for (const b of new TextEncoder().encode(JSON.stringify({ v: 1, t: w.t, meta: w.meta, save: w.save }))) bin += String.fromCharCode(b);
+  return btoa(bin);
+}
+export function decodeSave(code) {
+  try {
+    const bin = atob(String(code).replace(/\s+/g, ''));
+    const w = JSON.parse(new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0))));
+    if (kind(w) !== 'object' || kind(w.save) !== 'object') return null;
+    return { v: 1, t: Number.isFinite(+w.t) ? Math.max(0, +w.t) : 0, meta: kind(w.meta) === 'object' ? w.meta : {}, save: migrate(w.save) };
+  } catch { return null; }
+}

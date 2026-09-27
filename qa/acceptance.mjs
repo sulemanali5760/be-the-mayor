@@ -1,9 +1,10 @@
 // Automated acceptance run (GitHub Actions): headless Chrome plays the first 15 minutes at desktop,
-// small-window and phone sizes, checks B1–B4 of build 0.1 and C1–C4 of build 0.2, and saves screenshots to qa/out/.
+// small-window and phone sizes, checks B1–B4 of build 0.1, C1–C4 of build 0.2 and E3 of build 0.2.2 (saves), and saves
+// screenshots to qa/out/.
 //   node qa/acceptance.mjs http://localhost:8080/
 // Offline mode (?offline=1): CI never talks to the live Supabase project. Time is the game clock (LESSONS T6).
 import { chromium } from 'playwright';
-import { mkdirSync, writeFileSync, appendFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, appendFileSync, readFileSync } from 'node:fs';
 
 const BASE = (process.argv[2] || 'http://localhost:8080/') + '?q=low&offline=1';
 const FULL = (process.argv[2] || 'http://localhost:8080/') + '?offline=1'; // C3: the real phone look (outlines, shadows)
@@ -228,6 +229,138 @@ async function perf(page, n = 60) {
 }
 const perfNote = p => `JS ${p.ms} ms (median of ${p.n}), ${p.calls} draw calls, ${p.triangles} triangles`;
 
+// ---- E3 (build 0.2.2): saves survive a reload, export/import and a second device ---------------------------------------
+const facts = () => { const s = __btm.life.state; return { name: s.name, town: s.town, day: s.day, money: s.money, rep: s.rep, rank: s.rank }; };
+const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+const ready = page => page.waitForFunction(() => window.__btm?.life && __btm.mode === 'town', null, { timeout: 120000 });
+// the next page load (a reload the game does itself)
+const reloaded = (page, act) => Promise.all([page.waitForNavigation({ timeout: 120000 }), act()]).then(() => ready(page));
+async function closeCards(page) { // the newspaper and events that greet a loaded save
+  for (let i = 0; i < 8 && await page.isVisible('#modal'); i++) {
+    const ids = await page.$$eval('#card [data-opt]:not([disabled])', bs => bs.map(b => b.dataset.opt));
+    await page.click(`#card [data-opt="${ids.includes('ok') ? 'ok' : ids.find(x => x) ?? ids[0]}"]`);
+    await page.waitForTimeout(300);
+  }
+}
+
+async function saveRoundTrip(page) {
+  await page.evaluate(() => { __btm.clock.running = false; }); // nothing may happen between reading and reloading
+  const before = await page.evaluate(facts);
+  await page.reload();
+  await ready(page);
+  const after = await page.evaluate(facts);
+  check('desktop', 'E3 play → reload → same day, money and rank', same(before, after), `${JSON.stringify(before)} → ${JSON.stringify(after)}`);
+
+  // ⚙ → Export save code, then "Start a new life", then ⚙ → Import save code
+  await closeCards(page);
+  await page.click('#gear');
+  await shot(page, 'desktop-10-settings');
+  await page.click('#card [data-opt="export"]');
+  const code = await page.inputValue('#saveCode');
+  const exported = await page.evaluate(facts);
+  await page.click('#card [data-opt="ok"]');
+  await page.click('#ladder');
+  await page.click('#sheetBody [data-act="restart"]');
+  await Promise.all([page.waitForNavigation({ timeout: 120000 }), page.click('#card [data-opt="yes"]')]);
+  await page.waitForSelector('#inName', { timeout: 120000 });
+  await page.click('#card [data-opt="go"]');
+  await ready(page);
+  const fresh = await page.evaluate(facts);
+  await closeCards(page);
+  await page.click('#gear');
+  await page.click('#card [data-opt="import"]');
+  await page.fill('#saveCode', code);
+  await page.click('#card [data-opt="go"]');
+  const confirm = await page.textContent('#card');
+  await reloaded(page, () => page.click('#card [data-opt="yes"]'));
+  const back = await page.evaluate(facts);
+  check('desktop', 'E3 export then import round-trips', code.length > 500 && fresh.day === 1 && fresh.money === 0 && same(exported, back),
+    `code ${code.length} chars; new life ${JSON.stringify(fresh)}; card “${confirm.replace(/\s+/g, ' ').slice(0, 120)}”; imported ${JSON.stringify(back)} vs exported ${JSON.stringify(exported)}`);
+}
+
+// A second device, with the Supabase project stubbed by page.route: nothing reaches the live project (every request to its
+// host is answered here). The local save is 0.1.0's fixture, the cloud save 0.2.1's: the choice card must offer both.
+const FIX = v => JSON.parse(readFileSync(`js/rules/fixtures/saves/${v}.json`, 'utf8'));
+const HOST = /^https:\/\/espwhkntmxbanzbvnnqg\.supabase\.co\//;
+const UID = '0b7e5f6a-2c1d-4e3f-9a8b-7c6d5e4f3a2b';
+function stubSession() {
+  const b64 = o => Buffer.from(JSON.stringify(o)).toString('base64url'), exp = Math.floor(Date.now() / 1000) + 7200;
+  const user = { id: UID, aud: 'authenticated', role: 'authenticated', email: '', is_anonymous: true, app_metadata: { provider: 'anonymous', providers: ['anonymous'] }, user_metadata: {}, identities: [], created_at: new Date().toISOString() };
+  return { access_token: `${b64({ alg: 'HS256', typ: 'JWT' })}.${b64({ sub: UID, role: 'authenticated', aud: 'authenticated', exp, is_anonymous: true })}.stub`,
+    token_type: 'bearer', expires_in: 7200, expires_at: exp, refresh_token: 'stub', user };
+}
+async function stubbedDevice(local, cloud) {
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const session = stubSession(), writes = [], errors = [];
+  let row = cloud && { save: cloud, version: '0.2.1', play_t: cloud.t, updated_at: '2026-09-27T10:00:00Z' };
+  await ctx.addInitScript(([local, session]) => {
+    if (!localStorage.getItem('btm.save.v1')) localStorage.setItem('btm.save.v1', JSON.stringify(local));
+    localStorage.setItem('sb-espwhkntmxbanzbvnnqg-auth-token', JSON.stringify(session));
+  }, [local, session]);
+  await ctx.route(HOST, route => {
+    const req = route.request(), path = new URL(req.url()).pathname, m = req.method();
+    const cors = { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET, POST, PATCH, DELETE, OPTIONS',
+      'access-control-allow-headers': req.headers()['access-control-request-headers'] || 'authorization, apikey, content-type, prefer, x-client-info' };
+    const json = (body, status = 200) => route.fulfill({ status, headers: { ...cors, 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    if (m === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
+    if (path.startsWith('/auth/v1/user')) return json(session.user);
+    if (path.startsWith('/auth/v1/')) return json(session);
+    if (path === '/rest/v1/saves') {
+      if (m === 'GET') return json(row ? [row] : []);
+      const body = JSON.parse(req.postData() || 'null');
+      writes.push({ m, body });
+      row = { ...body, updated_at: new Date().toISOString() }; // the stub remembers, like the server
+      return m === 'PATCH' ? json([{ id: UID }]) : route.fulfill({ status: 201, headers: cors, body: '' });
+    }
+    return json([]); // towns, interactions, rpc: an empty online world
+  });
+  const page = await ctx.newPage();
+  page.setDefaultTimeout(60000);
+  page.on('pageerror', e => errors.push(String(e)));
+  page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+  await page.goto(BASE.replace('&offline=1', ''));
+  return { ctx, page, writes, errors };
+}
+
+async function cloudChoice() {
+  const local = FIX('0.1.0'), cloud = FIX('0.2.1');
+  const line = w => `Day ${w.save.day} · ${w.meta.title} · €${w.save.money}`;
+  // device 1 picks the cloud; a reload then loads it without asking again
+  {
+    const { ctx, page, errors } = await stubbedDevice(local, cloud);
+    try {
+      await page.waitForSelector('#card [data-opt="cloud"]', { timeout: 120000 });
+      const text = (await page.textContent('#card')).replace(/\s+/g, ' ');
+      await shot(page, 'desktop-11-choice-card');
+      await page.click('#card [data-opt="cloud"]');
+      await ready(page);
+      const got = await page.evaluate(facts);
+      await page.reload();
+      await ready(page);
+      const again = await page.evaluate(() => ({ asked: __btm.qa.choice.length, online: __btm.net.online, day: __btm.life.state.day, synced: __btm.synced }));
+      check('desktop', 'E3 choice card: both saves shown, cloud picked', text.includes(line(local)) && text.includes(line(cloud)) && got.day === 7 && got.rank === 1 && got.money === 310 && got.town === cloud.save.town,
+        `card “${text.slice(0, 200)}”; loaded ${JSON.stringify(got)}`);
+      check('desktop', 'E3 after picking, a reload asks nothing', again.online && again.asked === 0 && again.day === 7, `${JSON.stringify(again)}; errors: ${errors.slice(0, 2).join(' | ') || 'none'}`);
+    } catch (e) { check('desktop', 'E3 choice card (cloud)', false, String(e.message).split('\n')[0]); await shot(page, 'desktop-x-choice-cloud'); }
+    await ctx.close();
+  }
+  // device 2 keeps this device's save; it is uploaded to the cloud at once
+  {
+    const { ctx, page, writes, errors } = await stubbedDevice(local, cloud);
+    try {
+      await page.waitForSelector('#card [data-opt="local"]', { timeout: 120000 });
+      await page.click('#card [data-opt="local"]');
+      await ready(page);
+      const got = await page.evaluate(facts);
+      await page.waitForFunction(() => __btm.qa.cloud.some(c => c.ok), null, { timeout: 60000 });
+      const up = writes.find(w => w.body?.save?.save);
+      check('desktop', 'E3 choice card: this device picked and uploaded', got.day === 2 && got.money === 40 && up?.body.save.save.day === 2 && up.body.play_t >= local.t && !!up.body.version,
+        `loaded ${JSON.stringify(got)}; upload ${up ? `${up.m} day ${up.body.save.save.day}, play_t ${up.body.play_t}, version ${up.body.version}` : 'none'}; errors: ${errors.slice(0, 2).join(' | ') || 'none'}`);
+    } catch (e) { check('desktop', 'E3 choice card (local)', false, String(e.message).split('\n')[0]); await shot(page, 'desktop-x-choice-local'); }
+    await ctx.close();
+  }
+}
+
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 for (const v of VIEWS) {
   const ctx = await browser.newContext({ viewport: v.viewport, isMobile: v.isMobile, hasTouch: v.hasTouch, deviceScaleFactor: v.deviceScaleFactor || 1, acceptDownloads: true });
@@ -344,6 +477,8 @@ for (const v of VIEWS) {
 
     const bad = [...b4a.bad, ...b4b.bad.map(x => 'jobs sheet: ' + x), ...b4c.bad.map(x => 'visit: ' + x)];
     check(v.name, 'B4 layout: no overlaps', bad.length === 0, bad.join('; ') || `checked ${[...new Set([...b4a.seen, ...b4b.seen, ...b4c.seen])].join(' ')}`);
+
+    if (v.name === 'desktop') await saveRoundTrip(page);
   } catch (e) {
     // the first lines of a Playwright error carry the call log (e.g. which element intercepts the click)
     check(v.name, 'run', false, `${String(e.message).split('\n').slice(0, 5).join(' / ')}; bot: ${botLog.slice(-6).join(' · ')}`);
@@ -377,6 +512,7 @@ for (const v of VIEWS) {
   }
   await ctx.close();
 }
+await cloudChoice();
 await browser.close();
 
 const table = ['| view | check | result | notes |', '|---|---|---|---|', ...results.map(r => `| ${r.view} | ${r.id} | ${r.ok ? '✅' : '❌'} | ${r.note.replace(/\|/g, '/')} |`)].join('\n');

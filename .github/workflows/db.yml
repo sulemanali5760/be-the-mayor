@@ -23,8 +23,9 @@ jobs:
       - name: Start local Supabase (applies supabase/migrations)
         run: supabase start
       - run: npm install --no-save @supabase/supabase-js@2
-      - name: Policy tests
+      - name: Policy and save tests
         run: |
           eval "$(supabase status -o env)"
           export SUPABASE_URL="$API_URL" SUPABASE_ANON_KEY="${ANON_KEY:-$PUBLISHABLE_KEY}"
-          node --test supabase/tests/policies.test.mjs
+          export SUPABASE_SERVICE_KEY="${SERVICE_ROLE_KEY:-$SECRET_KEY}" # the runner's own local stack, never a real key
+          node --test supabase/tests/*.test.mjs

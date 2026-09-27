@@ -15,8 +15,8 @@ port = 54322
 [studio]
 enabled = false
 
-[inbucket]
-enabled = false
+[inbucket] # the local mail catcher: an email change or magic link has somewhere to go on the runner
+enabled = true
 
 [storage]
 enabled = false
@@ -38,3 +38,9 @@ enable_anonymous_sign_ins = true
 
 [auth.rate_limit]
 anonymous_users = 1000
+
+# emails confirm at once here, and the save tests make magic links with the admin API instead of reading the inbox.
+# The live project keeps "Confirm email" on, so there the player clicks the link.
+[auth.email]
+enable_signup = true
+enable_confirmations = false

@@ -6,7 +6,7 @@ const Q = new URLSearchParams(location.search);
 const imp = p => import(`${p}?v=${V}`);
 const $ = id => document.getElementById(id);
 
-const [{ createLife, CONTENT }, { newSave, migrate }, { createWorld }, ui, { drawPromo, downloadPng }, { net }, config] = await Promise.all([
+const [{ createLife, CONTENT }, { newSave, migrate, pickSave, encodeSave, decodeSave }, { createWorld }, ui, { drawPromo, downloadPng }, { net }, config] = await Promise.all([
   imp('./rules/life.js'), imp('./rules/save.js'), imp('./world/world.js'), imp('./ui/ui.js'), imp('./ui/promo.js'), imp('./net/net.js'), imp('./net/config.js'),
 ]);
 const { esc, chips, toast, card } = ui;
@@ -15,10 +15,21 @@ const content = Object.fromEntries(await Promise.all(CONTENT.map(async f => [f, 
 
 // ---- the one game clock: seconds of play, advancing only while the game runs and the tab is visible ----------
 const clock = { t: 0, speed: 1, running: false };
-const qa = { tasks: [], quick: [], visits: [], promo: null, tod: [], avatar: [], walks: [], ms: [] }; // evidence for qa/acceptance.mjs
+const qa = { tasks: [], quick: [], visits: [], promo: null, tod: [], avatar: [], walks: [], ms: [], choice: [], cloud: [] }; // evidence for qa/acceptance.mjs
 
-// ---- local save: { v, t, meta, save }; life.state is the rules' save object, meta is the shell's own ---------
+// ---- local save: { v, t, meta, save, synced }; life.state is the rules' save object, meta is the shell's own ---------
+// synced (0.2.2) = { id, t }: the user and the cloud play_t this device last wrote or loaded (js/rules/save.js pickSave)
 const KEY = 'btm.save.v1';
+const BAK = 'btm.save.bak'; // the save a choice card, an import or a new life replaced, kept just in case
+const FRESH = 'btm.fresh';  // "Start a new life" until the new one is saved: the cloud's old life must not come back
+let synced = null, leaving = false; // leaving: a reload is replacing the save, so nothing may write the old one back
+// cloud sync state (see "cloud save" below): checked = this session has compared the cloud save with ours
+let cloudChecked = false, cloudDirty = false, cloudBusy = false, cloudTry = 0, cloudAt = 0, cloudMsg = '', sinceCloud = 0;
+// ponytail: real time between cloud writes, not the game clock, because the limit is the server's; a fixed 21 s gap, no backoff
+const CLOUD_GAP = 21000;
+const rankTitle = n => content.ranks.find(r => r.rank === n)?.title || 'Labourer';
+const saveLine = w => { const s = migrate(w?.save); return `Day ${s.day} · ${rankTitle(s.rank)} · €${Math.round(s.money)}`; };
+const fromCloud = c => ({ ...c.save, synced: { id: net.account().id, t: c.play_t } });
 const META = { jobs: 0, choices: 0, visits: 0, paper: [], hook: '', seenAt: 0, title: '' };
 const TOD = [0.75, 0.55, 0.3, 0]; // time of day by slots left 3/2/1/0 (morning … evening); sleeping is night (1)
 const WALK = 3;                   // the walk before an action: at most 3 s of game time
@@ -27,8 +38,18 @@ function loadSaved() {
   try { const w = JSON.parse(localStorage.getItem(KEY)); if (w && w.save) return w; } catch { /* no save or unreadable: new game */ }
   return null;
 }
+const wrap = () => ({ v: 1, t: clock.t, meta, save: life.state, synced });
 function persist() {
-  try { localStorage.setItem(KEY, JSON.stringify({ v: 1, t: clock.t, meta, save: life.state })); } catch { /* storage full or blocked */ }
+  if (leaving) return;
+  try { localStorage.setItem(KEY, JSON.stringify(wrap())); } catch { /* storage full or blocked */ }
+}
+function keep(w) { try { if (w) localStorage.setItem(BAK, JSON.stringify(w)); } catch { /* best effort */ } }
+// replaces the local save and reloads (a choice card mid-game, an import): the load path runs everything through migrate
+function replaceWith(w) {
+  keep(wrap());
+  try { localStorage.setItem(KEY, JSON.stringify(w)); } catch { toast('This browser blocks saving, so that did not work'); return; }
+  leaving = true;
+  location.reload();
 }
 
 const world = createWorld($('view'), content);
@@ -37,12 +58,22 @@ const { buildings: _, ...layout } = content.town;
 const draw = s => world.showTown({ ...s, ...layout });
 if (Q.has('reset')) localStorage.removeItem(KEY);
 await net.init(Q.has('offline') ? null : config.default);
-$('boot').hidden = true;
 
-const saved = loadSaved();
+// build 0.2.2: the cloud copy may be newer (another device, a cleared browser); pickSave decides, a card asks on a real conflict
+let saved = loadSaved();
+const cloud = await cloudRead();
+$('boot').hidden = true;
+const fresh = (() => { try { return !!localStorage.getItem(FRESH); } catch { return false; } })();
+if (cloud && !fresh) {
+  let use = pickSave(saved, cloud, net.account().id);
+  if (use === 'ask') { draw(content.town); use = await chooseSave(saved, cloud); }
+  if (use === 'cloud') { keep(saved); saved = fromCloud(cloud); }
+}
+synced = saved?.synced ?? null;
 if (saved) {
   clock.t = +saved.t || 0;
   meta = { ...META, ...saved.meta };
+  for (const k in META) if (typeof meta[k] !== typeof META[k] || Array.isArray(meta[k]) !== Array.isArray(META[k])) meta[k] = META[k]; // imported codes
   life = createLife(content, migrate(saved.save));
 } else {
   draw(content.town); // the town behind the character creator
@@ -57,6 +88,8 @@ world.onPick(pick);
 clock.running = true;
 refresh();
 persist();
+if (fresh) try { localStorage.removeItem(FRESH); } catch { /* blocked */ }
+cloudDirty = !synced || synced.id !== net.account().id || Math.abs(clock.t - synced.t) > 0.01; // the cloud lacks what we have
 if (saved) whileAway();
 
 // ---- helpers over the rules' state -----------------------------------------------------------------------------
@@ -472,12 +505,149 @@ function pick({ id }) {
 function after() {
   refresh();
   persist();
+  cloudDirty = true;
 }
 
 async function restart() {
-  const ok = await card({ html: '<h2>Start a new life?</h2><p>Your town and progress on this device are replaced.</p>',
+  const ok = await card({ html: '<h2>Start a new life?</h2><p>Your town and progress are replaced, on this device and in your cloud save.</p>',
     options: [{ id: 'yes', html: 'Yes, start over' }, { id: '', html: 'Keep playing' }] });
-  if (ok) { localStorage.removeItem(KEY); location.reload(); }
+  if (!ok) return;
+  leaving = true; // pagehide must not save the old life back
+  keep(wrap());
+  try { localStorage.removeItem(KEY); localStorage.setItem(FRESH, '1'); } catch { /* blocked storage: nothing to replace */ }
+  location.reload();
+}
+
+// ---- cloud save (build 0.2.2): after actions, every 60 s of play and on hide; the server takes one write per 20 s --------
+// the cloud row, null when there is none, undefined when it can't be read: then nothing is uploaded until it can be
+async function cloudRead() {
+  if (!net.online) return undefined;
+  try {
+    const row = await Promise.race([net.cloudLoad(), new Promise((_, no) => setTimeout(() => no(new Error('timed out')), 8000))]);
+    cloudChecked = true;
+    return row;
+  } catch (e) { console.warn('cloud save not reachable:', e.message); return undefined; }
+}
+
+async function chooseSave(local, cloud) {
+  const here = saveLine(local), there = saveLine(cloud.save), newer = cloud.play_t > (+local.t || 0) ? 'cloud' : 'local';
+  const id = await card({
+    html: `<div class="eyebrow">Two saves</div><h2>Which life do you want to keep playing?</h2>
+      <p>This device and your cloud save have gone different ways. The one you don't pick is kept as a backup.</p>`,
+    options: [{ id: 'local', go: newer === 'local', html: `📱 This device: ${esc(here)}` }, { id: 'cloud', go: newer === 'cloud', html: `☁️ Cloud: ${esc(there)}` }],
+  });
+  qa.choice.push({ here, there, id });
+  return id;
+}
+
+// the start couldn't read the cloud: compare now, before the first upload; mid-game a different cloud save always asks
+async function recheck() {
+  const c = await cloudRead();
+  if (c === undefined) return false;
+  if (c && pickSave(wrap(), c, net.account().id) !== 'local' && await chooseSave(wrap(), c) === 'cloud') {
+    replaceWith(fromCloud(c));
+    return false;
+  }
+  return true;
+}
+
+async function sync() {
+  if (leaving || !net.online || cloudBusy || Date.now() - cloudTry < CLOUD_GAP) return;
+  cloudBusy = true;
+  cloudTry = Date.now();
+  try {
+    if (!cloudChecked && !(await recheck())) return;
+    if (!cloudDirty) return;
+    cloudDirty = false; // before the upload: anything that happens meanwhile marks it again
+    const w = wrap();
+    const r = await net.cloudSave(w, { version: V, play_t: w.t });
+    qa.cloud.push({ ok: r.ok, msg: r.msg || '' });
+    if (r.ok) { cloudAt = Date.now(); cloudMsg = ''; synced = { id: net.account().id, t: r.play_t }; persist(); }
+    else { cloudDirty = true; cloudMsg = r.msg; } // offline or too soon: try again later
+  } finally { cloudBusy = false; }
+}
+
+function cloudLine() {
+  if (!net.online) return 'Only on this device (offline)';
+  if (!cloudAt && (cloudDirty || !cloudChecked)) return cloudMsg ? `Only on this device for now: ${cloudMsg}` : 'Only on this device for now';
+  const s = Math.round((Date.now() - cloudAt) / 1000);
+  const ago = !cloudAt ? '' : s < 60 ? ` · ${s} s ago` : s < 3600 ? ` · ${Math.round(s / 60)} min ago` : ` · ${Math.round(s / 3600)} h ago`;
+  return `Saved to cloud${ago}${net.account().anonymous ? ', but only this browser can open it' : ''}`;
+}
+
+// ⚙ settings: the account, the cloud status, export and import
+async function settings() {
+  const a = net.account();
+  const who = !net.online ? '<p>Playing offline. Your progress is saved on this device.</p>'
+    : a.anonymous ? `<p>Add your email so a cleared browser, incognito or a new phone can't take your town away.</p>
+      ${a.pending ? `<p class="status">📬 Waiting for you to tap the link we sent to ${esc(a.pending)}.</p>` : ''}
+      <label>Email<input id="inEmail" type="email" autocomplete="email" maxlength="254" placeholder="you@example.com"></label>`
+    : `<p>Signed in as <b>${esc(a.email || 'you')}</b>. Your progress follows you to any device.</p>`;
+  const id = await card({
+    html: `<div class="eyebrow">Settings</div><h2>Your progress</h2><p class="status" id="cloudStatus">${esc(cloudLine())}</p>${who}<p class="status" id="mailMsg"></p>`,
+    options: [
+      ...(net.online && a.anonymous ? [{ id: 'link', go: true, html: '💾 Save my progress' }, { id: 'login', html: '🔑 Log in on this device' }] : []),
+      ...(net.online && !a.anonymous ? [{ id: 'logout', html: 'Log out' }] : []),
+      { id: 'export', html: '📤 Export save code' }, { id: 'import', html: '📥 Import save code' }, { id: '', html: 'Close' },
+    ],
+    act: (id, el) => {
+      if (id !== 'link' && id !== 'login') return false;
+      const input = el.querySelector('#inEmail'), msg = el.querySelector('#mailMsg'), email = input.value.trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { msg.textContent = 'Type your email address first.'; input.focus(); return true; }
+      msg.textContent = 'Sending…';
+      (id === 'link' ? net.linkEmail(email) : net.signInEmail(email)).then(r => {
+        qa.cloud.push({ act: id, ok: r.ok, msg: r.msg || '' });
+        msg.textContent = r.ok ? `📬 Check your inbox at ${email} and tap the link${id === 'login' ? ' on this device' : ''}.` : r.msg;
+      });
+      return true;
+    },
+  });
+  if (id === 'export') exportSave();
+  else if (id === 'import') importSave();
+  else if (id === 'logout') {
+    const r = await net.signOut();
+    cloudChecked = false; cloudAt = 0; synced = null; cloudDirty = true;
+    persist();
+    toast(esc(r.ok ? 'Logged out. Your progress stays on this device.' : r.msg));
+  }
+}
+
+async function exportSave() {
+  const code = encodeSave(wrap());
+  await card({
+    html: `<div class="eyebrow">Export</div><h2>Your save code</h2><p>Keep it somewhere safe, e.g. in an email to yourself. <b>Import save code</b> brings this life back on any device.</p>
+      <textarea id="saveCode" readonly rows="5" spellcheck="false">${esc(code)}</textarea><p class="status"></p>`,
+    options: [{ id: 'copy', go: true, html: '📋 Copy' }, { id: 'ok', html: 'Done' }],
+    act: (id, el) => {
+      if (id !== 'copy') return false;
+      el.querySelector('#saveCode').select();
+      const done = ok => { el.querySelector('.status').textContent = ok ? 'Copied.' : 'Select the code and copy it.'; };
+      (navigator.clipboard ? navigator.clipboard.writeText(code) : Promise.reject()).then(() => done(true), () => done(false));
+      return true;
+    },
+  });
+}
+
+// every import goes through migrate (decodeSave); the cloud mark stays, so the imported life is what gets uploaded next
+async function importSave() {
+  let w = null;
+  const id = await card({
+    html: `<div class="eyebrow">Import</div><h2>Paste a save code</h2><textarea id="saveCode" rows="5" spellcheck="false" placeholder="Paste the code here"></textarea><p class="err"></p>`,
+    options: [{ id: 'go', go: true, html: 'Import' }, { id: '', html: 'Cancel' }],
+    act: (id, el) => {
+      if (!id) return false;
+      w = decodeSave(el.querySelector('#saveCode').value);
+      if (w) return false;
+      el.querySelector('.err').textContent = 'That code does not work. Copy the whole code and try again.';
+      return true;
+    },
+  });
+  if (!id || !w) return;
+  const ok = await card({
+    html: `<h2>Replace your progress on this device?</h2><p>Now: ${esc(saveLine(wrap()))}<br>Save code: ${esc(saveLine(w))}</p>`,
+    options: [{ id: 'yes', go: true, html: 'Yes, load the code' }, { id: '', html: 'Keep playing' }],
+  });
+  if (ok) replaceWith({ ...w, synced });
 }
 
 // ---- input ------------------------------------------------------------------------------------------------------
@@ -506,10 +676,11 @@ $('sheetBody').onclick = e => {
   else if (b.dataset.act === 'restart') restart();
 };
 $('visitbar').onclick = e => { const b = e.target.closest('[data-visit]'); if (b && !b.disabled) visitAct(b.dataset.visit, b); };
+$('gear').onclick = () => { if (mode === 'town' && !ui.cardOpen()) settings(); };
 addEventListener('resize', () => document.documentElement.style.setProperty('--topH', $('top').offsetHeight + 'px'));
-// session end: keep the local save and upload the town snapshot (the server takes one a minute)
-addEventListener('visibilitychange', () => { if (document.hidden) { persist(); net.saveTown(life.snapshot()); } });
-addEventListener('pagehide', persist);
+// session end: keep the local save, upload the town snapshot (the server takes one a minute) and the cloud save
+addEventListener('visibilitychange', () => { if (document.hidden) { persist(); net.saveTown(life.snapshot()); sync(); } });
+addEventListener('pagehide', () => { persist(); sync(); });
 
 // ---- main loop ----------------------------------------------------------------------------------------------------
 let last = performance.now(), sinceSave = 0;
@@ -541,6 +712,8 @@ function frame(now) {
     ui.bubbles(mode === 'town' ? life.problems().map(p => ({ id: p.at || p.who, key: p.id, text: p.title })) : [], world.anchors(), openProblem);
   }
   if ((sinceSave += dt) > 10) { sinceSave = 0; persist(); }
+  if ((sinceCloud += dt) > 60) { sinceCloud = 0; cloudDirty = true; } // every 60 s of play
+  if (cloudDirty) sync(); // returns at once while a write is running or the 20 s limit isn't up
   if (mode === 'town') { qa.ms.push(performance.now() - js); if (qa.ms.length > 120) qa.ms.shift(); }
   requestAnimationFrame(frame);
 }
@@ -549,5 +722,6 @@ requestAnimationFrame(frame);
 // ---- QA hooks (qa/acceptance.mjs): the game clock, not real time ------------------------------------------------
 window.__btm = {
   V, clock, content, world, net, qa, TOD, get life() { return life; }, get mode() { return mode; }, get meta() { return meta; }, get tod() { return tod; }, stats,
+  get synced() { return synced; },
   advance(sec) { clock.t += sec; handle(life.tick(clock.t)); }, // skip ahead in game time, e.g. to finish a course
 };
