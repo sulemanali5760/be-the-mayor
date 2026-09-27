@@ -18,38 +18,54 @@ const town = [
   { id: 'dump2', type: 'dump_pile', x: -32, z: -28, rot: 0, state: 'ok' },
   { id: 'yard', type: 'yard', x: 32, z: -28, rot: 180, state: 'ok', label: 'Brandt Bau yard' },
 ];
+// the layout data/town.json carries in 0.2 (build 02 §3.3): roads, paths, props, homes and work
+const content = {
+  people: [{ id: 'ann', name: 'Ann', role: 'baker' }, { id: 'bo', name: 'Bo', role: 'teacher' }, { id: 'cy', name: 'Cy', role: 'pensioner' }, { id: 'rex', name: 'Rex', role: "Cy's dachshund" }],
+  town: { buildings: town, roads: [[[-45, 8], [45, 8]], [[-45, -36], [45, -36]]], paths: [[[-15, 8], [-15, 3]]],
+    props: [{ type: 'bench', x: -20, z: 5, rot: 0 }, { type: 'lamp', x: 8, z: 5.5 }, { type: 'tree', x: 50, z: 20 }], homes: { ann: 'house' }, work: { ann: 'shop' } },
+};
+// the solid footprints of the front row [x, z, half w, half d]: a walk may never enter one
+const SOLID = [[-30, 0, 3.5, 2.5], [-15, 0, 3, 2.5], [0, 0, 3.5, 2.5], [18, 0, 6, 3], [10, -22, 6, 4]];
 const html = `<!doctype html><html><head><meta charset="utf-8">
 <style>html,body{margin:0;height:100%;overflow:hidden}canvas{display:block;width:100vw;height:100vh}</style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
 "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}</script></head>
 <body><canvas id="view"></canvas><script type="module">
 const { createWorld } = await import('./js/world/world.js?v=smoke');
-const w = createWorld(document.getElementById('view'), {});
+const w = createWorld(document.getElementById('view'), ${JSON.stringify(content)});
 w.showTown({ town: ${JSON.stringify(town)} });
 window.picks = [];
 w.onPick(p => picks.push(p.id));
 window.step = (n = 1, dt = 0.1) => { for (let i = 0; i < n; i++) w.frame(dt); };
 window.run = (kind, params) => { window.res = null; w.playTask(kind, params).then(r => { window.res = r; }, e => { window.res = { error: String(e) }; }); };
+window.walk = id => { window.walked = null; w.walkTo(id).then(r => { window.walked = r; }); };
 step(1);
 window.ready = true;
 </script></body></html>`;
 
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
-const page = await browser.newPage({ viewport: { width: 960, height: 600 } });
 const errors = [];
-page.on('pageerror', e => errors.push(String(e)));
-page.on('console', m => { if (m.type() === 'error' && !/favicon/.test(m.text() + m.location().url)) errors.push(m.text()); });
-await page.route(/\/__smoke\.html(\?|$)/, r => r.fulfill({ contentType: 'text/html', body: html }));
-await page.goto(`${base}__smoke.html?q=low`);
-await page.waitForFunction(() => window.ready, null, { timeout: 60000 }).catch(e => { console.log('page errors:', errors); throw e; });
+async function open(query) {
+  const p = await browser.newPage({ viewport: { width: 960, height: 600 } });
+  p.on('pageerror', e => errors.push(String(e)));
+  p.on('console', m => { if (m.type() === 'error' && !/favicon/.test(m.text() + m.location().url)) errors.push(m.text()); });
+  await p.route(/\/__smoke\.html(\?|$)/, r => r.fulfill({ contentType: 'text/html', body: html }));
+  await p.goto(`${base}__smoke.html${query}`);
+  await p.waitForFunction(() => window.ready, null, { timeout: 90000 }).catch(e => { console.log('page errors:', errors); throw e; });
+  return p;
+}
+let page = await open('?q=low');
 const W = (fn, arg) => page.evaluate(fn, arg);
 const step = (n, dt = 0.1) => W(([n, dt]) => step(n, dt), [n, dt]);
 const check = (name, fn) => fn().then(() => console.log(`ok   ${name}`), e => { console.log(`FAIL ${name}: ${e.message}`); process.exitCode = 1; });
+const inside = ([x, z]) => SOLID.some(([cx, cz, hw, hd]) => Math.abs(x - cx) < hw && Math.abs(z - cz) < hd);
+const sat = ([r, g, b]) => (Math.max(r, g, b) - Math.min(r, g, b)) / Math.max(1, r, g, b);
+const median = a => a.slice().sort((x, y) => x - y)[Math.floor(a.length / 2)];
 
 await check('showTown builds every building, anchors are finite', async () => {
   assert.equal((await W(() => __btmWorld.stats())).buildings, town.length);
   const a = await W(() => __btmWorld.world.anchors());
-  assert.equal(a.length, town.length);
+  assert.equal(a.filter(p => p.kind === 'building').length, town.length);
   assert.ok(a.every(p => Number.isFinite(p.x) && Number.isFinite(p.y)));
   assert.ok(a.filter(p => p.visible).length >= 5, 'most of the town is on screen');
 });
@@ -101,6 +117,7 @@ await check('delivery: a drawn route through 3 stops gets 3 stars, and the town 
   await until(() => __btmWorld.task(), 20);
   const info = await W(() => __btmWorld.task());
   assert.equal(info.kind, 'delivery'); assert.equal(info.total, 3); assert.equal(info.barrier, null); assert.equal(info.limit, 45);
+  assert.equal((await W(() => __btmWorld.avatar())).visible, false, 'you drive the van: the avatar steps out of the town');
   await draw(route);
   await until(() => window.res, 120);
   const res = await W(() => window.res);
@@ -144,11 +161,13 @@ await check('delivery twist "closed road": the barrier blocks the direct leg; a 
   assert.ok(res.stars >= 1 && res.seconds <= 45, JSON.stringify(res));
 });
 
-await check('wall (twist rain): tapping lays and levels bricks; it always ends by 90 s with a star', async () => {
-  await W(() => run('wall', { twist: 'Rain' }));
+await check('wall (twist rain) in the Mayor\'s sleeves: tapping lays and levels bricks; it always ends by 90 s with a star', async () => {
+  await W(() => run('wall', { twist: 'Rain', avatar: { rank: 4 } }));
   await until(() => __btmWorld.task(), 100);
   const info = await W(() => __btmWorld.task());
   assert.equal(info.kind, 'wall'); assert.equal(info.twist, 'rain'); assert.ok(info.total >= 8 && info.total <= 12);
+  assert.ok([16, 8, 0].every(s => Math.abs((info.sleeve >> s & 255) - (0x3a3d45 >> s & 255)) <= 1), `params.avatar rank 4: the suit sleeve, not ${info.sleeve.toString(16)}`);
+  assert.equal(info.cuffs, 2);
   let laid = 0;
   for (let i = 0; i < 500 && !(await W(() => window.res)); i++) {
     const t = await W(() => __btmWorld.task());
@@ -161,11 +180,151 @@ await check('wall (twist rain): tapping lays and levels bricks; it always ends b
   assert.ok(laid >= 8, `the bot laid ${laid} bricks itself`);
 });
 
+await check('life: named citizens walk, cars loop the roads, trees, birds, props wait for their area to be fixed', async () => {
+  const li = await W(() => __btmWorld.life());
+  assert.equal(li.people.length, 3, 'three people, the dachshund stays home');
+  assert.equal(li.roads, 2); assert.equal(li.paths, 1); assert.equal(li.ring, false);
+  assert.ok(li.trees >= 20, `${li.trees} trees`);
+  assert.equal(li.cars.length, 3); assert.equal(li.birds, 5);
+  assert.ok(li.props.shown > 0 && li.props.shown < li.props.total, `props ${JSON.stringify(li.props)}`);
+  await step(10);
+  const li2 = await W(() => __btmWorld.life());
+  assert.ok(li2.cars.filter((c, i) => Math.hypot(c[0] - li.cars[i][0], c[1] - li.cars[i][1]) > 3).length >= 2, 'cars drive'); // one may be in a U-turn
+  await until(() => __btmWorld.life().walking > 0, 80);
+  assert.ok((await W(() => __btmWorld.life())).walking > 0, 'someone is walking');
+  const persons = (await W(() => __btmWorld.world.anchors())).filter(a => a.kind === 'person');
+  assert.equal(persons.length, (await W(() => __btmWorld.life())).citizens, 'people have anchors for bubbles');
+});
+
+await check('look: broken areas are grey on screen, fixed ones in colour', async () => {
+  const g = await W(() => __btmWorld.grey());
+  assert.deepEqual(g.map(z => z.id).sort(), ['bus', 'dump', 'garden', 'house']);
+  assert.ok(g.every(z => z.a === 1 && z.to === 1));
+  await W(() => __btmWorld.world.focus('garden')); await step(10);
+  const s = async list => median(await Promise.all(list.map(p => W(([x, z]) => __btmWorld.sample(x, z), p).then(sat))));
+  const grey = await s([[-15, -22.9], [-14, -23], [-16, -23]]), green = await s([[-5, -12], [-6, -12], [-5, -13]]);
+  assert.ok(green > 0.25 && grey < green * 0.5, `saturation by the broken garden ${grey.toFixed(2)}, in the fixed street ${green.toFixed(2)}`);
+});
+
+await check('time of day eases over about 1.5 s: night, then morning', async () => {
+  assert.equal((await W(() => __btmWorld.tod())).night, 0);
+  await W(() => __btmWorld.world.setTimeOfDay(1)); await step(5);
+  let tod = await W(() => __btmWorld.tod());
+  assert.ok(tod.t > 0.2 && tod.t < 0.5 && tod.night > 0 && tod.night < 1, `half way: ${JSON.stringify(tod)}`);
+  await step(12);
+  tod = await W(() => __btmWorld.tod());
+  assert.ok(tod.t === 1 && tod.night === 1 && tod.sun < 1, `night: ${JSON.stringify(tod)}`);
+  assert.equal((await W(() => __btmWorld.life())).birds, 0, 'birds sleep');
+  await W(() => __btmWorld.world.setTimeOfDay(0.55)); await step(16);
+  assert.equal((await W(() => __btmWorld.tod())).target, 0.55);
+  await W(() => __btmWorld.world.setTimeOfDay(0)); await step(16);
+  tod = await W(() => __btmWorld.tod());
+  assert.ok(tod.night === 0 && tod.sun > 1.5, `morning: ${JSON.stringify(tod)}`);
+});
+
+await check('avatar: in town, and every rank wears a different outfit', async () => {
+  await W(() => __btmWorld.world.focus('house')); await step(10);
+  const a = await W(() => __btmWorld.avatar());
+  assert.ok(a.visible, `on screen at ${a.x}, ${a.z}`);
+  assert.equal(a.rank, 0); assert.equal(a.clip, 'idle');
+  assert.deepEqual(a.parts.sort(), ['hardhat', 'stripes'], 'Labourer: hard hat and hi-vis');
+  const tops = [];
+  for (let r = 0; r <= 6; r++) tops.push((await W(r => { __btmWorld.world.setAvatar({ rank: r }); return __btmWorld.avatar(); }, r)).top);
+  assert.equal(new Set(tops).size, 7);
+  const set = await W(() => __btmWorld.world.setAvatar({ rank: 1, skin: 3, hair: 'bun', face: 'grin', extra: 'sunglasses' }));
+  assert.deepEqual(set, { skin: 0x9c6440, hair: 'bun', face: 'grin', rank: 1, extra: 'sunglasses' });
+  const b = await W(() => __btmWorld.avatar());
+  assert.equal(b.title, 'Skilled');
+  assert.deepEqual(b.parts.sort(), ['belt', 'sunglasses', 'tester']);
+  assert.equal((await W(() => __btmWorld.world.setAvatar({ rank: 0, extra: 'cap' }))).extra, 'cap');
+  assert.ok(!(await W(() => __btmWorld.avatar())).parts.includes('cap'), 'the hard hat wins over a cap');
+  await W(() => __btmWorld.world.setAvatar({ rank: 0, extra: null }));
+});
+
+await check('walkTo: along the streets to the door in ≤ 3 s, never through a building', async () => {
+  await W(() => walk('school'));
+  const trail = [];
+  for (let i = 0; i < 40 && (await W(() => window.walked)) === null; i++) { await step(1); trail.push(await W(() => { const a = __btmWorld.avatar(); return [a.x, a.z, a.clip]; })); }
+  assert.equal(await W(() => window.walked), true);
+  assert.ok(trail.length <= 31, `${trail.length} frames of 0.1 s`);
+  assert.ok(trail.some(p => p[2] === 'walk'), 'the walk clip played');
+  assert.ok(!trail.some(p => inside(p)), `through a building: ${JSON.stringify(trail.filter(p => inside(p)))}`);
+  const a = await W(() => __btmWorld.avatar());
+  assert.ok(Math.hypot(a.x - 18, a.z - 4.5) < 0.1 && a.clip === 'idle', `at the school door: ${a.x}, ${a.z}, ${a.clip}`);
+  assert.equal(await W(() => __btmWorld.world.walkTo('nope')), false, 'an unknown id resolves false');
+});
+
+await check('walkTo is skippable: a tap on the town jumps to the end and picks nothing', async () => {
+  const n = (await W(() => picks)).length;
+  await W(() => walk('cafe')); await step(3);
+  assert.equal((await W(() => __btmWorld.avatar())).walking, true);
+  await page.mouse.click(60, 60);
+  assert.equal(await W(() => window.walked), true);
+  const a = await W(() => __btmWorld.avatar());
+  assert.ok(!a.walking && Math.hypot(a.x + 30, a.z - 4) < 0.1, `at the café door: ${a.x}, ${a.z}`);
+  assert.equal((await W(() => picks)).length, n, 'the tap only skipped the walk');
+  await W(() => walk('hall')); await step(1);
+  assert.equal(await W(() => __btmWorld.skipWalk()), true);
+  const person = (await W(() => __btmWorld.life())).people.find(p => !p.inside);
+  await W(id => walk(id), person.id);
+  await until(() => window.walked !== null, 35);
+  assert.equal(await W(() => window.walked), true, 'walks up to a person too');
+});
+
+await check('a fix brings the colour back; celebrate: confetti, a bounce, the avatar cheers', async () => {
+  const before = (await W(() => __btmWorld.life())).props.shown;
+  await W(t => __btmWorld.world.showTown({ town: t.map(b => (b.id === 'house' ? { ...b, state: 'ok' } : b)) }), town);
+  assert.equal(await W(() => __btmWorld.lastFixed()), 'house');
+  await W(() => __btmWorld.world.celebrate('fixed')); await step(1);
+  assert.ok((await W(() => __btmWorld.life())).confetti > 50);
+  assert.equal((await W(() => __btmWorld.avatar())).clip, 'cheer');
+  await step(25);
+  assert.ok(!(await W(() => __btmWorld.grey())).some(z => z.id === 'house'), 'the grey has faded');
+  assert.ok((await W(() => __btmWorld.life())).props.shown > before, 'the house got its flowers (and the bench)');
+  await step(12);
+  assert.equal((await W(() => __btmWorld.avatar())).clip, 'idle');
+  assert.equal((await W(() => __btmWorld.life())).confetti, 0);
+  await W(() => __btmWorld.world.celebrate('promotion')); await W(() => __btmWorld.world.celebrate('like')); await step(40);
+});
+
+await check('a visit to a town without roads: a ring road, the avatar at its door; home again', async () => {
+  await W(() => __btmWorld.world.showTown({ buildings: [
+    { id: 'townhall', type: 'townhall', x: 0, z: 0, rot: 0, state: 'ok', label: 'Town hall' },
+    { id: 'home', type: 'house', x: 14, z: 6, rot: 0, state: 'ok' }, { id: 'park', type: 'park', x: -14, z: -16, rot: 0, state: 'broken' }] }));
+  const li = await W(() => __btmWorld.life());
+  assert.ok(li.ring && li.roads === 1 && li.cars.length === 3, JSON.stringify(li));
+  const a = await W(() => __btmWorld.avatar());
+  assert.ok(Math.hypot(a.x - 14, a.z - (6 + 2.5 + 2.2)) < 0.1, 'at the only house');
+  assert.deepEqual((await W(() => __btmWorld.grey())).map(z => z.id), ['park']);
+  await step(5);
+  await W(t => __btmWorld.world.showTown({ town: t }), town);
+  assert.equal((await W(() => __btmWorld.life())).ring, false);
+});
+
+const perf = async q => {
+  await step(1);
+  const s = await W(() => __btmWorld.stats());
+  console.log(`perf q=${q}: ${s.calls} draw calls, ${s.triangles} triangles in one town frame (budget 150, 60000)`);
+  assert.ok(s.calls <= 150 && s.triangles <= 60000, JSON.stringify(s));
+};
+await check('perf, q=low: within the phone budget', () => perf('low'));
+
 await check('a phone-sized resize keeps the camera finite', async () => {
   await page.setViewportSize({ width: 390, height: 844 });
   await step(2);
   const v = await W(() => __btmWorld.view), a = await W(() => __btmWorld.world.anchors());
   assert.ok(Number.isFinite(v.d) && a.every(p => Number.isFinite(p.x) && Number.isFinite(p.y)));
+});
+await page.screenshot({ path: 'smoke-town-low.png' });
+
+// full quality: outlines (multisampled target + depth edges) and the shadow map, as on phones
+page = await open('');
+await check('perf, full quality: outlines and shadows on, within the phone budget', async () => {
+  await step(3);
+  const tod = await W(() => __btmWorld.tod());
+  assert.ok(tod.outlines && tod.shadows, JSON.stringify(tod));
+  await perf('high');
+  await W(() => __btmWorld.world.setTimeOfDay(0.35)); await step(16);
 });
 
 await check('no page errors', async () => assert.deepEqual(errors, []));

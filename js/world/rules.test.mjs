@@ -1,7 +1,8 @@
 // node --test js/world/  (runs in the assets workflow on GitHub, never on the dev laptop: LESSONS T1)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { WALL, wallSlots, createWall, wallStars, DELIVERY, box, inBox, distToBox, drive, bestTour, deliveryStars } from './rules.js';
+import { WALL, wallSlots, createWall, wallStars, DELIVERY, box, inBox, distToBox, drive, bestTour, deliveryStars,
+  navGrid, findPath, pathLength, pointAt, walkSpeed, WALK } from './rules.js';
 
 const seeded = (n = 1) => () => (n = (n * 16807) % 2147483647) / 2147483647;
 
@@ -126,4 +127,44 @@ test('bestTour and delivery stars', () => {
   assert.equal(deliveryStars({ delivered: 3, total: 3, pathLen: 100, best: 40, seconds: 40 }), 1);
   assert.equal(deliveryStars({ delivered: 2, total: 4, pathLen: 10, best: 40, seconds: 45 }), 1);
   assert.equal(deliveryStars({ delivered: 1, total: 3, pathLen: 10, best: 40, seconds: 45 }), 0);
+});
+
+const B20 = [-10, 10, -10, 10];
+const samples = (pts, step = 0.25) => Array.from({ length: Math.ceil(pathLength(pts) / step) + 1 }, (_, i) => pointAt(pts, i * step)).map(p => [p.x, p.z]);
+
+test('walking: the route goes round a solid building, never through it', () => {
+  const wall = box(0, 0, 1, 6); // 2 m thick, 12 m long, across the straight line
+  const pts = findPath(navGrid(B20, [wall]), [-5, 0], [5, 0]);
+  assert.ok(pts, 'a route exists');
+  assert.deepEqual(pts[0], [-5, 0]); assert.deepEqual(pts[pts.length - 1], [5, 0]);
+  assert.ok(samples(pts).every(p => !inBox(p, wall)), 'no point of the walk is inside the wall');
+  assert.ok(pts.some(p => Math.abs(p[1]) > 6), 'it walks round the end of the wall');
+  assert.ok(pathLength(pts) < 30);
+});
+
+test('walking: roads and paths are preferred over grass', () => {
+  const road = { pts: [[-10, 6], [10, 6]], w: 2 };
+  const onRoad = findPath(navGrid(B20, [], [road]), [-8, 2], [8, 2]);
+  assert.ok(Math.max(...onRoad.map(p => p[1])) >= 5, `uses the road: ${JSON.stringify(onRoad)}`);
+  const plain = findPath(navGrid(B20, []), [-8, 2], [8, 2]);
+  assert.ok(Math.abs(pathLength(plain) - 16) < 1e-9, 'without a road it walks straight');
+});
+
+test('walking: a start inside a wall steps out; a walled-in goal is unreachable', () => {
+  const wall = box(0, 0, 1, 6);
+  const out = findPath(navGrid(B20, [wall]), [0, 0], [6, 0]);
+  assert.ok(out && out[out.length - 1][0] === 6);
+  const ring = [box(5, 2.5, 3, 0.6), box(5, 7.5, 3, 0.6), box(2.5, 5, 0.6, 3), box(7.5, 5, 0.6, 3)];
+  assert.equal(findPath(navGrid(B20, ring), [-5, -5], [5, 5]), null);
+});
+
+test('walking: path length, points along it, and the 3-second cap', () => {
+  const pts = [[0, 0], [3, 4], [3, 10]];
+  assert.equal(pathLength(pts), 11);
+  const a = pointAt(pts, 2.5), b = pointAt(pts, 8), c = pointAt(pts, 100);
+  assert.ok(Math.abs(a.x - 1.5) < 1e-9 && Math.abs(a.z - 2) < 1e-9 && Math.abs(a.dir - Math.atan2(3, 4)) < 1e-9);
+  assert.ok(Math.abs(b.x - 3) < 1e-9 && Math.abs(b.z - 7) < 1e-9 && b.dir === 0, 'faces +z on the second leg');
+  assert.deepEqual([c.x, c.z], [3, 10]);
+  assert.equal(walkSpeed(3), WALK.speed);
+  for (const len of [10, 60, 150]) assert.ok(len / walkSpeed(len) <= WALK.max + 1e-9, `${len} m in ≤ 3 s`);
 });
