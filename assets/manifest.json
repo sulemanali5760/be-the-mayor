@@ -1,0 +1,1905 @@
+{
+ "palette": "assets/palette.json",
+ "models": {
+  "bench": {
+   "file": "assets/models/bench.gltf",
+   "source": "kaykit",
+   "license": "CC0-1.0",
+   "url": "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0",
+   "kind": "prop",
+   "tris": 44,
+   "size": [
+    1.8,
+    0.45,
+    0.68
+   ],
+   "footprint": [
+    1.8,
+    0.68
+   ],
+   "nodes": [
+    "bench"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 6
+  },
+  "bird": {
+   "file": "assets/models/bird.gltf",
+   "source": "own",
+   "license": "own",
+   "url": "https://github.com/sulemanali5760/be-the-mayor/blob/main/blender/make_own.py",
+   "kind": "life",
+   "tris": 462,
+   "size": [
+    1.9,
+    2.0,
+    2.0
+   ],
+   "footprint": [
+    1.9,
+    2.0
+   ],
+   "nodes": [
+    "wingL",
+    "wingR",
+    "body",
+    "bird_body",
+    "bird_wings",
+    "bird"
+   ],
+   "animations": [
+    "fly",
+    "idle"
+   ],
+   "draws": 2,
+   "kb": 44
+  },
+  "box": {
+   "file": "assets/models/box.gltf",
+   "source": "kaykit",
+   "license": "CC0-1.0",
+   "url": "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0",
+   "kind": "prop",
+   "tris": 32,
+   "size": [
+    0.68,
+    0.6,
+    0.69
+   ],
+   "footprint": [
+    0.68,
+    0.69
+   ],
+   "nodes": [
+    "box"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 5
+  },
+  "brick_half": {
+   "file": "assets/models/brick_half.gltf",
+   "source": "own",
+   "license": "own",
+   "url": "https://github.com/sulemanali5760/brick-by-brick/blob/main/blender/make_assets.py",
+   "kind": "task",
+   "tris": 108,
+   "size": [
+    0.12,
+    0.07,
+    0.12
+   ],
+   "footprint": [
+    0.12,
+    0.12
+   ],
+   "nodes": [
+    "brick_half"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 145
+  },
+  "brick_nf": {
+   "file": "assets/models/brick_nf.gltf",
+   "source": "own",
+   "license": "own",
+   "url": "https://github.com/sulemanali5760/brick-by-brick/blob/main/blender/make_assets.py",
+   "kind": "task",
+   "tris": 108,
+   "size": [
+    0.24,
+    0.07,
+    0.12
+   ],
+   "footprint": [
+    0.24,
+    0.12
+   ],
+   "nodes": [
+    "brick_nf"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 145
+  },
+  "bridge": {
+   "file": "assets/models/bridge.gltf",
+   "source": "own",
+   "license": "own",
+   "url": "https://github.com/sulemanali5760/be-the-mayor/blob/main/blender/make_own.py",
+   "kind": "building",
+   "tris": 700,
+   "size": [
+    4.5,
+    1.94,
+    12.0
+   ],
+   "footprint": [
+    4.5,
+    12.0
+   ],
+   "nodes": [
+    "bridge"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 53
+  },
+  "bridge_broken": {
+   "file": "assets/models/bridge_broken.gltf",
+   "source": "own",
+   "license": "own",
+   "url": "https://github.com/sulemanali5760/be-the-mayor/blob/main/blender/make_own.py",
+   "kind": "building",
+   "tris": 752,
+   "size": [
+    4.5,
+    1.98,
+    12.0
+   ],
+   "footprint": [
+    4.5,
+    12.0
+   ],
+   "nodes": [
+    "bridge_broken"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 59
+  },
+  "broken_barrier": {
+   "file": "assets/models/broken_barrier.gltf",
+   "source": "own",
+   "license": "own",
+   "url": "https://github.com/sulemanali5760/be-the-mayor/blob/main/blender/make_own.py",
+   "kind": "broken",
+   "tris": 132,
+   "size": [
+    1.78,
+    1.0,
+    0.6
+   ],
+   "footprint": [
+    1.78,
+    0.6
+   ],
+   "nodes": [
+    "broken_barrier"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 15
+  },
+  "broken_boards": {
+   "file": "assets/models/broken_boards.gltf",
+   "source": "own",
+   "license": "own",
+   "url": "https://github.com/sulemanali5760/be-the-mayor/blob/main/blender/make_own.py",
+   "kind": "broken",
+   "tris": 36,
+   "size": [
+    1.31,
+    0.88,
+    0.11
+   ],
+   "footprint": [
+    1.31,
+    0.11
+   ],
+   "nodes": [
+    "broken_boards"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 5
+  },
+  "broken_cone": {
+   "file": "assets/models/broken_cone.gltf",
+   "source": "own",
+   "license": "own",
+   "url": "https://github.com/sulemanali5760/be-the-mayor/blob/main/blender/make_own.py",
+   "kind": "broken",
+   "tris": 84,
+   "size": [
+    0.45,
+    0.65,
+    0.45
+   ],
+   "footprint": [
+    0.45,
+    0.45
+   ],
+   "nodes": [
+    "broken_cone"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 8
+  },
+  "broken_rubble": {
+   "file": "assets/models/broken_rubble.gltf",
+   "source": "own",
+   "license": "own",
+   "url": "https://github.com/sulemanali5760/be-the-mayor/blob/main/blender/make_own.py",
+   "kind": "broken",
+   "tris": 144,
+   "size": [
+    1.3,
+    0.52,
+    1.12
+   ],
+   "footprint": [
+    1.3,
+    1.12
+   ],
+   "nodes": [
+    "broken_rubble"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 16
+  },
+  "busstop": {
+   "file": "assets/models/busstop.gltf",
+   "source": "own",
+   "license": "own",
+   "url": "https://github.com/sulemanali5760/be-the-mayor/blob/main/blender/make_own.py",
+   "kind": "building",
+   "tris": 400,
+   "size": [
+    3.84,
+    2.73,
+    1.61
+   ],
+   "footprint": [
+    3.84,
+    1.61
+   ],
+   "nodes": [
+    "busstop"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 34
+  },
+  "busstop_broken": {
+   "file": "assets/models/busstop_broken.gltf",
+   "source": "own",
+   "license": "own",
+   "url": "https://github.com/sulemanali5760/be-the-mayor/blob/main/blender/make_own.py",
+   "kind": "building",
+   "tris": 448,
+   "size": [
+    3.72,
+    2.73,
+    1.85
+   ],
+   "footprint": [
+    3.72,
+    1.85
+   ],
+   "nodes": [
+    "busstop_broken"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 39
+  },
+  "cafe": {
+   "file": "assets/models/cafe.gltf",
+   "source": "own",
+   "license": "own",
+   "url": "https://github.com/sulemanali5760/be-the-mayor/blob/main/blender/make_own.py",
+   "kind": "building",
+   "tris": 772,
+   "size": [
+    6.7,
+    4.32,
+    4.93
+   ],
+   "footprint": [
+    6.7,
+    4.93
+   ],
+   "nodes": [
+    "cafe"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 71
+  },
+  "car_hatchback": {
+   "file": "assets/models/car_hatchback.gltf",
+   "source": "kaykit",
+   "license": "CC0-1.0",
+   "url": "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0",
+   "kind": "vehicle",
+   "tris": 1194,
+   "size": [
+    1.98,
+    1.74,
+    3.8
+   ],
+   "footprint": [
+    1.98,
+    3.8
+   ],
+   "nodes": [
+    "car_hatchback"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 84
+  },
+  "car_sedan": {
+   "file": "assets/models/car_sedan.gltf",
+   "source": "kaykit",
+   "license": "CC0-1.0",
+   "url": "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0",
+   "kind": "vehicle",
+   "tris": 1222,
+   "size": [
+    1.88,
+    1.65,
+    4.2
+   ],
+   "footprint": [
+    1.88,
+    4.2
+   ],
+   "nodes": [
+    "car_sedan"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 87
+  },
+  "car_stationwagon": {
+   "file": "assets/models/car_stationwagon.gltf",
+   "source": "kaykit",
+   "license": "CC0-1.0",
+   "url": "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0",
+   "kind": "vehicle",
+   "tris": 1234,
+   "size": [
+    2.01,
+    1.77,
+    4.5
+   ],
+   "footprint": [
+    2.01,
+    4.5
+   ],
+   "nodes": [
+    "car_stationwagon"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 89
+  },
+  "character": {
+   "file": "assets/models/character.gltf",
+   "source": "own",
+   "license": "own",
+   "url": "https://github.com/sulemanali5760/be-the-mayor/blob/main/blender/make_own.py",
+   "kind": "character",
+   "tris": 4561,
+   "size": [
+    1.93,
+    2.92,
+    2.0
+   ],
+   "footprint": [
+    1.93,
+    2.0
+   ],
+   "nodes": [
+    "shinL",
+    "legL",
+    "shinR",
+    "legR",
+    "handL",
+    "forearmL",
+    "armL",
+    "handR",
+    "forearmR",
+    "armR",
+    "head",
+    "spine",
+    "hips",
+    "acc_blazer",
+    "acc_briefcase",
+    "acc_chain",
+    "acc_clipboard",
+    "acc_flagpin",
+    "acc_hardhat",
+    "acc_jacket",
+    "acc_tester",
+    "acc_tie",
+    "acc_toolbelt",
+    "acc_vest",
+    "body",
+    "extra_beanie",
+    "extra_bowtie",
+    "extra_cap",
+    "extra_flower",
+    "extra_scarf",
+    "extra_sunglasses",
+    "face_calm",
+    "face_grin",
+    "face_smile",
+    "hair_bun",
+    "hair_curly",
+    "hair_long",
+    "hair_short",
+    "character"
+   ],
+   "animations": [
+    "cheer",
+    "idle",
+    "walk",
+    "wave"
+   ],
+   "draws": 28,
+   "kb": 532
+  },
+  "dump_pile": {
+   "file": "assets/models/dump_pile.gltf",
+   "source": "own",
+   "license": "own",
+   "url": "https://github.com/sulemanali5760/be-the-mayor/blob/main/blender/make_own.py",
+   "kind": "building",
+   "tris": 708,
+   "size": [
+    5.82,
+    2.66,
+    4.82
+   ],
+   "footprint": [
+    5.82,
+    4.82
+   ],
+   "nodes": [
+    "dump_pile"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 69
+  },
+  "dump_pile_broken": {
+   "file": "assets/models/dump_pile_broken.gltf",
+   "source": "own",
+   "license": "own",
+   "url": "https://github.com/sulemanali5760/be-the-mayor/blob/main/blender/make_own.py",
+   "kind": "building",
+   "tris": 460,
+   "size": [
+    4.9,
+    1.76,
+    3.74
+   ],
+   "footprint": [
+    4.9,
+    3.74
+   ],
+   "nodes": [
+    "dump_pile_broken"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 41
+  },
+  "dumpster": {
+   "file": "assets/models/dumpster.gltf",
+   "source": "kaykit",
+   "license": "CC0-1.0",
+   "url": "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0",
+   "kind": "prop",
+   "tris": 126,
+   "size": [
+    2.0,
+    1.12,
+    1.25
+   ],
+   "footprint": [
+    2.0,
+    1.25
+   ],
+   "nodes": [
+    "dumpster"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 14
+  },
+  "fence": {
+   "file": "assets/models/fence.gltf",
+   "source": "kenney",
+   "license": "CC0-1.0",
+   "url": "https://kenney.nl/assets/nature-kit",
+   "kind": "prop",
+   "tris": 64,
+   "size": [
+    2.0,
+    0.69,
+    0.14
+   ],
+   "footprint": [
+    2.0,
+    0.14
+   ],
+   "nodes": [
+    "fence"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 7
+  },
+  "fence_gate": {
+   "file": "assets/models/fence_gate.gltf",
+   "source": "kenney",
+   "license": "CC0-1.0",
+   "url": "https://kenney.nl/assets/nature-kit",
+   "kind": "prop",
+   "tris": 524,
+   "size": [
+    2.0,
+    0.69,
+    0.14
+   ],
+   "footprint": [
+    2.0,
+    0.14
+   ],
+   "nodes": [
+    "fence_gate"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 38
+  },
+  "fence_low": {
+   "file": "assets/models/fence_low.gltf",
+   "source": "kenney",
+   "license": "CC0-1.0",
+   "url": "https://kenney.nl/assets/city-kit-suburban",
+   "kind": "prop",
+   "tris": 180,
+   "size": [
+    2.0,
+    0.27,
+    1.31
+   ],
+   "footprint": [
+    2.0,
+    1.31
+   ],
+   "nodes": [
+    "fence_low"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 18
+  },
+  "flower_purple": {
+   "file": "assets/models/flower_purple.gltf",
+   "source": "kenney",
+   "license": "CC0-1.0",
+   "url": "https://kenney.nl/assets/nature-kit",
+   "kind": "nature",
+   "tris": 76,
+   "size": [
+    0.3,
+    0.45,
+    0.34
+   ],
+   "footprint": [
+    0.3,
+    0.34
+   ],
+   "nodes": [
+    "flower_purple"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 9
+  },
+  "flower_red": {
+   "file": "assets/models/flower_red.gltf",
+   "source": "kenney",
+   "license": "CC0-1.0",
+   "url": "https://kenney.nl/assets/nature-kit",
+   "kind": "nature",
+   "tris": 76,
+   "size": [
+    0.24,
+    0.45,
+    0.28
+   ],
+   "footprint": [
+    0.24,
+    0.28
+   ],
+   "nodes": [
+    "flower_red"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 9
+  },
+  "flower_yellow": {
+   "file": "assets/models/flower_yellow.gltf",
+   "source": "kenney",
+   "license": "CC0-1.0",
+   "url": "https://kenney.nl/assets/nature-kit",
+   "kind": "nature",
+   "tris": 76,
+   "size": [
+    0.37,
+    0.45,
+    0.42
+   ],
+   "footprint": [
+    0.37,
+    0.42
+   ],
+   "nodes": [
+    "flower_yellow"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 9
+  },
+  "fp_arms": {
+   "file": "assets/models/fp_arms.gltf",
+   "source": "own",
+   "license": "own",
+   "url": "https://github.com/sulemanali5760/brick-by-brick/blob/main/blender/make_assets.py",
+   "kind": "task",
+   "tris": 4264,
+   "size": [
+    0.15,
+    0.13,
+    0.51
+   ],
+   "footprint": [
+    0.15,
+    0.51
+   ],
+   "nodes": [
+    "ArmL",
+    "ArmR"
+   ],
+   "animations": [],
+   "draws": 8,
+   "kb": 195
+  },
+  "garden": {
+   "file": "assets/models/garden.gltf",
+   "source": "own",
+   "license": "own",
+   "url": "https://github.com/sulemanali5760/be-the-mayor/blob/main/blender/make_own.py",
+   "kind": "building",
+   "tris": 928,
+   "size": [
+    7.0,
+    1.44,
+    4.28
+   ],
+   "footprint": [
+    7.0,
+    4.28
+   ],
+   "nodes": [
+    "garden"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 83
+  },
+  "garden_broken": {
+   "file": "assets/models/garden_broken.gltf",
+   "source": "own",
+   "license": "own",
+   "url": "https://github.com/sulemanali5760/be-the-mayor/blob/main/blender/make_own.py",
+   "kind": "building",
+   "tris": 420,
+   "size": [
+    6.15,
+    0.47,
+    4.08
+   ],
+   "footprint": [
+    6.15,
+    4.08
+   ],
+   "nodes": [
+    "garden_broken"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 46
+  },
+  "house": {
+   "file": "assets/models/house.gltf",
+   "source": "kenney",
+   "license": "CC0-1.0",
+   "url": "https://kenney.nl/assets/city-kit-suburban",
+   "kind": "building",
+   "tris": 1174,
+   "size": [
+    6.0,
+    3.85,
+    4.75
+   ],
+   "footprint": [
+    6.0,
+    4.75
+   ],
+   "nodes": [
+    "house"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 108
+  },
+  "house_2": {
+   "file": "assets/models/house_2.gltf",
+   "source": "kenney",
+   "license": "CC0-1.0",
+   "url": "https://kenney.nl/assets/city-kit-suburban",
+   "kind": "building",
+   "tris": 1196,
+   "size": [
+    6.0,
+    4.82,
+    4.8
+   ],
+   "footprint": [
+    6.0,
+    4.8
+   ],
+   "nodes": [
+    "house_2"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 111
+  },
+  "house_3": {
+   "file": "assets/models/house_3.gltf",
+   "source": "kenney",
+   "license": "CC0-1.0",
+   "url": "https://kenney.nl/assets/city-kit-suburban",
+   "kind": "building",
+   "tris": 1210,
+   "size": [
+    6.0,
+    4.54,
+    4.01
+   ],
+   "footprint": [
+    6.0,
+    4.01
+   ],
+   "nodes": [
+    "house_3"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 113
+  },
+  "hydrant": {
+   "file": "assets/models/hydrant.gltf",
+   "source": "kaykit",
+   "license": "CC0-1.0",
+   "url": "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0",
+   "kind": "prop",
+   "tris": 180,
+   "size": [
+    0.48,
+    0.8,
+    0.47
+   ],
+   "footprint": [
+    0.48,
+    0.47
+   ],
+   "nodes": [
+    "hydrant"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 14
+  },
+  "keller_house": {
+   "file": "assets/models/keller_house.gltf",
+   "source": "own",
+   "license": "own",
+   "url": "https://github.com/sulemanali5760/be-the-mayor/blob/main/blender/make_own.py",
+   "kind": "building",
+   "tris": 1176,
+   "size": [
+    5.68,
+    5.07,
+    5.67
+   ],
+   "footprint": [
+    5.68,
+    5.67
+   ],
+   "nodes": [
+    "keller_house"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 108
+  },
+  "kiosk": {
+   "file": "assets/models/kiosk.gltf",
+   "source": "own",
+   "license": "own",
+   "url": "https://github.com/sulemanali5760/be-the-mayor/blob/main/blender/make_own.py",
+   "kind": "building",
+   "tris": 304,
+   "size": [
+    5.2,
+    3.38,
+    3.38
+   ],
+   "footprint": [
+    5.2,
+    3.38
+   ],
+   "nodes": [
+    "kiosk"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 32
+  },
+  "line_pin": {
+   "file": "assets/models/line_pin.gltf",
+   "source": "own",
+   "license": "own",
+   "url": "https://github.com/sulemanali5760/brick-by-brick/blob/main/blender/make_assets.py",
+   "kind": "task",
+   "tris": 76,
+   "size": [
+    0.02,
+    0.14,
+    0.03
+   ],
+   "footprint": [
+    0.02,
+    0.03
+   ],
+   "nodes": [
+    "line_pin"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 6
+  },
+  "log": {
+   "file": "assets/models/log.gltf",
+   "source": "kenney",
+   "license": "CC0-1.0",
+   "url": "https://kenney.nl/assets/nature-kit",
+   "kind": "nature",
+   "tris": 200,
+   "size": [
+    0.53,
+    0.39,
+    1.6
+   ],
+   "footprint": [
+    0.53,
+    1.6
+   ],
+   "nodes": [
+    "log"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 18
+  },
+  "mortar_tub": {
+   "file": "assets/models/mortar_tub.gltf",
+   "source": "own",
+   "license": "own",
+   "url": "https://github.com/sulemanali5760/brick-by-brick/blob/main/blender/make_assets.py",
+   "kind": "task",
+   "tris": 2732,
+   "size": [
+    0.49,
+    0.31,
+    0.45
+   ],
+   "footprint": [
+    0.49,
+    0.45
+   ],
+   "nodes": [
+    "mortar_tub"
+   ],
+   "animations": [],
+   "draws": 2,
+   "kb": 236
+  },
+  "pallet_euro": {
+   "file": "assets/models/pallet_euro.gltf",
+   "source": "own",
+   "license": "own",
+   "url": "https://github.com/sulemanali5760/brick-by-brick/blob/main/blender/make_assets.py",
+   "kind": "task",
+   "tris": 2160,
+   "size": [
+    1.2,
+    0.14,
+    0.8
+   ],
+   "footprint": [
+    1.2,
+    0.8
+   ],
+   "nodes": [
+    "pallet_euro"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 333
+  },
+  "park": {
+   "file": "assets/models/park.gltf",
+   "source": "own",
+   "license": "own",
+   "url": "https://github.com/sulemanali5760/be-the-mayor/blob/main/blender/make_own.py",
+   "kind": "building",
+   "tris": 1670,
+   "size": [
+    12.0,
+    3.43,
+    10.0
+   ],
+   "footprint": [
+    12.0,
+    10.0
+   ],
+   "nodes": [
+    "park"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 154
+  },
+  "park_broken": {
+   "file": "assets/models/park_broken.gltf",
+   "source": "own",
+   "license": "own",
+   "url": "https://github.com/sulemanali5760/be-the-mayor/blob/main/blender/make_own.py",
+   "kind": "building",
+   "tris": 768,
+   "size": [
+    12.0,
+    2.72,
+    10.0
+   ],
+   "footprint": [
+    12.0,
+    10.0
+   ],
+   "nodes": [
+    "park_broken"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 69
+  },
+  "path_stones": {
+   "file": "assets/models/path_stones.gltf",
+   "source": "kenney",
+   "license": "CC0-1.0",
+   "url": "https://kenney.nl/assets/city-kit-suburban",
+   "kind": "road",
+   "tris": 24,
+   "size": [
+    1.4,
+    0.1,
+    2.0
+   ],
+   "footprint": [
+    1.4,
+    2.0
+   ],
+   "nodes": [
+    "path_stones"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 4
+  },
+  "pharmacy": {
+   "file": "assets/models/pharmacy.gltf",
+   "source": "own",
+   "license": "own",
+   "url": "https://github.com/sulemanali5760/be-the-mayor/blob/main/blender/make_own.py",
+   "kind": "building",
+   "tris": 540,
+   "size": [
+    7.05,
+    4.8,
+    4.93
+   ],
+   "footprint": [
+    7.05,
+    4.93
+   ],
+   "nodes": [
+    "pharmacy"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 56
+  },
+  "planter": {
+   "file": "assets/models/planter.gltf",
+   "source": "kenney",
+   "license": "CC0-1.0",
+   "url": "https://kenney.nl/assets/city-kit-suburban",
+   "kind": "prop",
+   "tris": 204,
+   "size": [
+    1.6,
+    0.71,
+    1.2
+   ],
+   "footprint": [
+    1.6,
+    1.2
+   ],
+   "nodes": [
+    "planter"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 20
+  },
+  "playground": {
+   "file": "assets/models/playground.gltf",
+   "source": "own",
+   "license": "own",
+   "url": "https://github.com/sulemanali5760/be-the-mayor/blob/main/blender/make_own.py",
+   "kind": "building",
+   "tris": 524,
+   "size": [
+    7.6,
+    3.12,
+    7.6
+   ],
+   "footprint": [
+    7.6,
+    7.6
+   ],
+   "nodes": [
+    "playground"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 53
+  },
+  "playground_broken": {
+   "file": "assets/models/playground_broken.gltf",
+   "source": "own",
+   "license": "own",
+   "url": "https://github.com/sulemanali5760/be-the-mayor/blob/main/blender/make_own.py",
+   "kind": "building",
+   "tris": 484,
+   "size": [
+    8.14,
+    3.15,
+    7.6
+   ],
+   "footprint": [
+    8.14,
+    7.6
+   ],
+   "nodes": [
+    "playground_broken"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 49
+  },
+  "potted_bush": {
+   "file": "assets/models/potted_bush.gltf",
+   "source": "kaykit",
+   "license": "CC0-1.0",
+   "url": "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0",
+   "kind": "prop",
+   "tris": 72,
+   "size": [
+    0.6,
+    1.2,
+    0.63
+   ],
+   "footprint": [
+    0.6,
+    0.63
+   ],
+   "nodes": [
+    "potted_bush"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 7
+  },
+  "road_corner": {
+   "file": "assets/models/road_corner.gltf",
+   "source": "kaykit",
+   "license": "CC0-1.0",
+   "url": "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0",
+   "kind": "road",
+   "tris": 172,
+   "size": [
+    6.0,
+    0.3,
+    6.0
+   ],
+   "footprint": [
+    6.0,
+    6.0
+   ],
+   "nodes": [
+    "road_corner"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 13
+  },
+  "road_crossing": {
+   "file": "assets/models/road_crossing.gltf",
+   "source": "kaykit",
+   "license": "CC0-1.0",
+   "url": "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0",
+   "kind": "road",
+   "tris": 64,
+   "size": [
+    6.0,
+    0.3,
+    6.0
+   ],
+   "footprint": [
+    6.0,
+    6.0
+   ],
+   "nodes": [
+    "road_crossing"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 7
+  },
+  "road_junction": {
+   "file": "assets/models/road_junction.gltf",
+   "source": "kaykit",
+   "license": "CC0-1.0",
+   "url": "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0",
+   "kind": "road",
+   "tris": 170,
+   "size": [
+    6.0,
+    0.3,
+    6.0
+   ],
+   "footprint": [
+    6.0,
+    6.0
+   ],
+   "nodes": [
+    "road_junction"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 16
+  },
+  "road_straight": {
+   "file": "assets/models/road_straight.gltf",
+   "source": "kaykit",
+   "license": "CC0-1.0",
+   "url": "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0",
+   "kind": "road",
+   "tris": 58,
+   "size": [
+    6.0,
+    0.3,
+    6.0
+   ],
+   "footprint": [
+    6.0,
+    6.0
+   ],
+   "nodes": [
+    "road_straight"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 7
+  },
+  "road_tsplit": {
+   "file": "assets/models/road_tsplit.gltf",
+   "source": "kaykit",
+   "license": "CC0-1.0",
+   "url": "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0",
+   "kind": "road",
+   "tris": 138,
+   "size": [
+    6.0,
+    0.3,
+    6.0
+   ],
+   "footprint": [
+    6.0,
+    6.0
+   ],
+   "nodes": [
+    "road_tsplit"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 12
+  },
+  "rock": {
+   "file": "assets/models/rock.gltf",
+   "source": "kenney",
+   "license": "CC0-1.0",
+   "url": "https://kenney.nl/assets/nature-kit",
+   "kind": "nature",
+   "tris": 80,
+   "size": [
+    2.42,
+    0.8,
+    3.13
+   ],
+   "footprint": [
+    2.42,
+    3.13
+   ],
+   "nodes": [
+    "rock"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 9
+  },
+  "rock_small": {
+   "file": "assets/models/rock_small.gltf",
+   "source": "kenney",
+   "license": "CC0-1.0",
+   "url": "https://kenney.nl/assets/nature-kit",
+   "kind": "nature",
+   "tris": 16,
+   "size": [
+    0.66,
+    0.35,
+    0.66
+   ],
+   "footprint": [
+    0.66,
+    0.66
+   ],
+   "nodes": [
+    "rock_small"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 3
+  },
+  "school": {
+   "file": "assets/models/school.gltf",
+   "source": "own",
+   "license": "own",
+   "url": "https://github.com/sulemanali5760/be-the-mayor/blob/main/blender/make_own.py",
+   "kind": "building",
+   "tris": 1228,
+   "size": [
+    11.88,
+    9.4,
+    6.61
+   ],
+   "footprint": [
+    11.88,
+    6.61
+   ],
+   "nodes": [
+    "school"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 126
+  },
+  "shop": {
+   "file": "assets/models/shop.gltf",
+   "source": "own",
+   "license": "own",
+   "url": "https://github.com/sulemanali5760/be-the-mayor/blob/main/blender/make_own.py",
+   "kind": "building",
+   "tris": 1032,
+   "size": [
+    6.7,
+    4.05,
+    4.93
+   ],
+   "footprint": [
+    6.7,
+    4.93
+   ],
+   "nodes": [
+    "shop"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 100
+  },
+  "spirit_level": {
+   "file": "assets/models/spirit_level.gltf",
+   "source": "own",
+   "license": "own",
+   "url": "https://github.com/sulemanali5760/brick-by-brick/blob/main/blender/make_assets.py",
+   "kind": "task",
+   "tris": 348,
+   "size": [
+    0.6,
+    0.06,
+    0.03
+   ],
+   "footprint": [
+    0.6,
+    0.03
+   ],
+   "nodes": [
+    "spirit_level"
+   ],
+   "animations": [],
+   "draws": 3,
+   "kb": 36
+  },
+  "statue": {
+   "file": "assets/models/statue.gltf",
+   "source": "own",
+   "license": "own",
+   "url": "https://github.com/sulemanali5760/be-the-mayor/blob/main/blender/make_own.py",
+   "kind": "building",
+   "tris": 308,
+   "size": [
+    1.9,
+    4.26,
+    1.9
+   ],
+   "footprint": [
+    1.9,
+    1.9
+   ],
+   "nodes": [
+    "statue"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 23
+  },
+  "streetlight": {
+   "file": "assets/models/streetlight.gltf",
+   "source": "own",
+   "license": "own",
+   "url": "https://github.com/sulemanali5760/be-the-mayor/blob/main/blender/make_own.py",
+   "kind": "building",
+   "tris": 194,
+   "size": [
+    0.68,
+    5.2,
+    0.59
+   ],
+   "footprint": [
+    0.68,
+    0.59
+   ],
+   "nodes": [
+    "lamp",
+    "streetlight"
+   ],
+   "animations": [],
+   "draws": 2,
+   "kb": 21
+  },
+  "stump": {
+   "file": "assets/models/stump.gltf",
+   "source": "kenney",
+   "license": "CC0-1.0",
+   "url": "https://kenney.nl/assets/nature-kit",
+   "kind": "nature",
+   "tris": 56,
+   "size": [
+    0.78,
+    0.5,
+    0.9
+   ],
+   "footprint": [
+    0.78,
+    0.9
+   ],
+   "nodes": [
+    "stump"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 6
+  },
+  "townhall": {
+   "file": "assets/models/townhall.gltf",
+   "source": "own",
+   "license": "own",
+   "url": "https://github.com/sulemanali5760/be-the-mayor/blob/main/blender/make_own.py",
+   "kind": "building",
+   "tris": 2738,
+   "size": [
+    12.0,
+    12.4,
+    8.17
+   ],
+   "footprint": [
+    12.0,
+    8.17
+   ],
+   "nodes": [
+    "clock_hour",
+    "clock_minute",
+    "townhall"
+   ],
+   "animations": [],
+   "draws": 3,
+   "kb": 258
+  },
+  "trash_bags": {
+   "file": "assets/models/trash_bags.gltf",
+   "source": "kaykit",
+   "license": "CC0-1.0",
+   "url": "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0",
+   "kind": "prop",
+   "tris": 18,
+   "size": [
+    1.14,
+    0.47,
+    1.2
+   ],
+   "footprint": [
+    1.14,
+    1.2
+   ],
+   "nodes": [
+    "trash_bags"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 2
+  },
+  "trash_bags_2": {
+   "file": "assets/models/trash_bags_2.gltf",
+   "source": "kaykit",
+   "license": "CC0-1.0",
+   "url": "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0",
+   "kind": "prop",
+   "tris": 18,
+   "size": [
+    1.15,
+    0.68,
+    1.2
+   ],
+   "footprint": [
+    1.15,
+    1.2
+   ],
+   "nodes": [
+    "trash_bags_2"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 2
+  },
+  "tree": {
+   "file": "assets/models/tree.gltf",
+   "source": "kenney",
+   "license": "CC0-1.0",
+   "url": "https://kenney.nl/assets/nature-kit",
+   "kind": "nature",
+   "tris": 114,
+   "size": [
+    1.68,
+    3.8,
+    1.45
+   ],
+   "footprint": [
+    1.68,
+    1.45
+   ],
+   "nodes": [
+    "tree"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 12
+  },
+  "tree_cone": {
+   "file": "assets/models/tree_cone.gltf",
+   "source": "kenney",
+   "license": "CC0-1.0",
+   "url": "https://kenney.nl/assets/nature-kit",
+   "kind": "nature",
+   "tris": 132,
+   "size": [
+    1.7,
+    4.6,
+    1.7
+   ],
+   "footprint": [
+    1.7,
+    1.7
+   ],
+   "nodes": [
+    "tree_cone"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 13
+  },
+  "tree_fat": {
+   "file": "assets/models/tree_fat.gltf",
+   "source": "kenney",
+   "license": "CC0-1.0",
+   "url": "https://kenney.nl/assets/nature-kit",
+   "kind": "nature",
+   "tris": 50,
+   "size": [
+    2.36,
+    3.6,
+    2.05
+   ],
+   "footprint": [
+    2.36,
+    2.05
+   ],
+   "nodes": [
+    "tree_fat"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 6
+  },
+  "tree_oak": {
+   "file": "assets/models/tree_oak.gltf",
+   "source": "kenney",
+   "license": "CC0-1.0",
+   "url": "https://kenney.nl/assets/nature-kit",
+   "kind": "nature",
+   "tris": 196,
+   "size": [
+    2.19,
+    4.2,
+    2.53
+   ],
+   "footprint": [
+    2.19,
+    2.53
+   ],
+   "nodes": [
+    "tree_oak"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 18
+  },
+  "tree_pine": {
+   "file": "assets/models/tree_pine.gltf",
+   "source": "kenney",
+   "license": "CC0-1.0",
+   "url": "https://kenney.nl/assets/nature-kit",
+   "kind": "nature",
+   "tris": 206,
+   "size": [
+    1.92,
+    5.0,
+    2.21
+   ],
+   "footprint": [
+    1.92,
+    2.21
+   ],
+   "nodes": [
+    "tree_pine"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 19
+  },
+  "trowel": {
+   "file": "assets/models/trowel.gltf",
+   "source": "own",
+   "license": "own",
+   "url": "https://github.com/sulemanali5760/brick-by-brick/blob/main/blender/make_assets.py",
+   "kind": "task",
+   "tris": 156,
+   "size": [
+    0.43,
+    0.07,
+    0.13
+   ],
+   "footprint": [
+    0.43,
+    0.13
+   ],
+   "nodes": [
+    "trowel"
+   ],
+   "animations": [],
+   "draws": 2,
+   "kb": 13
+  },
+  "yard": {
+   "file": "assets/models/yard.gltf",
+   "source": "own",
+   "license": "own",
+   "url": "https://github.com/sulemanali5760/be-the-mayor/blob/main/blender/make_own.py",
+   "kind": "building",
+   "tris": 902,
+   "size": [
+    9.6,
+    3.29,
+    7.69
+   ],
+   "footprint": [
+    9.6,
+    7.69
+   ],
+   "nodes": [
+    "yard"
+   ],
+   "animations": [],
+   "draws": 1,
+   "kb": 89
+  }
+ },
+ "character": {
+  "base": "character",
+  "animations": {
+   "idle": "idle",
+   "walk": "walk",
+   "wave": "wave",
+   "cheer": "cheer"
+  },
+  "attach": {
+   "head": "head",
+   "spine": "spine",
+   "handR": "handR"
+  },
+  "body": [
+   "body"
+  ],
+  "materials": [
+   "Skin",
+   "Hair",
+   "Shirt",
+   "Pants",
+   "Shoes",
+   "Jacket"
+  ],
+  "skins": [
+   "#f9dcc4",
+   "#f1c27d",
+   "#e0ac69",
+   "#c68642",
+   "#8d5524",
+   "#5c3a21"
+  ],
+  "hairs": [
+   {
+    "id": "short",
+    "model": "hair_short",
+    "color": "#5b3a29"
+   },
+   {
+    "id": "long",
+    "model": "hair_long",
+    "color": "#2e2a28"
+   },
+   {
+    "id": "bun",
+    "model": "hair_bun",
+    "color": "#c9a15b"
+   },
+   {
+    "id": "curly",
+    "model": "hair_curly",
+    "color": "#3a2a22"
+   },
+   {
+    "id": "none",
+    "model": null,
+    "color": null
+   }
+  ],
+  "faces": [
+   "face_smile",
+   "face_grin",
+   "face_calm"
+  ],
+  "outfits": [
+   {
+    "rank": 0,
+    "title": "Labourer",
+    "colors": {
+     "Shirt": "#8a9aa8",
+     "Pants": "#4a5d7a",
+     "Shoes": "#7a5233"
+    },
+    "sleeve": "#8a9aa8",
+    "show": [
+     "acc_vest",
+     "acc_hardhat"
+    ]
+   },
+   {
+    "rank": 1,
+    "title": "Skilled",
+    "colors": {
+     "Shirt": "#3e6fb0",
+     "Pants": "#3b4a5e",
+     "Shoes": "#5a4030"
+    },
+    "sleeve": "#3e6fb0",
+    "show": [
+     "acc_toolbelt",
+     "acc_tester"
+    ]
+   },
+   {
+    "rank": 2,
+    "title": "Community helper",
+    "colors": {
+     "Shirt": "#f2e6c9",
+     "Pants": "#4a5d7a",
+     "Shoes": "#e8e8e8",
+     "Jacket": "#39a58a"
+    },
+    "sleeve": "#39a58a",
+    "show": [
+     "acc_jacket",
+     "acc_clipboard"
+    ]
+   },
+   {
+    "rank": 3,
+    "title": "Councillor",
+    "colors": {
+     "Shirt": "#ffffff",
+     "Pants": "#4b4f58",
+     "Shoes": "#3a2a20",
+     "Jacket": "#8a93a0"
+    },
+    "sleeve": "#8a93a0",
+    "show": [
+     "acc_blazer"
+    ]
+   },
+   {
+    "rank": 4,
+    "title": "Mayor",
+    "colors": {
+     "Shirt": "#ffffff",
+     "Pants": "#2f4a7a",
+     "Shoes": "#2a2a2a",
+     "Jacket": "#2f4a7a"
+    },
+    "sleeve": "#2f4a7a",
+    "show": [
+     "acc_blazer",
+     "acc_tie",
+     "acc_chain"
+    ]
+   },
+   {
+    "rank": 5,
+    "title": "Governor",
+    "colors": {
+     "Shirt": "#e8eef5",
+     "Pants": "#2b2d33",
+     "Shoes": "#1e1e1e",
+     "Jacket": "#2b2d33"
+    },
+    "sleeve": "#2b2d33",
+    "show": [
+     "acc_blazer",
+     "acc_tie",
+     "acc_briefcase"
+    ]
+   },
+   {
+    "rank": 6,
+    "title": "President",
+    "colors": {
+     "Shirt": "#ffffff",
+     "Pants": "#151c2e",
+     "Shoes": "#141414",
+     "Jacket": "#151c2e"
+    },
+    "sleeve": "#151c2e",
+    "show": [
+     "acc_blazer",
+     "acc_tie",
+     "acc_flagpin"
+    ]
+   }
+  ],
+  "extras": [
+   {
+    "id": "cap",
+    "model": "extra_cap",
+    "slot": "hat"
+   },
+   {
+    "id": "beanie",
+    "model": "extra_beanie",
+    "slot": "hat"
+   },
+   {
+    "id": "sunglasses",
+    "model": "extra_sunglasses",
+    "slot": "face"
+   },
+   {
+    "id": "flower",
+    "model": "extra_flower",
+    "slot": "hair"
+   },
+   {
+    "id": "scarf",
+    "model": "extra_scarf",
+    "slot": "neck"
+   },
+   {
+    "id": "bowtie",
+    "model": "extra_bowtie",
+    "slot": "neck"
+   }
+  ]
+ },
+ "budget": {
+  "mb": 4.18,
+  "characterTris": 4561,
+  "townBuildings": {
+   "tris": 12360,
+   "draws": 18
+  }
+ }
+}
