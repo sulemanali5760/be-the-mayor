@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@500;600;700&family=Saira+Stencil+One&display=swap" rel="stylesheet">
 <style>*,*::before,*::after{box-sizing:border-box}[hidden]{display:none!important}</style>
-<link rel="stylesheet" href="css/game.css?v=0.2.1">
+<link rel="stylesheet" href="css/game.css?v=0.2.2">
 </head>
 <body>
 <div id="app">
@@ -63,6 +63,6 @@
   // show start-up failures on the loading card instead of a silent "Loading…"
   addEventListener('error', e => { const l = document.getElementById('bootMsg'); if (l && !document.getElementById('boot').hidden) l.textContent = 'Could not start: ' + (e.message || 'a file failed to load'); }, true);
 </script>
-<script type="module" src="js/main.js?v=0.2.1"></script>
+<script type="module" src="js/main.js?v=0.2.2"></script>
 </body>
 </html>

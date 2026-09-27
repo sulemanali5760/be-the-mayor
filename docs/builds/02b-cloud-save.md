@@ -1,6 +1,6 @@
 # Build 0.2.2: "Cloud save"
 
-Status: in progress · base: 0.2.1 · one lane (G) · owner request 2026-09-28
+Status: closed · 0.2.2 released · base: 0.2.1 · one lane (G) · owner request 2026-09-28
 
 ## 1. Goal
 
@@ -86,3 +86,13 @@ net.signOut()
 1. Run the new migration in the SQL Editor.
 2. Authentication → URL Configuration: **Site URL** = `https://sulemanali5760.github.io/be-the-mayor/`, and the same under Redirect URLs.
 3. In the game: ⚙ → Save my progress → your email → click the link.
+
+## 5. Minutes (2026-09-28)
+
+- Lane G: every check green on the **first push**.
+  - rules 46/46: save fixtures 0.1.0, 0.2.1 and 0.2.2, export/import, `pickSave` conflicts;
+  - db 15/15: privacy, rate limit, backups, same id after email linking and magic-link login;
+  - qa: the reload, export/import and choice-card checks, with Supabase stubbed so nothing reached the live project.
+  - About 284k tokens.
+- Also fixed: "Start a new life" did nothing, because the `pagehide` save rewrote the old life.
+- Director reviewed the migration SQL before handing it to the owner: owner-only RLS, anon revoked, server-owned id, timestamps and backups, 20 s limit, safe to re-run.
