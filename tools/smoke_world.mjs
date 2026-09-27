@@ -259,8 +259,9 @@ await check('avatar: the kit character in town, and every rank wears a different
   const outfits = [];
   for (let r = 0; r <= 6; r++) outfits.push((await W(r => { __btmWorld.world.setAvatar({ rank: r }); return __btmWorld.avatar(); }, r)).outfit);
   assert.equal(new Set(outfits).size, 7);
-  const set = await W(() => __btmWorld.world.setAvatar({ rank: 1, skin: 3, hair: 4, face: 1, extra: 'sunglasses' })); // indices, as saved
-  assert.deepEqual(set, { skin: 0x9c6440, hair: 'blond', face: 'grin', rank: 1, extra: 'sunglasses' });
+  const set = await W(() => __btmWorld.world.setAvatar({ rank: 1, skin: 3, hair: 4, face: 1, extra: 'sunglasses' })); // indices into the manifest's lists, as saved
+  assert.ok(near(set.skin, 0xc68642), `manifest skin 3, not ${set.skin.toString(16)}`);
+  assert.deepEqual({ ...set, skin: 0 }, { skin: 0, hair: 'none', face: 'grin', rank: 1, extra: 'sunglasses' });
   const b = await W(() => __btmWorld.avatar());
   assert.equal(b.title, 'Skilled');
   assert.deepEqual(b.parts.sort(), ['sunglasses', 'tester', 'toolbelt']);
@@ -350,6 +351,12 @@ await check('a phone-sized resize keeps the camera finite', async () => {
   await step(2);
   const v = await W(() => __btmWorld.view), a = await W(() => __btmWorld.world.anchors());
   assert.ok(Number.isFinite(v.d) && a.every(p => Number.isFinite(p.x) && Number.isFinite(p.y)));
+  await W(() => { __btmWorld.world.focus('yard'); }); await step(10);
+  await W(() => __btmWorld.world.celebrate('promotion')); await step(10);
+  assert.equal((await W(() => __btmWorld.avatar())).visible, true, 'a promotion flies to the avatar in its new outfit');
+  await W(() => __btmWorld.world.showTown({ buildings: [{ id: 'far', type: 'house', x: 60, z: 40, rot: 0, state: 'ok' }, { id: 'hall2', type: 'townhall', x: -40, z: -30, rot: 0, state: 'ok' }] }));
+  await step(1);
+  assert.equal((await W(() => __btmWorld.avatar())).visible, true, 'a visit opens on its avatar');
 });
 await page.screenshot({ path: 'smoke-town-low.png' });
 

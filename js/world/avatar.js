@@ -8,12 +8,12 @@ const V = new URL(import.meta.url).searchParams.get('v') || 'dev';
 const L = await import(`./look.js?v=${V}`);
 const { pointAt, pathLength, walkSpeed } = await import(`./rules.js?v=${V}`);
 
-// setAvatar's skin, hair and face are indices into these lists (data/wardrobe.json looks are in the same order)
-export const SKINS = [0xf6d7bd, 0xe8b894, 0xc98f63, 0x9c6440, 0x6b4128, 0x47291a];
+// setAvatar's skin, hair and face are indices into manifest.character's skins, hairs and faces (Lane G's save and
+// creator use that order). These copies serve the stand-in until the kit is in; after that the manifest's lists win.
+export const SKINS = [0xf9dcc4, 0xf1c27d, 0xe0ac69, 0xc68642, 0x8d5524, 0x5c3a21];
 export const HAIRS = [
-  { id: 'short', style: 'short', model: 'hair_short', color: 0x3b2618 }, { id: 'long', style: 'long', model: 'hair_long', color: 0x6b3f1f },
-  { id: 'bun', style: 'bun', model: 'hair_bun', color: 0x1e1712 }, { id: 'curly', style: 'curly', model: 'hair_curly', color: 0x2a1c14 },
-  { id: 'blond', style: 'short', model: 'hair_short', color: 0xd8b26a }, { id: 'buzz', style: 'buzz', model: null, color: 0x4a4a4a },
+  { id: 'short', model: 'hair_short', color: 0x5b3a29 }, { id: 'long', model: 'hair_long', color: 0x2e2a28 },
+  { id: 'bun', model: 'hair_bun', color: 0xc9a15b }, { id: 'curly', model: 'hair_curly', color: 0x3a2a22 }, { id: 'none', model: null, color: null },
 ];
 export const FACES = ['smile', 'grin', 'calm'];
 export const EXTRAS = ['cap', 'beanie', 'sunglasses', 'flower', 'scarf', 'bowtie']; // build 02 contract change 1
@@ -37,10 +37,14 @@ export function outfitOf(av) {
   return { ...OUTFITS[r], ...(k?.sleeve && { sleeve: hex(k.sleeve) }) };
 }
 const at = (list, v) => (Number.isInteger(v) && v >= 0 && v < list.length ? list[v] : undefined);
+const skins = () => (KIT?.skins?.length ? KIT.skins.map(hex) : SKINS);
+const hairs = () => (KIT?.hairs?.length ? KIT.hairs.map(h => ({ id: h.id, model: h.model ?? null, color: h.color ? hex(h.color) : null })) : HAIRS);
+const hairOf = id => hairs().find(h => h.id === id) ?? hairs()[0];
 // setAvatar input → what the figure wears; a skin may also be a colour, a hair or face an id
 export function normalise(av = {}) {
-  const skin = at(SKINS, av.skin) ?? av.skin ?? SKINS[1], hair = at(HAIRS, av.hair)?.id ?? av.hair, face = at(FACES, av.face) ?? av.face;
-  return { skin: typeof skin === 'number' ? skin : hex(skin), hair: HAIRS.some(h => h.id === hair) ? hair : HAIRS[0].id,
+  const S = skins(), H = hairs();
+  const skin = at(S, av.skin) ?? av.skin ?? S[1], hair = at(H, av.hair)?.id ?? av.hair, face = at(FACES, av.face) ?? av.face;
+  return { skin: typeof skin === 'number' ? skin : hex(skin), hair: H.some(h => h.id === hair) ? hair : H[0].id,
     face: FACES.includes(face) ? face : FACES[0], rank: rankOf(av.rank), extra: EXTRAS.includes(av.extra) ? av.extra : null };
 }
 const wornExtra = (lk, hat) => (lk.extra && !(hat && HATS.includes(lk.extra)) ? lk.extra : null);
@@ -117,13 +121,12 @@ function standIn() {
     calm: bakeMesh([...eyes(true), ...cheeks(), P(new THREE.BoxGeometry(0.1, 0.02, 0.02), DARK, 0, -0.1, 0.29)], head),
   };
   const cap = r => sph(r, 14, 6, 0, Math.PI * 0.5);
-  const hairs = {
+  const hairStyles = { // by the manifest's hair ids ('none': no mesh)
     short: mesh(cap(0.315).rotateX(-0.25), M.hair, head, 0, 0.02, -0.01),
     long: mesh(L.bake([P(cap(0.32).rotateX(-0.2), 0xffffff, 0, 0.02, 0), P(new THREE.BoxGeometry(0.52, 0.5, 0.14), 0xffffff, 0, -0.14, -0.22)], false), M.hair, head),
     bun: mesh(L.bake([P(cap(0.315).rotateX(-0.25), 0xffffff, 0, 0.02, -0.01), P(sph(0.12, 8, 6), 0xffffff, 0, 0.3, -0.12)], false), M.hair, head),
     curly: mesh(L.bake([[0, 0.24, 0], [0.16, 0.18, 0.1], [-0.16, 0.18, 0.1], [0.2, 0.14, -0.1], [-0.2, 0.14, -0.1], [0, 0.18, -0.2], [0.1, 0.26, -0.1], [-0.1, 0.26, 0.08]]
       .map(([x, y, z]) => P(sph(0.13, 8, 6), 0xffffff, x, y, z)), false), M.hair, head),
-    buzz: mesh(cap(0.305).rotateX(-0.35), M.hair, head, 0, 0.01, 0),
   };
   const SILVER = 0xe8eef2, GOLD = 0xe6b422, WHITE = 0xf7f4ee, BROWN = 0x6b4a2f, RED = 0xc8323c;
   const parts = {
@@ -155,11 +158,11 @@ function standIn() {
   return {
     obj, mixer, clips: CLIPS, kit: false,
     dress(lk) {
-      const o = OUTFITS[lk.rank], h = HAIRS.find(x => x.id === lk.hair), hat = o.parts.includes('hardhat'), extra = wornExtra(lk, hat);
-      M.skin.color.setHex(lk.skin); M.hair.color.setHex(h.color);
+      const o = OUTFITS[lk.rank], h = hairOf(lk.hair), hat = o.parts.includes('hardhat'), extra = wornExtra(lk, hat);
+      M.skin.color.setHex(lk.skin); if (h.color !== null) M.hair.color.setHex(h.color);
       M.top.color.setHex(o.top); M.sleeve.color.setHex(o.sleeve); M.legs.color.setHex(o.legs); M.shoes.color.setHex(o.shoes);
       for (const [k, m] of Object.entries(face)) m.visible = k === lk.face;
-      for (const [k, m] of Object.entries(hairs)) m.visible = k === h.style && !hat;
+      for (const [k, m] of Object.entries(hairStyles)) m.visible = k === h.id && !hat; // 'none': no hair
       for (const [k, m] of Object.entries(parts)) m.visible = o.parts.includes(k);
       for (const c of cuffs) c.visible = !!o.cuff;
       for (const [k, m] of Object.entries(extras)) m.visible = k === extra;
@@ -186,11 +189,11 @@ function kitFigure(g, C) {
     clips: ['idle', 'walk', 'wave', 'cheer'].map(k => { const c = THREE.AnimationClip.findByName(g.animations, C.animations?.[k] ?? k); if (c) c.name = k; return c; }),
     dress(lk) {
       const o = C.outfits?.[lk.rank] ?? {}, show = o.show ?? [], hat = show.includes('acc_hardhat'), extra = wornExtra(lk, hat);
-      const on = new Set([...(C.body ?? []), HAIRS.find(h => h.id === lk.hair)?.model, `face_${lk.face}`, ...show,
-        C.extras?.find(e => e.id === extra)?.model].filter(Boolean));
+      const hair = hairOf(lk.hair);
+      const on = new Set([...(C.body ?? []), hair.model, `face_${lk.face}`, ...show, C.extras?.find(e => e.id === extra)?.model].filter(Boolean));
       obj.traverse(x => { if (variants.has(x.name)) x.visible = on.has(x.name); });
       R.Skin?.color.setHex(lk.skin);
-      R.Hair?.color.setHex(HAIRS.find(h => h.id === lk.hair).color);
+      if (hair.color !== null) R.Hair?.color.setHex(hair.color);
       for (const [n, c] of Object.entries(o.colors ?? {})) R[n]?.color.set(c);
       const top = o.colors?.Jacket ?? o.colors?.Shirt;
       return { parts: [...show.map(strip), ...(extra ? [extra] : [])], top: top ? hex(top) : 0, sig: JSON.stringify(o) };
@@ -220,13 +223,13 @@ export function createAvatar(scene) {
     if (walk) act.walk.setEffectiveTimeScale(Math.min(3, walk.speed / 1.8));
     worn = fig.dress(look);
   }
-  let look = normalise();
+  let asked = {}, look = normalise(); // asked: what setAvatar was given (indices), re-read once the kit's lists are in
   mount(standIn());
 
   function set(av = {}) {
-    const next = { ...look };
-    for (const [k, v] of Object.entries(av || {})) if (v !== undefined) next[k] = v; // a missing field keeps what's worn
-    look = normalise(next);
+    asked = { ...asked };
+    for (const [k, v] of Object.entries(av || {})) if (v !== undefined) asked[k] = v; // a missing field keeps what's worn
+    look = normalise(asked);
     worn = fig.dress(look);
     return look;
   }
@@ -235,6 +238,7 @@ export function createAvatar(scene) {
     const f = kitFigure(g, C);
     if (f.clips.some(c => !c)) { console.warn('Kit character without all four clips; keeping the stand-in'); return false; }
     KIT = C;
+    look = normalise(asked);
     mount(f);
     return true;
   }
