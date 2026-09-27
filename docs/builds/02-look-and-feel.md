@@ -153,3 +153,8 @@ Never open downloaded files locally. To inspect results, read `manifest.json` an
 - The phone is at 57k of 60k triangles, so new props need instancing or LODs.
 - The old desktop QA click can flake on software GL.
 - Kit citizens only if there's budget to spare.
+
+**Director play test on Pages (0.2.0 → 0.2.1):**
+- The town reads as one cozy style; grey broken areas and colour both show.
+- **Bug:** the kit avatar kept its hair mesh under the hard hat, and curly hair covered the hat. It was fixed in `avatar.js` in 0.2.1 (hair hidden under the helmet, as the stand-in path already did).
+- **Lesson:** QA checked `parts` in state, which can't see one mesh hiding another, so keep the director's visual play test in every release.
