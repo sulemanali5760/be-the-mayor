@@ -68,6 +68,7 @@ export function town(o = {}, { wind = false, glow = false } = {}) {
   return m;
 }
 export const townMat = town({ vertexColors: true }, { glow: true }); // buildings and props: baked vertex colours
+export const lampMat = town({ vertexColors: true, emissive: 0xffd27a, emissiveIntensity: 0 }); // kit lamps: lit at night
 
 // merge coloured pieces [{ geo, color, glow }] into one geometry (position, normal, color[, glow]) for one draw
 // call. The pieces' geometries are consumed (disposed).
@@ -128,7 +129,8 @@ export function createLook(renderer, scene, LOW) {
   sun.shadow.bias = -0.0005; sun.shadow.normalBias = 0.05;
   scene.add(hemi, sun, sun.target);
 
-  let cur = paramsAt(0), tw = null, target = 0;
+  let cur = paramsAt(0), tw = null, target = 0, hours = 7; // the town hall clock: 7:00 in the morning … 23:00 at night
+  const hoursAt = t => 7 + 16 * t;
   function apply(p) {
     cur = p;
     sun.color.copy(p.sun); sun.intensity = p.sunI;
@@ -136,18 +138,23 @@ export function createLook(renderer, scene, LOW) {
     hemi.color.copy(p.sky); hemi.groundColor.copy(p.ground); hemi.intensity = p.hemiI;
     scene.fog.color.copy(p.fog); scene.background.copy(p.fog);
     U.uNight.value = p.night;
+    lampMat.emissiveIntensity = p.night * 2.2;
   }
   apply(cur);
   // eases from wherever it is now over 1.5 s of game time, so night → morning doesn't rewind through the day
+  // (and the clock runs on to the next morning)
   function setTime(t) {
     target = Math.max(0, Math.min(1, Number(t) || 0));
-    tw = { from: cur, to: paramsAt(target), k: 0 };
+    const h1 = hoursAt(target);
+    tw = { from: cur, to: paramsAt(target), k: 0, h0: hours, h1: h1 < hours ? h1 + 24 : h1 };
   }
   function update(dt) {
     U.uTime.value += dt;
     if (!tw) return;
     tw.k = Math.min(1, tw.k + dt / 1.5);
-    apply(mix(tw.from, tw.to, tw.k * tw.k * (3 - 2 * tw.k)));
+    const e = tw.k * tw.k * (3 - 2 * tw.k);
+    apply(mix(tw.from, tw.to, e));
+    hours = (tw.h0 + (tw.h1 - tw.h0) * e) % 24;
     if (tw.k >= 1) tw = null;
   }
   // centre the key light and its shadow on the town (radius R)
@@ -210,6 +217,6 @@ void main() {
     renderer.render(post.qs, post.qc);
   }
 
-  return { sun, hemi, setTime, update, fit, setSize, render,
-    info: () => ({ target, t: tw ? tw.k : 1, sun: +sun.intensity.toFixed(3), night: +cur.night.toFixed(3), outlines: !!post, shadows: sun.castShadow }) };
+  return { sun, hemi, setTime, update, fit, setSize, render, get hours() { return hours; },
+    info: () => ({ target, t: tw ? tw.k : 1, sun: +sun.intensity.toFixed(3), night: +cur.night.toFixed(3), hours: +hours.toFixed(2), outlines: !!post, shadows: sun.castShadow }) };
 }

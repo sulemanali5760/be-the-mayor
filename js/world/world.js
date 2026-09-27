@@ -5,7 +5,7 @@ import * as THREE from 'three';
 
 // main.js imports this file as world.js?v=…; every file below is fetched with the same ?v= (LESSONS H3)
 const V = new URL(import.meta.url).searchParams.get('v') || 'dev';
-const [B, L, A, Life] = await Promise.all(['buildings', 'look', 'avatar', 'life'].map(f => import(`./${f}.js?v=${V}`)));
+const [B, L, A, Life, K] = await Promise.all(['buildings', 'look', 'avatar', 'life', 'assets'].map(f => import(`./${f}.js?v=${V}`)));
 
 const YAW = Math.PI / 4, PITCH = 0.9; // fixed view from the south-east, about 52° down
 const MIN_D = 22, MAX_D = 240;         // camera distance to the ground point it looks at (m)
@@ -33,6 +33,23 @@ export function createWorld(canvas, content = {}) {
   scene.add(town);
   const life = Life.createLife(scene, content || {});
   const avatar = A.createAvatar(scene);
+
+  /* ---------- Lane A's kit: loads in the background; the town, its life and the avatar switch over once it's in ---------- */
+  const kit = { scenes: new Map(), meta: null, size: id => kit.meta?.models?.[id]?.size };
+  const loaded = K.manifest().then(async m => {
+    const ids = Object.keys(m.models ?? {}).filter(id => ['building', 'broken'].includes(m.models[id].kind) || id === 'tree' || Life.KIT.includes(id));
+    const [character] = await Promise.all([m.character ? K.model(m.character.base ?? 'character', null) : null,
+      ...ids.map(id => K.model(id).then(g => { if (g) kit.scenes.set(id, g.scene); }))]);
+    kit.meta = m;
+    if (character) avatar.useKit(character, m.character);
+    life.useKit(kit.scenes);
+    if (lastState) { // rebuild what is on show: every building, then its life
+      for (const it of items.values()) it.key = '';
+      showTown(lastState);
+      life.build(items, layoutOf(lastState));
+    }
+    return true;
+  }).catch(e => { console.warn('The kit did not load; the code-built town stays:', e); return false; });
 
   /* ---------- size (resize guard, T5) ---------- */
   const size = { w: 0, h: 0 };
@@ -75,10 +92,10 @@ export function createWorld(canvas, content = {}) {
   /* ---------- town ---------- */
   const items = new Map(); // id → { key, group, b }
   const zones = new Map(); // id → grey area { x, z, r, a, to }: broken buildings grey their surroundings
-  let idsKey = '', lastFixed = null;
+  let idsKey = '', lastFixed = null, lastState = null;
   function drop(group) {
     town.remove(group);
-    group.traverse(o => { o.geometry?.dispose(); if (o.userData.own) { o.material.map?.dispose(); o.material.dispose(); } });
+    group.traverse(o => { if (!o.userData.kit) o.geometry?.dispose(); if (o.userData.own) { o.material.map?.dispose(); o.material.dispose(); } });
   }
   function fitTown() {
     let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
@@ -105,13 +122,14 @@ export function createWorld(canvas, content = {}) {
   }
   // rebuilds only buildings whose type, place, state or label changed; a different set of ids (a visit) re-frames
   function showTown(state) {
+    lastState = state;
     const seen = new Set();
     for (const b of buildingsOf(state)) {
       seen.add(b.id);
       const key = JSON.stringify([b.type, b.x, b.z, b.rot, b.state, b.label]), it = items.get(b.id);
       if (it?.key === key) { it.b = b; continue; }
       if (it) { if (it.b.state === 'broken' && b.state !== 'broken') lastFixed = b.id; drop(it.group); }
-      const group = B.makeBuilding(b);
+      const group = B.makeBuilding(b, kit.meta ? kit : null);
       town.add(group);
       items.set(b.id, { key, group, b });
     }
@@ -247,6 +265,15 @@ export function createWorld(canvas, content = {}) {
     if (it) bounces.push({ g: it.group, t: 0 });
     avatar.play(kind === 'like' ? 'wave' : 'cheer');
   }
+  // the town hall clock shows the time of day (look.js hours); its hands turn about z, clockwise seen from the front
+  const qz = new THREE.Quaternion(), Z = new THREE.Vector3(0, 0, 1);
+  function updateClocks() {
+    const H = look.hours;
+    for (const { group } of items.values()) for (const h of group.userData.hands) {
+      const a = h.name === 'clock_hour' ? (H % 12) / 12 * Math.PI * 2 : (H % 1) * Math.PI * 2;
+      h.quaternion.copy(h.userData.rest).multiply(qz.setFromAxisAngle(Z, -a));
+    }
+  }
   function updateBounces(dt) {
     for (let i = bounces.length - 1; i >= 0; i--) {
       const b = bounces[i], k = Math.min(1, (b.t += dt) / 0.8), s = Math.sin(k * Math.PI * 3) * (1 - k);
@@ -305,6 +332,7 @@ export function createWorld(canvas, content = {}) {
     avatar.update(dt);
     updateZones(dt);
     updateBounces(dt);
+    updateClocks();
     renderTown();
   }
 
@@ -327,6 +355,13 @@ export function createWorld(canvas, content = {}) {
     grey: () => [...zones].map(([id, z]) => ({ id, a: +z.a.toFixed(3), to: z.to })),
     life: () => life.info(),
     lastFixed: () => lastFixed,
+    loaded, // resolves true once Lane A's kit is on show (false: it failed and the code-built town stays)
+    // the kit: is it in, which model each building shows, the avatar's figure, the town hall clock hands (radians)
+    kit: () => ({ ready: !!kit.meta, models: kit.scenes.size, character: avatar.info().kit, hours: look.hours,
+      buildings: Object.fromEntries([...items].map(([id, it]) => [id, it.group.userData.model])),
+      hands: [...items.values()].flatMap(it => it.group.userData.hands.map(h => ({ id: it.b.id, name: h.name, z: +h.rotation.z.toFixed(3) }))),
+      lamps: [...items.values()].map(it => { let lit = null; it.group.getObjectByName('lamp')?.traverse(o => { if (o.isMesh) lit = o.material === L.lampMat; }); return lit === null ? null : { id: it.b.id, lit }; }).filter(Boolean),
+      lampGlow: +L.lampMat.emissiveIntensity.toFixed(3) }),
     // the rendered colour [r, g, b] at a ground point, read back straight after a render
     sample(x, z) {
       const [px, py] = screen(x, z);

@@ -42,6 +42,8 @@ window.step = (n = 1, dt = 0.1) => { for (let i = 0; i < n; i++) w.frame(dt); };
 window.run = (kind, params) => { window.res = null; w.playTask(kind, params).then(r => { window.res = r; }, e => { window.res = { error: String(e) }; }); };
 window.walk = id => { window.walked = null; w.walkTo(id).then(r => { window.walked = r; }); };
 step(1);
+window.kitLoaded = await __btmWorld.loaded; // Lane A's models, fetched by the browser
+step(1);
 window.ready = true;
 </script></body></html>`;
 
@@ -63,6 +65,19 @@ const check = (name, fn) => fn().then(() => console.log(`ok   ${name}`), e => { 
 const inside = ([x, z]) => SOLID.some(([cx, cz, hw, hd]) => Math.abs(x - cx) < hw && Math.abs(z - cz) < hd);
 const sat = ([r, g, b]) => (Math.max(r, g, b) - Math.min(r, g, b)) / Math.max(1, r, g, b);
 const median = a => a.slice().sort((x, y) => x - y)[Math.floor(a.length / 2)];
+
+await check('the kit: every building from the manifest (by id, then type), broken variants, rubble, the character', async () => {
+  assert.equal(await W(() => window.kitLoaded), true);
+  const k = await W(() => __btmWorld.kit());
+  assert.ok(k.ready && k.character, JSON.stringify(k));
+  const b = k.buildings;
+  assert.deepEqual([b.cafe, b.shop, b.school, b.hall, b.yard, b.dump2], ['cafe', 'shop', 'school', 'townhall', 'yard', 'dump_pile']);
+  assert.deepEqual([b.garden, b.bus, b.dump], ['garden_broken', 'busstop_broken', 'dump_pile_broken'], 'broken variants');
+  assert.ok(['house', 'house_2', 'house_3'].includes(b.house), `a house: ${b.house}`);
+  assert.equal(k.hands.length, 2, 'the town hall clock has two hands');
+  const house = await W(() => __btmWorld.world.anchors().find(a => a.id === 'house'));
+  assert.ok(Number.isFinite(house.y));
+});
 
 await check('showTown builds every building, anchors are finite', async () => {
   assert.equal((await W(() => __btmWorld.stats())).buildings, town.length);
@@ -168,7 +183,7 @@ await check('wall (twist rain) in the Mayor\'s sleeves: tapping lays and levels 
   await until(() => __btmWorld.task(), 100);
   const info = await W(() => __btmWorld.task());
   assert.equal(info.kind, 'wall'); assert.equal(info.twist, 'rain'); assert.ok(info.total >= 8 && info.total <= 12);
-  assert.ok(near(info.sleeve, 0x3a3d45), `params.avatar rank 4: the suit sleeve, not ${info.sleeve.toString(16)}`);
+  assert.ok(near(info.sleeve, 0x2f4a7a), `params.avatar rank 4: the manifest's Mayor sleeve, not ${info.sleeve.toString(16)}`);
   assert.equal(info.cuffs, 2);
   let laid = 0;
   for (let i = 0; i < 500 && !(await W(() => window.res)); i++) {
@@ -208,36 +223,44 @@ await check('look: broken areas are grey on screen, fixed ones in colour', async
   assert.ok(green > 0.25 && grey < green * 0.5, `saturation by the broken garden ${grey.toFixed(2)}, in the fixed street ${green.toFixed(2)}`);
 });
 
-await check('time of day eases over about 1.5 s: night, then morning', async () => {
-  assert.equal((await W(() => __btmWorld.tod())).night, 0);
-  await W(() => __btmWorld.world.setTimeOfDay(1)); await step(5);
+await check('time of day eases over about 1.5 s: night, lamps and the town hall clock, then morning', async () => {
   let tod = await W(() => __btmWorld.tod());
+  assert.ok(tod.night === 0 && tod.hours === 7, JSON.stringify(tod));
+  const k0 = await W(() => __btmWorld.kit());
+  assert.equal(k0.lampGlow, 0, 'lamps are off by day');
+  await W(() => __btmWorld.world.setTimeOfDay(1)); await step(5);
+  tod = await W(() => __btmWorld.tod());
   assert.ok(tod.t > 0.2 && tod.t < 0.5 && tod.night > 0 && tod.night < 1, `half way: ${JSON.stringify(tod)}`);
   await step(12);
   tod = await W(() => __btmWorld.tod());
-  assert.ok(tod.t === 1 && tod.night === 1 && tod.sun < 1, `night: ${JSON.stringify(tod)}`);
+  assert.ok(tod.t === 1 && tod.night === 1 && tod.sun < 1 && tod.hours === 23, `night: ${JSON.stringify(tod)}`);
+  const k1 = await W(() => __btmWorld.kit());
+  assert.ok(k1.lampGlow >= 2, 'lamps glow at night');
+  assert.notDeepEqual(k1.hands, k0.hands, 'the clock hands turned');
   assert.equal((await W(() => __btmWorld.life())).birds, 0, 'birds sleep');
   await W(() => __btmWorld.world.setTimeOfDay(0.55)); await step(16);
   assert.equal((await W(() => __btmWorld.tod())).target, 0.55);
   await W(() => __btmWorld.world.setTimeOfDay(0)); await step(16);
   tod = await W(() => __btmWorld.tod());
-  assert.ok(tod.night === 0 && tod.sun > 1.5, `morning: ${JSON.stringify(tod)}`);
+  assert.ok(tod.night === 0 && tod.sun > 1.5 && tod.hours === 7, `morning: ${JSON.stringify(tod)}`);
+  assert.deepEqual((await W(() => __btmWorld.kit())).hands, k0.hands, 'the clock runs on to 7:00 again');
 });
 
-await check('avatar: in town, and every rank wears a different outfit', async () => {
+await check('avatar: the kit character in town, and every rank wears a different outfit', async () => {
   await W(() => __btmWorld.world.focus('house')); await step(10);
   const a = await W(() => __btmWorld.avatar());
   assert.ok(a.visible, `on screen at ${a.x}, ${a.z}`);
+  assert.equal(a.kit, true, 'character.gltf, not the stand-in');
   assert.equal(a.rank, 0); assert.equal(a.clip, 'idle');
-  assert.deepEqual(a.parts.sort(), ['hardhat', 'stripes'], 'Labourer: hard hat and hi-vis');
-  const tops = [];
-  for (let r = 0; r <= 6; r++) tops.push((await W(r => { __btmWorld.world.setAvatar({ rank: r }); return __btmWorld.avatar(); }, r)).top);
-  assert.equal(new Set(tops).size, 7);
+  assert.deepEqual(a.parts.sort(), ['hardhat', 'vest'], 'Labourer: hard hat and hi-vis');
+  const outfits = [];
+  for (let r = 0; r <= 6; r++) outfits.push((await W(r => { __btmWorld.world.setAvatar({ rank: r }); return __btmWorld.avatar(); }, r)).outfit);
+  assert.equal(new Set(outfits).size, 7);
   const set = await W(() => __btmWorld.world.setAvatar({ rank: 1, skin: 3, hair: 4, face: 1, extra: 'sunglasses' })); // indices, as saved
   assert.deepEqual(set, { skin: 0x9c6440, hair: 'blond', face: 'grin', rank: 1, extra: 'sunglasses' });
   const b = await W(() => __btmWorld.avatar());
   assert.equal(b.title, 'Skilled');
-  assert.deepEqual(b.parts.sort(), ['belt', 'sunglasses', 'tester']);
+  assert.deepEqual(b.parts.sort(), ['sunglasses', 'tester', 'toolbelt']);
   assert.equal((await W(() => __btmWorld.world.setAvatar({ hair: 'bun', rank: undefined }))).hair, 'bun', 'a hair style id works too');
   assert.equal((await W(() => __btmWorld.avatar())).rank, 1, 'an undefined field keeps what is worn');
   assert.equal((await W(() => __btmWorld.world.setAvatar({ rank: 0, extra: 'cap' }))).extra, 'cap');
@@ -291,15 +314,21 @@ await check('a fix brings the colour back; celebrate: confetti, a bounce, the av
   await W(() => __btmWorld.world.celebrate('promotion')); await W(() => __btmWorld.world.celebrate('like')); await step(40);
 });
 
-await check('a visit to a town without roads: a ring road, the avatar at its door; home again', async () => {
+await check('a visit to a town without roads: a ring road, the avatar by its house, lit and broken lamps, the kiosk by id; home again', async () => {
   await W(() => __btmWorld.world.showTown({ buildings: [
     { id: 'townhall', type: 'townhall', x: 0, z: 0, rot: 0, state: 'ok', label: 'Town hall' },
-    { id: 'home', type: 'house', x: 14, z: 6, rot: 0, state: 'ok' }, { id: 'park', type: 'park', x: -14, z: -16, rot: 0, state: 'broken' }] }));
+    { id: 'home', type: 'house', x: 14, z: 6, rot: 0, state: 'ok' }, { id: 'park', type: 'park', x: -14, z: -16, rot: 0, state: 'broken' },
+    { id: 'kiosk', type: 'shop', x: 14, z: -10, rot: 0, state: 'ok' },
+    { id: 'lamp_ok', type: 'streetlight', x: 7, z: 8, rot: 0, state: 'ok' }, { id: 'lamp_out', type: 'streetlight', x: -7, z: 8, rot: 0, state: 'broken' }] }));
   const li = await W(() => __btmWorld.life());
   assert.ok(li.ring && li.roads === 1 && li.cars.length === 3, JSON.stringify(li));
   const a = await W(() => __btmWorld.avatar()), k = Math.SQRT1_2 * (Math.hypot(6, 5) / 2 + 1.2);
   assert.ok(Math.hypot(a.x - 14 - k, a.z - 6 - k) < 0.1, `by the only house, on the camera's side: ${a.x}, ${a.z}`);
-  assert.deepEqual((await W(() => __btmWorld.grey())).map(z => z.id), ['park']);
+  assert.deepEqual((await W(() => __btmWorld.grey())).map(z => z.id).sort(), ['lamp_out', 'park']);
+  const kit = await W(() => __btmWorld.kit());
+  assert.equal(kit.buildings.kiosk, 'kiosk', 'a shop with the id kiosk gets its own model');
+  assert.equal(kit.buildings.lamp_out, 'streetlight', 'no broken variant: the ok model, greyed, with rubble');
+  assert.deepEqual(kit.lamps, [{ id: 'lamp_ok', lit: true }, { id: 'lamp_out', lit: false }]);
   await step(5);
   await W(t => __btmWorld.world.showTown({ town: t }), town);
   assert.equal((await W(() => __btmWorld.life())).ring, false);
