@@ -1,7 +1,11 @@
 // Code-built low-poly town buildings: no model files, so createWorld stays synchronous and the town
 // costs a few thousand triangles (budget in docs/ASSETS.md). Each building is centred on its footprint,
-// front towards +z; b.rot (degrees) turns it. Broken = grey with rubble, ok = colour (+ its label).
+// front towards +z; b.rot (degrees) turns it. Broken = rubble (look.js greys the area), ok = its label.
+// Each building is baked into one vertex-coloured mesh: one draw call, whatever its number of parts.
 import * as THREE from 'three';
+
+const V = new URL(import.meta.url).searchParams.get('v') || 'dev';
+const L = await import(`./look.js?v=${V}`);
 
 const PAL = {
   wall: 0xf1e3c8, plaster: 0xe8b98a, hall: 0xeadcb8, school: 0xe39f6a, cafe: 0xd9785b, shop: 0x7fb2a8,
@@ -10,17 +14,16 @@ const PAL = {
   brick: 0xb5563a, path: 0xd8c9a8, sand: 0xe6d29a, yellow: 0xf2c14e, red: 0xd9453b, lamp: 0xfff2b0,
 };
 const cache = new Map();
-// broken buildings get the grey twin of every colour: same lightness, no hue, a little darker
-export function mat(name, grey = false) {
-  const key = name + (grey ? ':grey' : '');
-  if (!cache.has(key)) {
-    const c = new THREE.Color(PAL[name]);
-    if (grey) { const l = (c.r * 0.3 + c.g * 0.59 + c.b * 0.11) * 0.8 + 0.02; c.setRGB(l, l, l * 1.04); }
-    const lit = name === 'lamp' && !grey;
-    cache.set(key, new THREE.MeshLambertMaterial({ color: c, flatShading: true, emissive: lit ? 0xffd27a : 0x000000, emissiveIntensity: lit ? 0.8 : 0 }));
+// one toon material per palette colour (the delivery van and barrier use these; buildings are baked)
+export function mat(name) {
+  if (!cache.has(name)) {
+    const m = L.toon({ color: PAL[name] });
+    m.userData.pal = name;
+    cache.set(name, m);
   }
-  return cache.get(key);
+  return cache.get(name);
 }
+const GLOW = { lamp: 1, glass: 0.6 }; // lit at night (look.js), unless broken
 
 function add(g, geo, m, x, y, z, ry = 0) {
   const o = new THREE.Mesh(geo, m);
@@ -186,18 +189,31 @@ export function label(text, y) {
   x.fillText(text, 22, 34);
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
-  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false }));
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, depthWrite: false }));
   s.scale.set(1.7 * c.width / c.height, 1.7, 1);
   s.position.y = y; s.renderOrder = 10; s.userData.own = true;
   return s;
 }
 
+// the ground point `gap` metres in front of a building's door (front is +z, turned by rot)
+export function door(b, gap = 1.5) {
+  const T = TYPES[typeOf(b.type)], a = THREE.MathUtils.degToRad(b.rot || 0), r = T.foot[1] / 2 + gap;
+  return [b.x + Math.sin(a) * r, b.z + Math.cos(a) * r];
+}
+
 export function makeBuilding(b) {
   const type = typeOf(b.type), T = TYPES[type], broken = b.state === 'broken';
-  const g = new THREE.Group(), m = name => mat(name, broken);
-  T.build(g, m, broken);
-  if (broken) for (const [x, z, s] of [[0, 0.5, 0.6], [0.8, 0.9, 0.4], [1.4, 0.3, 0.5]]) box(g, m('stone'), s, s * 0.6, s, T.foot[0] / 2 - 1.2 + x, 0, T.foot[1] / 2 + z, x + z);
-  g.traverse(o => { if (o.isMesh) o.castShadow = o.receiveShadow = true; });
+  const g = new THREE.Group();
+  T.build(g, mat, broken);
+  if (broken) for (const [x, z, s] of [[0, 0.5, 0.6], [0.8, 0.9, 0.4], [1.4, 0.3, 0.5]]) box(g, mat('stone'), s, s * 0.6, s, T.foot[0] / 2 - 1.2 + x, 0, T.foot[1] / 2 + z, x + z);
+  const parts = g.children.filter(o => o.isMesh);
+  const body = new THREE.Mesh(L.bake(parts.map(o => {
+    o.updateMatrix();
+    return { geo: o.geometry.applyMatrix4(o.matrix), color: o.material.color, glow: broken ? 0 : GLOW[o.material.userData.pal] ?? 0 };
+  })), L.townMat);
+  g.clear();
+  body.castShadow = body.receiveShadow = true;
+  g.add(body);
   if (!broken && b.label) g.add(label(b.label, T.h + 2));
   g.position.set(b.x, 0, b.z);
   g.rotation.y = THREE.MathUtils.degToRad(b.rot || 0);

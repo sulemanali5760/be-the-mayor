@@ -106,6 +106,8 @@ function buildSite() {
   const rig = new THREE.Group();
   camera.add(rig);
   const armR = M.fp_arms.getObjectByName('ArmR') || new THREE.Group(), armL = M.fp_arms.getObjectByName('ArmL') || new THREE.Group();
+  const sleeveMat = new THREE.MeshLambertMaterial(), cuffMat = new THREE.MeshLambertMaterial({ color: 0xf7f4ee });
+  const cuffs = [armR, armL].map(a => sleeve(a, sleeveMat, cuffMat)).filter(Boolean);
   for (const a of [armR, armL]) { a.traverse(o => { o.castShadow = false; }); rig.add(a); }
   const trowel = M.trowel;
   trowel.rotation.set(0, Math.PI / 2, -0.2); // handle through the fist (grip axis at 0.29 m), blade forward
@@ -147,7 +149,24 @@ function buildSite() {
   rain.frustumCulled = false;
   scene.add(rain);
 
-  return { scene, camera, rig, armR, armL, lump, hand, crack, ghost, ghostFill, wall, line, rain, mortarMat, unitBox: new THREE.BoxGeometry(1, 1, 1) };
+  return { scene, camera, rig, armR, armL, lump, hand, crack, ghost, ghostFill, wall, line, rain, mortarMat, sleeveMat, cuffs, unitBox: new THREE.BoxGeometry(1, 1, 1) };
+}
+
+// a sleeve of the rank's outfit over the elbow end of a forearm (origin = elbow, hand along +y), sized from the
+// arm model's own bounds; a white shirt cuff at its end shows under a jacket
+function sleeve(arm, mat, cuffMat) {
+  arm.updateWorldMatrix(true, true);
+  const inv = arm.matrixWorld.clone().invert(), box = new THREE.Box3();
+  arm.traverse(o => { if (o.isMesh) { o.geometry.computeBoundingBox(); box.union(o.geometry.boundingBox.clone().applyMatrix4(inv.clone().multiply(o.matrixWorld))); } });
+  if (box.isEmpty()) return null;
+  const s = box.getSize(new THREE.Vector3()), r = Math.max(s.x, s.z) / 2, len = s.y * 0.45;
+  const cloth = new THREE.Mesh(new THREE.CylinderGeometry(r * 1.02, r * 1.1, len, 12), mat);
+  cloth.position.set((box.min.x + box.max.x) / 2, box.min.y + len / 2, (box.min.z + box.max.z) / 2);
+  const cuff = new THREE.Mesh(new THREE.CylinderGeometry(r * 1.04, r * 1.04, len * 0.14, 12), cuffMat);
+  cuff.position.y = len * 0.5;
+  cloth.add(cuff);
+  arm.add(cloth);
+  return cuff;
 }
 
 /* ---------- one wall task ---------- */
@@ -160,6 +179,11 @@ export function start(ctx, params, done) {
   const slotY = sl => FOOT_TOP + sl.y;
   let t = 0, down = null, ended = null, closed = false, shake = 0, flashMsg = null;
   const view = { yaw: 0, pitch: -0.9 }, anims = [], beds = new Map(), bricks = new Map();
+
+  // your sleeves: the outfit of your rank (params.avatar, build 02 §3.2)
+  const outfit = ctx.outfit(params.avatar);
+  S.sleeveMat.color.setHex(outfit.sleeve);
+  for (const c of S.cuffs) c.visible = !!outfit.cuff;
 
   // reset the garden from the last wall
   for (const o of [...S.wall.children]) { S.wall.remove(o); o.traverse(m => { if (m.isMesh && m.material !== S.mortarMat) m.material.dispose(); }); }
@@ -394,6 +418,6 @@ export function start(ctx, params, done) {
     },
     finish(stars) { close({ stars, seconds: Math.min(t, WALL.limit) }); },
     // aim: the current brick's top front middle in canvas px, for QA bots
-    info: () => ({ kind: 'wall', twist, t, next: game.next(), aim: slots[game.state.cur] ? proj(slots[game.state.cur].x, slotY(slots[game.state.cur]) + BH, BD / 2) : null, laid: game.state.results.length, total: slots.length, hand: game.state.hand, setting: game.state.setting && { a: game.state.setting.a, b: game.state.setting.b } }),
+    info: () => ({ kind: 'wall', twist, t, sleeve: S.sleeveMat.color.getHex(), cuffs: S.cuffs.length, next: game.next(), aim: slots[game.state.cur] ? proj(slots[game.state.cur].x, slotY(slots[game.state.cur]) + BH, BD / 2) : null, laid: game.state.results.length, total: slots.length, hand: game.state.hand, setting: game.state.setting && { a: game.state.setting.a, b: game.state.setting.b } }),
   };
 }

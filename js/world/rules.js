@@ -173,3 +173,106 @@ export function deliveryStars({ delivered, total, pathLen, best, seconds, limit 
   const ratio = pathLen / Math.max(1, best);
   return ratio <= 1.4 && seconds <= limit * 0.6 ? 3 : ratio <= 2 ? 2 : 1;
 }
+
+/* ---------- walking: A* on a 1 m grid; roads and paths are cheap, grass costs more, solid buildings are walls ---------- */
+export const NAV = { cell: 1, road: 1, grass: 3 };
+export const WALK = { speed: 3.2, max: 3 }; // the avatar jogs, but a walk never takes more than 3 s (build 02 §3.3)
+export const walkSpeed = len => Math.max(WALK.speed, len / WALK.max);
+
+function segDist(p, a, b) {
+  const dx = b[0] - a[0], dz = b[1] - a[1], l2 = dx * dx + dz * dz;
+  const k = l2 ? Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dz) / l2)) : 0;
+  return Math.hypot(p[0] - a[0] - dx * k, p[1] - a[1] - dz * k);
+}
+// bounds [x0, x1, z0, z1]; walls: boxes (see box()); lanes: [{ pts: [[x, z], ...], w }] polylines w metres wide
+export function navGrid(bounds, walls, lanes = [], cell = NAV.cell) {
+  const [x0, x1, z0, z1] = bounds, nx = Math.max(1, Math.ceil((x1 - x0) / cell)), nz = Math.max(1, Math.ceil((z1 - z0) / cell));
+  const cost = new Float32Array(nx * nz);
+  for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) {
+    const p = [x0 + (i + 0.5) * cell, z0 + (j + 0.5) * cell];
+    cost[j * nx + i] = walls.some(o => inBox(p, o)) ? Infinity
+      : lanes.some(l => l.pts.some((a, k) => k > 0 && segDist(p, l.pts[k - 1], a) <= l.w / 2)) ? NAV.road : NAV.grass;
+  }
+  return { x0, z0, nx, nz, cell, cost };
+}
+
+// cheapest route from → to as corner points (8 neighbours, no cutting past a wall's corner). A start or goal inside
+// a wall moves to the nearest free cell; null when the goal can't be reached.
+export function findPath(g, from, to) {
+  const { nx, nz, cell, cost } = g, n = nx * nz;
+  const cellOf = ([x, z]) => Math.min(nz - 1, Math.max(0, Math.floor((z - g.z0) / cell))) * nx + Math.min(nx - 1, Math.max(0, Math.floor((x - g.x0) / cell)));
+  const near = k => { // breadth-first to the nearest walkable cell
+    const seen = new Uint8Array(n), q = [k];
+    seen[k] = 1;
+    for (let h = 0; h < q.length; h++) {
+      const c = q[h], i = c % nx, j = (c - i) / nx;
+      if (cost[c] < Infinity) return c;
+      for (const [a, b] of [[i + 1, j], [i - 1, j], [i, j + 1], [i, j - 1]]) if (a >= 0 && b >= 0 && a < nx && b < nz && !seen[b * nx + a]) { seen[b * nx + a] = 1; q.push(b * nx + a); }
+    }
+    return -1;
+  };
+  const s = near(cellOf(from)), e = near(cellOf(to));
+  if (s < 0 || e < 0) return null;
+  const ei = e % nx, ej = (e - ei) / nx;
+  const h = k => { const dx = Math.abs(k % nx - ei), dz = Math.abs(Math.floor(k / nx) - ej); return (Math.max(dx, dz) + (Math.SQRT2 - 1) * Math.min(dx, dz)) * NAV.road; };
+  const gs = new Float64Array(n).fill(Infinity), came = new Int32Array(n).fill(-1), done = new Uint8Array(n), heap = [];
+  const push = (f, k) => {
+    heap.push([f, k]);
+    for (let i = heap.length - 1; i > 0;) { const p = (i - 1) >> 1; if (heap[p][0] <= heap[i][0]) break; [heap[p], heap[i]] = [heap[i], heap[p]]; i = p; }
+  };
+  const pop = () => {
+    const top = heap[0], last = heap.pop();
+    if (heap.length) {
+      heap[0] = last;
+      for (let i = 0; ;) {
+        const l = 2 * i + 1, r = l + 1;
+        let m = i;
+        if (l < heap.length && heap[l][0] < heap[m][0]) m = l;
+        if (r < heap.length && heap[r][0] < heap[m][0]) m = r;
+        if (m === i) break;
+        [heap[m], heap[i]] = [heap[i], heap[m]]; i = m;
+      }
+    }
+    return top[1];
+  };
+  gs[s] = 0; push(h(s), s);
+  while (heap.length) {
+    const k = pop();
+    if (done[k]) continue;
+    done[k] = 1;
+    if (k === e) break;
+    const i = k % nx, j = (k - i) / nx;
+    for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) {
+      const a = i + di, b = j + dj, m = b * nx + a;
+      if ((!di && !dj) || a < 0 || b < 0 || a >= nx || b >= nz || done[m] || cost[m] === Infinity) continue;
+      if (di && dj && (cost[j * nx + a] === Infinity || cost[b * nx + i] === Infinity)) continue;
+      const ng = gs[k] + (di && dj ? Math.SQRT2 : 1) * (cost[k] + cost[m]) / 2;
+      if (ng < gs[m]) { gs[m] = ng; came[m] = k; push(ng + h(m), m); }
+    }
+  }
+  if (!done[e]) return null;
+  const cells = [];
+  for (let k = e; k !== -1; k = came[k]) cells.unshift(k);
+  const centre = k => [g.x0 + (k % nx + 0.5) * cell, g.z0 + (Math.floor(k / nx) + 0.5) * cell];
+  const pts = [from];
+  for (let q = 1; q < cells.length - 1; q++) { // keep only the cells where the direction changes
+    const [a, b, c] = [cells[q - 1], cells[q], cells[q + 1]];
+    if (b - a !== c - b) pts.push(centre(b));
+  }
+  pts.push(to);
+  return pts;
+}
+
+export const pathLength = pts => pts.reduce((l, p, i) => (i ? l + Math.hypot(p[0] - pts[i - 1][0], p[1] - pts[i - 1][1]) : 0), 0);
+// the point s metres along a path, and the heading there (radians, three.js rotation.y: 0 faces +z)
+export function pointAt(pts, s) {
+  for (let i = 1; i < pts.length; i++) {
+    const a = pts[i - 1], b = pts[i], l = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    if (s <= l || i === pts.length - 1) {
+      const k = l ? Math.max(0, Math.min(1, s / l)) : 1;
+      return { x: a[0] + (b[0] - a[0]) * k, z: a[1] + (b[1] - a[1]) * k, dir: Math.atan2(b[0] - a[0], b[1] - a[1]) };
+    }
+    s -= l;
+  }
+  return { x: pts[0][0], z: pts[0][1], dir: 0 };
+}
