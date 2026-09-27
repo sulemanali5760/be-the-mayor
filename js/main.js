@@ -32,10 +32,7 @@ function persist() {
 }
 
 const world = createWorld($('view'), content);
-// the 0.2 world API (build 0.2 §3.2) comes from Lane W; until it lands these are no-ops, and QA says which
-const stubs = ['setTimeOfDay', 'setAvatar', 'walkTo', 'celebrate'].filter(k => typeof world[k] !== 'function');
-for (const k of stubs) world[k] = k === 'walkTo' ? async () => {} : () => {};
-// every town shares data/town.json's roads, paths, props and routines; buildings come from the state or snapshot
+// every town shares data/town.json's roads, paths, props, homes and work; buildings come from the state or snapshot
 const { buildings: _, ...layout } = content.town;
 const draw = s => world.showTown({ ...s, ...layout });
 if (Q.has('reset')) localStorage.removeItem(KEY);
@@ -115,13 +112,14 @@ async function walkTo(id) {
 }
 
 // ---- the character creator: skin, hair and face, one tap each, shown on the avatar at once ----------------------
+// the looks in data/wardrobe.json are in the order of js/world/avatar.js SKINS, HAIRS and FACES (the avatar takes indices)
 function lookPicker(look, onChange) {
   const { skins, hairs, faces } = content.wardrobe.looks;
   const dot = c => `<i style="background:${esc(c)}"></i>`;
-  const row = (k, label, list, cell) => `<div class="looks"><span>${label}</span>${list.map((v, i) =>
-    `<button type="button" class="sw" data-k="${k}" data-i="${i}" aria-pressed="${look[k] === i}" aria-label="${label} ${i + 1}">${cell(v)}</button>`).join('')}</div>`;
+  const row = (k, label, list, cell, cls = 'sw') => `<div class="looks"><span>${label}</span>${list.map((v, i) =>
+    `<button type="button" class="${cls}" data-k="${k}" data-i="${i}" aria-pressed="${look[k] === i}" aria-label="${label} ${i + 1}">${cell(v)}</button>`).join('')}</div>`;
   return {
-    html: row('skin', 'Skin', skins, dot) + row('hair', 'Hair', hairs, dot) + row('face', 'Face', faces, esc),
+    html: row('skin', 'Skin', skins, dot) + row('hair', 'Hair', hairs, h => dot(h.color) + esc(h.label), 'sw pill') + row('face', 'Face', faces, esc),
     bind: el => {
       for (const b of el.querySelectorAll('.sw')) b.onclick = () => {
         look[b.dataset.k] = +b.dataset.i;
@@ -550,6 +548,6 @@ requestAnimationFrame(frame);
 
 // ---- QA hooks (qa/acceptance.mjs): the game clock, not real time ------------------------------------------------
 window.__btm = {
-  V, clock, content, world, net, qa, stubs, TOD, get life() { return life; }, get mode() { return mode; }, get meta() { return meta; }, get tod() { return tod; }, stats,
+  V, clock, content, world, net, qa, TOD, get life() { return life; }, get mode() { return mode; }, get meta() { return meta; }, get tod() { return tod; }, stats,
   advance(sec) { clock.t += sec; handle(life.tick(clock.t)); }, // skip ahead in game time, e.g. to finish a course
 };

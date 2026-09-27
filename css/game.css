@@ -112,6 +112,8 @@ body.visiting #dock,body.visiting #goal{display:none}
 .sw{width:36px;height:36px;display:grid;place-items:center;padding:0;background:rgba(244,242,237,.08);border:2px solid var(--line);border-radius:50%;font-size:20px;line-height:1}
 .sw i{width:24px;height:24px;border-radius:50%}
 .sw[aria-pressed="true"]{border-color:var(--hivis);box-shadow:0 0 0 2px var(--hivis)}
+.sw.pill{width:auto;height:32px;display:inline-flex;gap:5px;padding:0 10px 0 6px;border-radius:16px;font-family:var(--label);font-weight:600;font-size:13px}
+.sw.pill i{width:16px;height:16px}
 .tabs{display:flex;gap:6px;margin-bottom:6px}
 .tabs button{flex:1;background:rgba(244,242,237,.06);border:1.5px solid var(--line);font-family:var(--label);font-weight:700;font-size:14px;padding:7px 4px}
 .tabs button[aria-pressed="true"]{border-color:var(--hivis);color:var(--hivis)}

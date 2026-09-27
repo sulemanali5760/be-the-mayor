@@ -19,7 +19,7 @@
         { "id": "keller_house", "type": "house", "x": -22, "z": 8, "rot": 90, "state": "ok" },
         { "id": "keller_garden", "type": "garden", "x": -22, "z": 17, "rot": 90, "state": "ok" },
         { "id": "playground", "type": "playground", "x": 8, "z": 18, "rot": 0, "state": "ok", "label": "Playground, repainted by 40 neighbours" },
-        { "id": "yard", "type": "yard", "x": 22, "z": 20, "rot": 180, "state": "ok" },
+        { "id": "yard", "type": "yard", "x": 22, "z": 19, "rot": 180, "state": "ok" },
         { "id": "bridge", "type": "bridge", "x": 0, "z": 32, "rot": 0, "state": "ok", "label": "The bridge – rebuilt in 3 days" },
         { "id": "statue", "type": "statue", "x": 34, "z": 1, "rot": 270, "state": "ok", "label": "Mayor statue" }
       ],
@@ -46,7 +46,7 @@
         { "id": "keller_house", "type": "house", "x": -22, "z": 8, "rot": 90, "state": "ok" },
         { "id": "keller_garden", "type": "garden", "x": -22, "z": 17, "rot": 90, "state": "ok", "label": "Garden wall – built by Tomasz" },
         { "id": "playground", "type": "playground", "x": 8, "z": 18, "rot": 0, "state": "ok" },
-        { "id": "yard", "type": "yard", "x": 22, "z": 20, "rot": 180, "state": "ok" },
+        { "id": "yard", "type": "yard", "x": 22, "z": 19, "rot": 180, "state": "ok" },
         { "id": "bridge", "type": "bridge", "x": 0, "z": 32, "rot": 0, "state": "ok", "label": "Bridge railing – fixed by Tomasz" }
       ],
       "posted": [{ "id": "p-dumping", "title": "Clear the dumping behind the park" }]
@@ -72,7 +72,7 @@
         { "id": "keller_house", "type": "house", "x": -22, "z": 8, "rot": 90, "state": "ok" },
         { "id": "keller_garden", "type": "garden", "x": -22, "z": 17, "rot": 90, "state": "ok", "label": "Garden wall – built by Aisha" },
         { "id": "playground", "type": "playground", "x": 8, "z": 18, "rot": 0, "state": "broken" },
-        { "id": "yard", "type": "yard", "x": 22, "z": 20, "rot": 180, "state": "ok" },
+        { "id": "yard", "type": "yard", "x": 22, "z": 19, "rot": 180, "state": "ok" },
         { "id": "bridge", "type": "bridge", "x": 0, "z": 32, "rot": 0, "state": "broken" }
       ],
       "posted": [{ "id": "p-water", "title": "Water tank for the school" }]
@@ -98,7 +98,7 @@
         { "id": "keller_house", "type": "house", "x": -22, "z": 8, "rot": 90, "state": "ok" },
         { "id": "keller_garden", "type": "garden", "x": -22, "z": 17, "rot": 90, "state": "ok", "label": "Garden wall – built by Leo" },
         { "id": "playground", "type": "playground", "x": 8, "z": 18, "rot": 0, "state": "broken" },
-        { "id": "yard", "type": "yard", "x": 22, "z": 20, "rot": 180, "state": "ok" },
+        { "id": "yard", "type": "yard", "x": 22, "z": 19, "rot": 180, "state": "ok" },
         { "id": "bridge", "type": "bridge", "x": 0, "z": 32, "rot": 0, "state": "broken" }
       ],
       "posted": [{ "id": "p-potholes", "title": "Potholes on Station Road" }]

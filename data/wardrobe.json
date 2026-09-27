@@ -1,7 +1,10 @@
 {
   "looks": {
-    "skins": ["#F3D5B5", "#E0AC85", "#C68642", "#8D5524", "#5C3A21"],
-    "hairs": ["#2B2118", "#6A4E33", "#C9A66B", "#A33B20", "#9E9E9E"],
+    "skins": ["#F6D7BD", "#E8B894", "#C98F63", "#9C6440", "#6B4128", "#47291A"],
+    "hairs": [
+      { "label": "Short", "color": "#3B2618" }, { "label": "Long", "color": "#6B3F1F" }, { "label": "Bun", "color": "#1E1712" },
+      { "label": "Curly", "color": "#2A1C14" }, { "label": "Blond", "color": "#D8B26A" }, { "label": "Buzz", "color": "#4A4A4A" }
+    ],
     "faces": ["🙂", "😄", "😐"]
   },
   "extras": [

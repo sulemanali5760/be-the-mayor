@@ -19,7 +19,11 @@ export function createLife(content, save, rand = Math.random) {
 
   // content changes between versions must never break an old save
   s.buildings ??= [];
-  for (const b of content.town.buildings) if (!find(s.buildings, b.id)) s.buildings.push({ ...b });
+  for (const b of content.town.buildings) { // places follow the layout (roads fit them); state and label are the player's
+    const have = find(s.buildings, b.id);
+    if (have) Object.assign(have, { type: b.type, x: b.x, z: b.z, rot: b.rot });
+    else s.buildings.push({ ...b });
+  }
   const extras = content.wardrobe.extras;
   s.avatar.owned = s.avatar.owned.filter(id => find(extras, id));
   if (!s.avatar.owned.includes(s.avatar.extra)) s.avatar.extra = null;

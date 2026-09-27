@@ -36,7 +36,8 @@ test('save: stale content ids are dropped and new buildings are added', () => {
   assert.deepEqual(s.problems, []);
   assert.equal(life.offers().length, 2);
   assert.equal(s.buildings.length, content.town.buildings.length);
-  assert.equal(s.buildings.find(b => b.id === 'bus_stop').label, 'Mine');
+  const bus = s.buildings.find(b => b.id === 'bus_stop');
+  assert.deepEqual([bus.label, bus.state, bus.type, bus.x, bus.z], ['Mine', 'ok', 'busstop', 6, -2], 'yours, in the layout\'s place');
   assert.equal(life.ladder().title, 'Labourer');
 });
 

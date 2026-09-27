@@ -80,12 +80,12 @@ test('counts match the build plan', () => {
 });
 
 // ---- the town's layout: Brookfield (data/town.json) and the curated towns (data/seed-towns.json) share it ----
-// w × d in metres, front towards +z; the bridge includes its 36 m stream. Unknown types draw a house.
+// w × d in metres, front towards +z (js/world/buildings.js); the bridge includes its 36 m stream. Unknown types draw a house.
 const FOOT = { house: [6, 5], garden: [7, 5], cafe: [7, 5], shop: [7, 5], busstop: [3.6, 1.6], bridge: [36, 12],
   townhall: [12, 8], school: [12, 6], park: [12, 10], playground: [8, 8], statue: [2, 2], streetlight: [0.6, 0.6], tree: [2, 2],
   yard: [10, 8], dumppile: [6, 5] };
 const ALIAS = { hall: 'townhall', stop: 'busstop', store: 'shop', lamp: 'streetlight', gardenwall: 'garden' };
-const SOLID = new Set(['house', 'cafe', 'shop', 'busstop', 'townhall', 'school', 'statue']); // paths never cross these
+const SOLID = new Set(['house', 'cafe', 'shop', 'busstop', 'townhall', 'school', 'statue']); // paths never cross these (ASSETS.md)
 const kindOf = b => { const k = b.type.toLowerCase().replace(/[^a-z]/g, ''); return ALIAS[k] ?? k; };
 const box = (b, m) => {
   const [w, d] = FOOT[kindOf(b)] ?? FOOT.house;
@@ -116,19 +116,21 @@ test('town: footprints from ASSETS.md never overlap (1 m apart at least), in eve
   }
 });
 
-test('town layout: roads (4 m) clear of buildings, paths never through solid ones, props off both, a node near every building', () => {
+// the world draws roads 5 m and paths 2 m wide (js/world/life.js ROAD_W, PATH_W); a prop is about 1 m across
+const ROAD_HALF = 2.5, PATH_HALF = 1, PROP_HALF = 0.5;
+test('town layout: roads clear of buildings, paths never through solid ones, props off both, a node near every building', () => {
   const { roads, paths, props } = c.town;
   for (const line of [...roads, ...paths]) assert.ok(line.length >= 2 && line.every(p => p.length === 2 && p.every(Number.isFinite)), 'polyline of [x, z]');
   for (const [name, list] of towns) {
     const bad = new Set();
     const raw = list.map(b => ({ b, r: box(b, 0), k: kindOf(b) }));
-    roads.forEach((line, i) => { for (const p of along(line)) for (const { b, r, k } of raw) if (k !== 'bridge' && away(p, r) < 2 - EPS) bad.add(`road ${i} × ${b.id}`); });
+    roads.forEach((line, i) => { for (const p of along(line)) for (const { b, r, k } of raw) if (k !== 'bridge' && away(p, r) < ROAD_HALF - EPS) bad.add(`road ${i} × ${b.id}`); });
     paths.forEach((line, i) => { for (const p of along(line)) for (const { b, r, k } of raw) if (SOLID.has(k) && inside(p, r)) bad.add(`path ${i} × ${b.id}`); });
     for (const pr of props) {
       const p = [pr.x, pr.z], at = `${pr.type} at ${p}`;
       for (const { b, r } of raw) if (away(p, r) < 1 - EPS) bad.add(`${at} × ${b.id}`);
-      if (roads.some(l => toLine(p, l) < 2.5 - EPS)) bad.add(`${at} on a road`);
-      if (paths.some(l => toLine(p, l) < 1 - EPS)) bad.add(`${at} on a path`);
+      if (roads.some(l => toLine(p, l) < ROAD_HALF + PROP_HALF - EPS)) bad.add(`${at} on a road`);
+      if (paths.some(l => toLine(p, l) < PATH_HALF + PROP_HALF - EPS)) bad.add(`${at} on a path`);
     }
     const nodes = [...roads, ...paths].flat();
     for (const b of list) if (!nodes.some(n => Math.hypot(n[0] - b.x, n[1] - b.z) <= 6)) bad.add(`${b.id}: no node within 6 m`);
@@ -151,14 +153,11 @@ test('town layout: one connected graph, every junction a shared vertex (walkTo c
   assert.equal(joined.size, lines.length);
 });
 
-test('routines: named people live and work at real buildings, at times of day between 0 and 1', () => {
-  assert.ok(c.town.routines.length >= 6);
-  for (const r of c.town.routines) {
-    assert.ok(people.has(r.who) && buildings.has(r.home) && buildings.has(r.work), r.who);
-    const [a, b] = r.hours;
-    assert.ok(a >= 0 && a < b && b <= 1, `${r.who}: hours`);
-  }
-  assert.equal(new Set(c.town.routines.map(r => r.who)).size, c.town.routines.length, 'one routine each');
+test('routines: named people have a home and work at real buildings (the world sends them home at night)', () => {
+  const { homes, work } = c.town;
+  assert.ok(Object.keys(homes).length >= 6);
+  assert.deepEqual(Object.keys(work).sort(), Object.keys(homes).sort());
+  for (const [who, id] of [...Object.entries(homes), ...Object.entries(work)]) assert.ok(people.has(who) && buildings.has(id), `${who}: ${id}`);
 });
 
 test('seed towns share the layout: same id, same place; each shows an avatar', () => {

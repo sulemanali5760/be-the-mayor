@@ -45,7 +45,8 @@ function layout(sels) {
 const snapshotState = () => {
   const b = __btm, L = b.life, l = L.ladder();
   return {
-    rank: l.rank, mode: b.mode, t: +b.clock.t.toFixed(1), ...b.stats(), visits: b.meta.visits, hook: b.meta.hook, tod: b.tod, todWant: b.TOD[b.stats().slots],
+    rank: l.rank, mode: b.mode, t: +b.clock.t.toFixed(1), ...b.stats(), visits: b.meta.visits, hook: b.meta.hook,
+    tod: b.tod, worldTod: __btmWorld.tod().target, todWant: b.TOD[b.stats().slots],
     card: !document.getElementById('modal').hidden, promoCard: document.getElementById('card').classList.contains('promo'),
     cardOpts: [...document.querySelectorAll('#card [data-opt]')].map(x => ({ id: x.dataset.opt, disabled: x.disabled })),
     cardKind: document.querySelector('#card .eyebrow')?.textContent || '', studiedDay: L.state.studiedDay,
@@ -97,7 +98,7 @@ async function playToSkilled(page, v) {
   let want = null, promo = null, downloaded = '', walked = 0;
   for (let step = 0; step < 160; step++) {
     const s = await page.evaluate(snapshotState);
-    if (s.mode === 'town' && !s.card && s.tod !== s.todWant) todBad.push(`d${s.day}/${s.slots} slots: ${s.tod}`);
+    if (s.mode === 'town' && !s.card && (s.tod !== s.todWant || s.worldTod !== s.todWant)) todBad.push(`d${s.day}/${s.slots} slots: ${s.tod}, world ${s.worldTod}`);
     if (s.rank >= 1 && promo && !s.card) return { ok: true, s, log, promo, downloaded, acts, todBad };
     let did;
     if (s.mode === 'walk') {
@@ -241,6 +242,7 @@ for (const v of VIEWS) {
     await page.waitForFunction(() => window.__btm && __btm.life, null, { timeout: 60000 });
     await page.waitForTimeout(800);
     await shot(page, `${v.name}-2-town`);
+    const av0 = await page.evaluate(() => __btmWorld.avatar()); // C1: the avatar in the town at the start
 
     // B4: town HUD, then with the job sheet open
     // (toasts are short-lived and may sit over an open sheet, so they are checked against the fixed HUD only)
@@ -274,19 +276,19 @@ for (const v of VIEWS) {
       tasks.map(t => `${t.kind} ${t.game}s/${t.seconds}s`).join(', ') || 'no tasks played');
 
     // C1: your look from the creator, in the Labourer outfit, then the Skilled one after the promotion
-    const ev = await page.evaluate(() => ({ av: __btm.qa.avatar, walks: __btm.qa.walks, tod: __btm.qa.tod, stubs: __btm.stubs, seen: window.__btmWorld?.avatar?.() ?? null }));
-    const stub = k => ev.stubs.includes(k) ? ` (world.${k} is a stub)` : '';
+    const ev = await page.evaluate(() => ({ av: __btm.qa.avatar, walks: __btm.qa.walks, tod: __btm.qa.tod, seen: __btmWorld.avatar() }));
     const home = ev.av.filter(a => !a.visit), r0 = home.findIndex(a => a.rank === 0), r1 = home.findIndex(a => a.rank === 1);
     const mine = r0 >= 0 && Object.entries(LOOK).every(([k, i]) => home[r0][k] === i);
-    check(v.name, 'C1 avatar: your look, outfit changes at Skilled', mine && r1 > r0 && (stub('setAvatar') || ev.seen?.visible),
-      `look ${JSON.stringify(home[r0] || {})}; Skilled at call ${r1} of ${home.length}; world ${JSON.stringify(ev.seen)}${stub('setAvatar')}`);
+    const brief = a => a && `${a.title} [${a.parts}] ${a.visible ? 'visible' : 'hidden'}`;
+    check(v.name, 'C1 avatar: your look, outfit changes at Skilled', mine && r1 > r0 && av0.visible && av0.title === 'Labourer' && ev.seen.title === 'Skilled' && `${av0.parts}` !== `${ev.seen.parts}`,
+      `look ${JSON.stringify(home[r0] || {})}; world at start: ${brief(av0)}; after the promotion: ${brief(ev.seen)}`);
     const walkNote = ev.walks.map(w => `${w.id} ${w.how} ${w.game}s`).join(', ');
-    check(v.name, 'C1 walk before a task or card (≤ 3 s, a tap skips)', ev.walks.length >= 3 && ev.walks.every(w => w.game <= 3.1) && (stub('walkTo') || ev.walks.some(w => w.how === 'tap')),
-      `${ev.walks.length} walks: ${walkNote}${stub('walkTo')}`);
-    // C2: every town step matched the slots (checked in the bot), and a night fell and turned to morning
+    check(v.name, 'C1 walk before a task or card (≤ 3 s, a tap skips)', ev.walks.length >= 3 && ev.walks.every(w => w.game <= 3.1) && ev.walks.some(w => w.how === 'tap') && ev.walks.some(w => w.how !== 'tap'),
+      `${ev.walks.length} walks: ${walkNote}`);
+    // C2: every town step matched the slots, in main.js and in the world (checked in the bot); a night fell and turned to morning
     const seq = ev.tod.map(x => x.t), slept = seq.some((t, i) => t === 1 && seq[i + 1] === 0);
     check(v.name, 'C2 time of day follows the slots', !b1.todBad.length && slept && [0, 0.3, 0.55, 0.75].every(t => seq.includes(t)),
-      `${seq.length} changes: ${seq.slice(0, 12).join(' → ')}…; mismatches: ${b1.todBad.slice(0, 3).join(', ') || 'none'}${stub('setTimeOfDay')}`);
+      `${seq.length} changes: ${seq.slice(0, 12).join(' → ')}…; mismatches: ${b1.todBad.slice(0, 3).join(', ') || 'none'}`);
 
     await page.click('#ladder');
     await page.waitForTimeout(200);
@@ -311,7 +313,7 @@ for (const v of VIEWS) {
     const b4c = await page.evaluate(layout, ['#top', '#visitbar', '#toasts .toast']);
     // C4: the visited town's avatar (from its snapshot), then yours again at home
     const theirs = await page.evaluate(i => __btm.net.getTown(i).then(t => t.snapshot.avatar), id);
-    const shown = await page.evaluate(() => ({ last: __btm.qa.avatar.at(-1), seen: window.__btmWorld?.avatar?.() ?? null }));
+    const shown = await page.evaluate(() => ({ last: __btm.qa.avatar.at(-1), seen: __btmWorld.avatar() }));
     await shot(page, `${v.name}-8a-visit-avatar`);
     await page.click('[data-visit="like"]');
     await page.waitForTimeout(200);
@@ -330,8 +332,9 @@ for (const v of VIEWS) {
     check(v.name, 'B3 offline visit, like, sign, help', ok3, `${acts.map(a => `${a.kind}:${a.ok ? 'ok' : a.msg}`).join(', ')}; second like: “${again.msg}”`);
     const back = await page.evaluate(() => __btm.qa.avatar.at(-1));
     const same = (a, b) => ['skin', 'hair', 'face', 'extra', 'rank'].every(k => a?.[k] === b?.[k]);
-    check(v.name, 'C4 a visit shows the other avatar', shown.last.visit && same(shown.last, theirs) && !back.visit && back.rank === 1 && (stub('setAvatar') || shown.seen?.visible),
-      `visit ${JSON.stringify(shown.last)} vs snapshot ${JSON.stringify(theirs)}; home ${JSON.stringify(back)}; world ${JSON.stringify(shown.seen)}${stub('setAvatar')}`);
+    // the world normalises the look (skin index → colour, hair index → style); its rank and extra must be the snapshot's
+    check(v.name, 'C4 a visit shows the other avatar', shown.last.visit && same(shown.last, theirs) && shown.seen.rank === theirs.rank && shown.seen.extra === theirs.extra && !back.visit && back.rank === 1,
+      `visit ${JSON.stringify(shown.last)} vs snapshot ${JSON.stringify(theirs)}; world: ${brief(shown.seen)}; home ${JSON.stringify(back)}`);
 
     // C3 (phone): frame JS here at ?q=low; draw calls and triangles below at full quality
     if (v.name === 'phone') low = await perf(page);
