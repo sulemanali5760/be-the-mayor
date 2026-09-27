@@ -81,10 +81,10 @@ export function createLife(scene, content = {}) {
   const geos = {
     tree: L.bake([P(new THREE.CylinderGeometry(0.18, 0.26, 1.6, 5), 0x7a5234, 0, 0.8, 0), P(new THREE.IcosahedronGeometry(1.3, 0), 0x4f9f4a, 0, 2.3, 0),
       P(new THREE.IcosahedronGeometry(0.9, 0), 0x67b457, 0.2, 3.2, 0.1)], false),
-    torso: new THREE.CapsuleGeometry(0.24, 0.36, 3, 8).translate(0, 1.1, 0),
-    leg: new THREE.CapsuleGeometry(0.09, 0.52, 2, 6).translate(0, -0.35, 0),
-    head: L.bake([P(new THREE.SphereGeometry(0.26, 10, 8), 0xffffff, 0, 1.76, 0),
-      P(new THREE.SphereGeometry(0.27, 10, 5, 0, Math.PI * 2, 0, Math.PI / 2).rotateX(-0.3), 0x5a3a22, 0, 1.79, -0.02)], false),
+    torso: new THREE.CapsuleGeometry(0.24, 0.36, 2, 7).translate(0, 1.1, 0), // low-poly: 12 citizens, twice with shadows
+    leg: new THREE.CapsuleGeometry(0.09, 0.52, 1, 5).translate(0, -0.35, 0),
+    head: L.bake([P(new THREE.SphereGeometry(0.26, 8, 6), 0xffffff, 0, 1.76, 0),
+      P(new THREE.SphereGeometry(0.27, 8, 3, 0, Math.PI * 2, 0, Math.PI / 2).rotateX(-0.3), 0x5a3a22, 0, 1.79, -0.02)], false),
     car: L.bake([P(new THREE.BoxGeometry(1.9, 0.75, 3.8), 0xffffff, 0, 0.7, 0), P(new THREE.BoxGeometry(1.7, 0.7, 2), 0xffffff, 0, 1.4, -0.25),
       P(new THREE.BoxGeometry(1.74, 0.34, 2.04), 0x2a3440, 0, 1.45, -0.25),
       ...[[-0.95, 1.2], [0.95, 1.2], [-0.95, -1.2], [0.95, -1.2]].map(([x, z]) => P(new THREE.CylinderGeometry(0.36, 0.36, 0.3, 10).rotateZ(Math.PI / 2), 0x22262b, x, 0.36, z)),
@@ -155,23 +155,27 @@ export function createLife(scene, content = {}) {
 
     const nearLane = (x, z, pad) => lanes.some(l => l.pts.some((a, i) => i > 0 && R.distToBox([x, z], segBox(l.pts[i - 1], a, l.w / 2)) < pad));
 
-    // trees round the town, off the roads
+    // trees: town.json's in town (they cast shadows), and a ring round the town, off the roads (no shadows: the
+    // shadow map only covers the town, and they would double their triangles)
     const trees = [];
-    for (const pr of layout.props || []) if (pr?.type === 'tree' && Number.isFinite(pr.x) && Number.isFinite(pr.z)) trees.push([pr.x, pr.z, rand() * 6, 0.9 + rand() * 0.3]);
-    for (let k = 0; k < 600 && trees.length < 46; k++) {
+    for (const pr of layout.props || []) if (pr?.type === 'tree' && Number.isFinite(pr.x) && Number.isFinite(pr.z)) trees.push([pr.x, pr.z, rand() * 6, 0.9 + rand() * 0.3, false]);
+    const inTown = trees.length;
+    for (let k = 0; k < 600 && trees.length < inTown + 24; k++) {
       const x = x0 - 30 + rand() * (x1 - x0 + 60), z = z0 - 30 + rand() * (z1 - z0 + 60);
       if (x > x0 - 8 && x < x1 + 8 && z > z0 - 8 && z < z1 + 8) continue;
       if (nearLane(x, z, 2.5)) continue;
-      trees.push([x, z, rand() * 6, 0.8 + rand() * 0.5]);
+      trees.push([x, z, rand() * 6, 0.8 + rand() * 0.5, true]);
     }
     const kinds = TREE_KIT.map(kitParts).filter(Boolean); // the kit's trees, taken in turn; else the code-built one
     for (const [k, parts] of (kinds.length ? kinds : [[{ geo: geos.tree, mat: mats.tree }]]).entries()) {
-      const mine = trees.filter((_, i) => i % Math.max(1, kinds.length) === k);
-      for (const pt of parts) {
-        const m = instanced(pt.geo, pt.geo.attributes.color ? mats.tree : pt.mat, mine.length);
-        mine.forEach(([x, z, r, s], i) => put(m, i, x, 0, z, r, s));
-        m.receiveShadow = true;
-        group.add(m);
+      for (const edge of [false, true]) {
+        const mine = trees.filter((t, i) => i % Math.max(1, kinds.length) === k && t[4] === edge);
+        for (const pt of parts) {
+          const m = instanced(pt.geo, pt.geo.attributes.color ? mats.tree : pt.mat, mine.length, !edge);
+          mine.forEach(([x, z, r, s], i) => put(m, i, x, 0, z, r, s));
+          m.receiveShadow = true;
+          group.add(m);
+        }
       }
     }
 
@@ -197,7 +201,7 @@ export function createLife(scene, content = {}) {
       const pieces = models?.every(([ps]) => ps) ? models.flatMap(([ps, x, z]) => ps.map(pt => ({ ...pt, off: new THREE.Matrix4().makeTranslation(x, 0, z) })))
         : [{ geo: propGeo(type), mat: L.townMat, off: new THREE.Matrix4() }];
       propMeshes[type] = pieces.map(({ geo, mat, off }) => {
-        const m = instanced(geo, mat, mine.length);
+        const m = instanced(geo, mat, mine.length, !['flowers', 'bin', 'bush'].includes(type)); // low things: no shadow
         m.receiveShadow = true;
         group.add(m);
         return { mesh: m, off };

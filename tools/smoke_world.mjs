@@ -34,8 +34,11 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
 "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}</script></head>
 <body><canvas id="view"></canvas><script type="module">
 const { createWorld } = await import('./js/world/world.js?v=smoke');
-const w = createWorld(document.getElementById('view'), ${JSON.stringify(content)});
-w.showTown({ town: ${JSON.stringify(town)} });
+// ?real: Brookfield itself (data/town.json and data/people.json), for the perf numbers
+const real = new URLSearchParams(location.search).has('real') && Object.fromEntries(await Promise.all(['town', 'people']
+  .map(f => fetch('data/' + f + '.json').then(r => r.json()).then(d => [f, d]))));
+const w = createWorld(document.getElementById('view'), real || ${JSON.stringify(content)});
+w.showTown(real ? (Array.isArray(real.town) ? { buildings: real.town } : real.town) : { town: ${JSON.stringify(town)} });
 window.picks = [];
 w.onPick(p => picks.push(p.id));
 window.step = (n = 1, dt = 0.1) => { for (let i = 0; i < n; i++) w.frame(dt); };
@@ -350,12 +353,13 @@ await check('a phone-sized resize keeps the camera finite', async () => {
 });
 await page.screenshot({ path: 'smoke-town-low.png' });
 
-// full quality: outlines (multisampled target + depth edges) and the shadow map, as on phones
-page = await open('');
-await check('perf, full quality: outlines and shadows on, within the phone budget', async () => {
+// full quality (outlines: a multisampled target and depth edges; the shadow map), as on phones, in Brookfield itself
+page = await open('?real');
+await check('perf, full quality, Brookfield (data/town.json, its people): within the phone budget', async () => {
   await step(3);
   const tod = await W(() => __btmWorld.tod());
   assert.ok(tod.outlines && tod.shadows, JSON.stringify(tod));
+  assert.ok((await W(() => __btmWorld.life())).people.length >= 10, 'the citizens are out');
   await perf('high');
   await W(() => __btmWorld.world.setTimeOfDay(0.35)); await step(16);
 });
