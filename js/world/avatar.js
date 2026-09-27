@@ -190,7 +190,8 @@ function kitFigure(g, C) {
     dress(lk) {
       const o = C.outfits?.[lk.rank] ?? {}, show = o.show ?? [], hat = show.includes('acc_hardhat'), extra = wornExtra(lk, hat);
       const hair = hairOf(lk.hair);
-      const on = new Set([...(C.body ?? []), hair.model, `face_${lk.face}`, ...show, C.extras?.find(e => e.id === extra)?.model].filter(Boolean));
+      // hair goes under the work helmet, as in the stand-in: curly hair is bigger than the hard hat and swallowed it (0.2 play test)
+      const on = new Set([...(C.body ?? []), hat ? null : hair.model, `face_${lk.face}`, ...show, C.extras?.find(e => e.id === extra)?.model].filter(Boolean));
       obj.traverse(x => { if (variants.has(x.name)) x.visible = on.has(x.name); });
       R.Skin?.color.setHex(lk.skin);
       if (hair.color !== null) R.Hair?.color.setHex(hair.color);
