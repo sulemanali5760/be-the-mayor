@@ -97,10 +97,11 @@ export function createWorld(canvas, content = {}) {
     const ids = own ? buildingsOf(own).map(b => b.id) : [];
     return own && ids.length && ids.every(id => items.has(id)) ? own : {};
   }
+  // the avatar starts by your flat (else the first house), on the side the camera sees, facing the camera
   function placeHome() {
     const it = items.get('flat') ?? [...items.values()].find(i => i.group.userData.type === 'house');
-    const p = it ? B.door(it.b, 2.2) : [view.x, view.z];
-    avatar.place(p[0], p[1], YAW); // facing the camera
+    const r = it ? Math.hypot(...it.group.userData.foot) / 2 + 1.2 : 0, [x, z] = it ? [it.b.x, it.b.z] : [view.x, view.z];
+    avatar.place(x + Math.sin(YAW) * r, z + Math.cos(YAW) * r, YAW);
   }
   // rebuilds only buildings whose type, place, state or label changed; a different set of ids (a visit) re-frames
   function showTown(state) {

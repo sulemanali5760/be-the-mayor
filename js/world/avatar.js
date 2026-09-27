@@ -27,12 +27,13 @@ export const OUTFITS = [
 ];
 const rankOf = r => Math.max(0, Math.min(OUTFITS.length - 1, Math.round(Number(r) || 0)));
 export const outfitOf = av => OUTFITS[rankOf(av?.rank)];
-const pick = (list, v, key = 'id') => (Number.isInteger(v) && list[v] !== undefined ? list[v] : list.find(x => (key ? x[key] : x) === v) ?? list[0]);
-// setAvatar input → what the figure wears. skin: an index or a colour; hair and face: an id or an index
+const at = (list, v) => (Number.isInteger(v) && v >= 0 && v < list.length ? list[v] : undefined);
+// setAvatar input → what the figure wears. skin, hair and face are indices into the lists above (data/wardrobe.json
+// looks are in the same order); a skin may also be a colour, a hair or face an id
 export function normalise(av = {}) {
-  const skin = Number.isInteger(av.skin) && av.skin >= 0 && av.skin < SKINS.length ? SKINS[av.skin] : av.skin ?? SKINS[1];
-  return { skin: typeof skin === 'number' ? skin : new THREE.Color(skin).getHex(), hair: pick(HAIRS, av.hair).id, face: pick(FACES, av.face, null),
-    rank: rankOf(av.rank), extra: EXTRAS.includes(av.extra) ? av.extra : null };
+  const skin = at(SKINS, av.skin) ?? av.skin ?? SKINS[1], hair = at(HAIRS, av.hair)?.id ?? av.hair, face = at(FACES, av.face) ?? av.face;
+  return { skin: typeof skin === 'number' ? skin : new THREE.Color(skin).getHex(), hair: HAIRS.some(h => h.id === hair) ? hair : HAIRS[0].id,
+    face: FACES.includes(face) ? face : FACES[0], rank: rankOf(av.rank), extra: EXTRAS.includes(av.extra) ? av.extra : null };
 }
 
 /* ---------- geometry helpers ---------- */
@@ -142,20 +143,27 @@ export function createAvatar(scene) {
     cap: bakeMesh([P(cap(0.325), RED, 0, 0.06, 0), P(new THREE.BoxGeometry(0.3, 0.025, 0.2), RED, 0, 0.08, 0.3)], head),
     scarf: bakeMesh([P(new THREE.TorusGeometry(0.2, 0.07, 6, 14).rotateX(Math.PI / 2), 0x3f7fbf, 0, 0.72, 0), P(new THREE.BoxGeometry(0.1, 0.3, 0.05), 0x3f7fbf, 0.1, 0.55, 0.26)], spine),
     sunglasses: bakeMesh([P(new THREE.BoxGeometry(0.44, 0.09, 0.04), 0x15171a, 0, 0.04, 0.28)], head),
-    flowers: bakeMesh([0xf28cb1, 0xf2c14e, 0xffffff, 0xf28cb1, 0xb58cf2, 0xf2c14e, 0xffffff].map((c, i) => {
-      const a = (i / 7) * Math.PI * 2; return P(sph(0.07, 6, 4), c, Math.sin(a) * 0.29, 0.16, Math.cos(a) * 0.29);
-    }), head),
+    flowers: bakeMesh([[0xf28cb1, 0.1, 0.56], [0xf2c14e, 0.17, 0.6], [0xffffff, 0.14, 0.5], [0x5b9a4c, 0.13, 0.44]] // a buttonhole
+      .map(([c, x, y]) => P(sph(c === 0x5b9a4c ? 0.04 : 0.065, 6, 4), c, x, y, 0.27)), spine),
     bowtie: bakeMesh([-1, 1].map(x => P(new THREE.ConeGeometry(0.06, 0.1, 4).rotateZ(x * Math.PI / 2), RED, 0.05 * x, 0.66, 0.26)), spine),
     headphones: bakeMesh([P(new THREE.TorusGeometry(0.31, 0.025, 4, 14, Math.PI), 0x2b2f36, 0, 0.02, 0), ...[-1, 1].map(x => P(new THREE.CylinderGeometry(0.09, 0.09, 0.08, 10).rotateZ(Math.PI / 2), RED, 0.31 * x, 0.02, 0))], head),
   };
   root.traverse(o => { if (o.isMesh) o.castShadow = true; });
+  // "you": a hi-vis ring on the ground, so the avatar reads among the citizens even on a phone
+  const ring = new THREE.Mesh(new THREE.RingGeometry(0.62, 0.82, 24).rotateX(-Math.PI / 2),
+    new THREE.MeshBasicMaterial({ color: 0xf5b400, transparent: true, opacity: 0.9, depthWrite: false }));
+  ring.position.y = 0.06;
+  root.add(ring);
+  root.scale.setScalar(1.2); // a little larger than the citizens
   scene.add(root);
 
   /* ---------- the look: material swaps and part visibility ---------- */
   let look = normalise();
-  function set(av) {
-    look = normalise({ ...look, ...av });
-    const o = OUTFITS[look.rank], h = pick(HAIRS, look.hair);
+  function set(av = {}) {
+    const next = { ...look };
+    for (const [k, v] of Object.entries(av || {})) if (v !== undefined) next[k] = v; // a missing field keeps what's worn
+    look = normalise(next);
+    const o = OUTFITS[look.rank], h = HAIRS.find(x => x.id === look.hair);
     M.skin.color.setHex(look.skin); M.hair.color.setHex(h.color);
     M.top.color.setHex(o.top); M.sleeve.color.setHex(o.sleeve); M.legs.color.setHex(o.legs); M.shoes.color.setHex(o.shoes);
     for (const [k, m] of Object.entries(face)) m.visible = k === look.face;
@@ -163,7 +171,7 @@ export function createAvatar(scene) {
     for (const [k, m] of Object.entries(hairs)) m.visible = k === h.style && !hat;
     for (const [k, m] of Object.entries(parts)) for (const x of [m].flat()) x.visible = k === 'cuffs' ? !!o.cuff : o.parts.includes(k);
     // a work helmet wins over a hat from the wardrobe: the rank shows first
-    for (const [k, m] of Object.entries(extras)) m.visible = k === look.extra && !(hat && ['cap', 'flowers', 'headphones'].includes(k));
+    for (const [k, m] of Object.entries(extras)) m.visible = k === look.extra && !(hat && ['cap', 'headphones'].includes(k));
     return look;
   }
   set({});
