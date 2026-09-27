@@ -60,9 +60,18 @@ One file, `character.gltf`: a rig (`hips`, `spine`, `head`, `armL/R`, `forearmL/
 | Delivery overlay (van, stops, barrier, route dots) | ≤ 3,000 triangles | Lane W (about 700 + 6 per queued metre) |
 | Wall scene (models, pallet stack, wall, garden) | ≤ 20,000 triangles | Lane W (about 13,000) |
 
+## How the world uses the kit (Lane W)
+
+`js/world/assets.js` fetches `manifest.json` and the models in the browser, decodes each in memory (LESSONS H1) and swaps the `palette` material for the greyable toon one. `createWorld` stays synchronous: the town, its life and the avatar start as code-built stand-ins and switch over once the kit is in (`__btmWorld.loaded`). If the kit fails, the stand-ins stay and a warning is logged.
+- **Buildings:** the model with the building's id first (`pharmacy`, `kiosk`, `keller_house`), then its type; houses vary between `house`, `house_2` and `house_3` by id. A broken building shows `<id>_broken`, or the ok model with `broken_rubble`, `broken_cone` and `broken_boards` in front. A bridge always gets the stream it crosses.
+- **Town hall clock:** `clock_hour` and `clock_minute` show the time of day, 7:00 in the morning to 23:00 at night, and run on to 7:00 overnight. **Streetlights:** `lamp` glows at evening and night unless the light is broken.
+- **Props, trees and cars:** `bench`, `fence`, `streetlight` (lamps), `potted_bush`, a trio of `flower_*` for a flower bed, the five trees in turn, and the three cars; one instanced draw per model part. Litter bins stay code-built.
+- **Avatar:** `character.gltf` with its four clips; it shows the body, one hair, one face, the rank's `show` list and the worn extra (a hat-slot extra hides under the hard hat). It recolours `Skin`, `Hair` and the outfit's `colors`, and the first-person sleeves take the outfit's `sleeve`. The avatar's skin, hair and face indices follow `js/world/avatar.js` `SKINS`, `HAIRS` and `FACES`, the order of `data/wardrobe.json` looks.
+- Citizens and birds stay code-built and instanced: twelve 4.5k-triangle characters would not fit the budget.
+
 ## Models (copied from Brick by Brick, made by its `blender/make_assets.py`)
 
-Used by the first-person wall only. The town is built in code (see below), so `createWorld` loads nothing.
+Used by the first-person wall only.
 
 | File | What | Tris | Notes |
 |---|---|---|---|
@@ -77,9 +86,9 @@ Used by the first-person wall only. The town is built in code (see below), so `c
 
 If a model fails to load, the wall uses a coloured box instead and logs a warning, so the task still runs.
 
-## Town buildings (code-built in `js/world/buildings.js`)
+## Town buildings (`js/world/buildings.js`: the kit's models, code-built stand-ins)
 
-Each building is centred on its `x, z`, with its front towards +z; `rot` is in degrees. Broken ones are grey, with rubble; ok ones are in colour, with their `label`. **Keep footprints apart when laying out a town**: the numbers below are in metres. Solid buildings block the delivery van, with a 1 m margin.
+Each building is centred on its `x, z`, with its front towards +z; `rot` is in degrees. Broken ones stand in a grey area (look.js greys everything within their footprint plus 3 m, fading back to colour over about 1.5 s once fixed); ok ones are in colour, with their `label`. **Keep footprints apart when laying out a town**: the numbers below are in metres, and walking, the delivery van and the grey areas use them whichever model is shown. Solid buildings block the van (with a 1 m margin) and walkers. The triangle counts are the code-built stand-ins'.
 
 | `type` | Footprint w × d | Height | Solid | Tris | Broken vs ok |
 |---|---|---|---|---|---|
@@ -125,10 +134,23 @@ The delivery always has 3–4 stops. If the list names fewer, it's topped up wit
 |---|---|
 | `tap(id)` | fires `onPick({ id })` as if the building were tapped; returns false for an unknown id |
 | `finish(stars)` | ends the running task at once with 0–3 stars; `seconds` is the game time so far (≤ 90) |
-| `task()` | the running task's state or null. The wall gives `{ kind, twist, t, next, aim, laid, total, hand, setting }`, where `aim` is the current brick in canvas px (tap there); the delivery gives `{ kind, twist, closed, limit, t, van, queued, pathLen, best, delivered, total, stops, barrier }` |
+| `task()` | the running task's state or null. The wall gives `{ kind, twist, t, sleeve, cuffs, next, aim, laid, total, hand, setting }` (`sleeve`: the colour your rank's sleeves wear), where `aim` is the current brick in canvas px (tap there); the delivery gives `{ kind, twist, closed, limit, t, van, queued, pathLen, best, delivered, total, stops, barrier }` |
 | `screen(x, z)` | a ground point in canvas px under the town camera; draw a delivery route through the stops' `x, z` with it |
 | `view` | the town camera: `{ x, z, d }` |
-| `stats()` | draw calls, triangles, the building count and the world's game time |
+| `stats()` | draw calls and triangles of the last whole frame (every pass: shadows, scene, outlines), the building count, the world's game time and `quality` (`low` or `high`) |
 | `world` | the world object itself |
+| `loaded` | a promise: true once the kit is on show, false if it failed |
+| `kit()` | `{ ready, models, character, hours, buildings: { id: model }, hands, lamps, lampGlow }` |
+| `avatar()` | `{ skin, hair, face, rank, extra, x, z, walking, skips, clip, kit, title, parts, top, outfit, screen, visible }`; `visible` means on screen |
+| `skipWalk()` | ends a walk at once, as a tap on the town does; true if one was running |
+| `tod()` | `{ target, t, sun, night, hours, outlines, shadows }`; `t` is 1 once the 1.5 s ease is done |
+| `grey()` | the grey areas: `[{ id, a, to }]`, `a` from 1 (grey) to 0 |
+| `life()` | `{ citizens, walking, people, cars, birds, trees, props: { total, shown }, roads, paths, ring, confetti }` |
+| `lastFixed()` | the building fixed last (what `celebrate('fixed')` bounces) |
+| `sample(x, z)` | renders and reads back the `[r, g, b]` on screen at a ground point |
 
-Add `?q=low` to the page URL for the software-GL runner: no antialiasing, no shadows, pixel ratio 1.
+`anchors()` gives buildings (`kind: 'building'`) and the citizens walking about (`kind: 'person'`, their people.json id). A tap on the town during a walk only skips the walk.
+
+Add `?q=low` to the page URL for the software-GL runner: no antialiasing, no outlines, no shadows, pixel ratio 1.
+
+Perf, as `tools/smoke_world.mjs` reports it: Brookfield with the kit and 12 citizens at full quality is about 107 draw calls and 57k triangles a frame (budget 150 and 60k); the smoke town at `q=low` is about 43 draw calls and 25k triangles.
