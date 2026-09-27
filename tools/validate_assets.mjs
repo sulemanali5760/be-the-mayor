@@ -15,7 +15,8 @@ for (const f of files) {
   const { numErrors, numWarnings } = report.issues, tris = report.info?.totalTriangleCount ?? 0;
   const bufs = JSON.parse(buf.toString()).buffers ?? [];
   const embedded = bufs.length === 1 && String(bufs[0].uri).startsWith('data:');
-  console.log(`${f}: ${numErrors} errors, ${numWarnings} warnings, ${tris} triangles${embedded ? '' : ', NOT one embedded buffer'}`);
+  const codes = [...new Set(report.issues.messages.filter(m => m.severity === 1).map(m => m.code))].join(' ');
+  console.log(`${f}: ${numErrors} errors, ${numWarnings} warnings${codes ? ` (${codes})` : ''}, ${tris} triangles${embedded ? '' : ', NOT one embedded buffer'}`);
   if (numErrors) console.log(report.issues.messages.filter(m => m.severity === 0).slice(0, 5));
   if (numErrors || !embedded || tris > PER_MODEL) bad++;
 }
