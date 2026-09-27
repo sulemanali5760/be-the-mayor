@@ -201,8 +201,8 @@ export function door(b, gap = 1.5) {
   return [b.x + Math.sin(a) * r, b.z + Math.cos(a) * r];
 }
 
-export function makeBuilding(b) {
-  const type = typeOf(b.type), T = TYPES[type], broken = b.state === 'broken';
+// the code-built building (the kit's stand-in while it loads, or if it can't): one baked mesh
+function codeBuilt(T, broken) {
   const g = new THREE.Group();
   T.build(g, mat, broken);
   if (broken) for (const [x, z, s] of [[0, 0.5, 0.6], [0.8, 0.9, 0.4], [1.4, 0.3, 0.5]]) box(g, mat('stone'), s, s * 0.6, s, T.foot[0] / 2 - 1.2 + x, 0, T.foot[1] / 2 + z, x + z);
@@ -214,9 +214,48 @@ export function makeBuilding(b) {
   g.clear();
   body.castShadow = body.receiveShadow = true;
   g.add(body);
-  if (!broken && b.label) g.add(label(b.label, T.h + 2));
+  return g;
+}
+
+/* ---------- Lane A's kit (assets/manifest.json): kit = { scenes: Map id → scene, size(id) → [x, y, z] } ---------- */
+const HOUSES = ['house', 'house_2', 'house_3'];
+const RUBBLE = [['broken_rubble', 1, 1], ['broken_cone', -1, 0.7], ['broken_boards', 0, 0.4]]; // [model, side, in front]
+const hashId = s => [...String(s)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
+// the model for a building: its id first (pharmacy, kiosk, keller_house), then its type; houses vary by id.
+// Broken: `<id>_broken` where there is one, else the ok model (greyed by look.js) with rubble in front.
+function kitModel(b, type, broken, kit) {
+  const houses = HOUSES.filter(h => kit.scenes.has(h));
+  const base = kit.scenes.has(b.id) ? b.id : type === 'house' && houses.length ? houses[hashId(b.id) % houses.length] : type;
+  if (!kit.scenes.has(base)) return null;
+  return broken && kit.scenes.has(`${base}_broken`) ? `${base}_broken` : base;
+}
+function fromKit(T, broken, id, kit) {
+  const g = new THREE.Group(), m = kit.scenes.get(id).clone();
+  g.add(m);
+  const lamp = m.getObjectByName('lamp'); // the streetlight's lamp glows at evening and night
+  if (lamp && !broken) lamp.traverse(o => { if (o.isMesh) o.material = L.lampMat; });
+  if (broken && !id.endsWith('_broken')) {
+    const [w, d] = T.foot;
+    for (const [rid, side, front] of RUBBLE) {
+      if (!kit.scenes.has(rid)) continue;
+      const r = kit.scenes.get(rid).clone();
+      r.position.set(side * Math.max(0.6, w / 2 - 0.8), 0, d / 2 + front);
+      r.rotation.y = side * 0.4;
+      g.add(r);
+    }
+  }
+  const hands = ['clock_hour', 'clock_minute'].map(n => m.getObjectByName(n)).filter(Boolean); // turned by world.frame
+  for (const h of hands) h.userData.rest = h.quaternion.clone();
+  return { g, h: kit.size(id)?.[1] ?? T.h, hands };
+}
+
+export function makeBuilding(b, kit = null) {
+  const type = typeOf(b.type), T = TYPES[type], broken = b.state === 'broken';
+  const model = kit && kitModel(b, type, broken, kit);
+  const { g, h, hands } = model ? fromKit(T, broken, model, kit) : { g: codeBuilt(T, broken), h: T.h, hands: [] };
+  if (!broken && b.label) g.add(label(b.label, h + 2));
   g.position.set(b.x, 0, b.z);
   g.rotation.y = THREE.MathUtils.degToRad(b.rot || 0);
-  g.userData = { id: b.id, type, h: T.h, foot: T.foot, solid: T.solid };
+  g.userData = { id: b.id, type, h, foot: T.foot, solid: T.solid, model, hands };
   return g;
 }

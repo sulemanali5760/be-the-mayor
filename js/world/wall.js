@@ -2,10 +2,10 @@
 // The rules live in rules.js (tested in CI); this file is the 3D, the input and the task HUD.
 // Time is only the dt that world.frame passes on from main.js's game clock (LESSONS T6).
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const V = new URL(import.meta.url).searchParams.get('v') || 'dev';
 const { WALL, createWall } = await import(`./rules.js?v=${V}`);
+const { loadGltf } = await import(`./assets.js?v=${V}`);
 
 const [, BD, BH] = WALL.brick, FOOT_TOP = 0.25;
 const WALL_LEN = WALL.bricks * (WALL.brick[0] + WALL.headJoint) - WALL.headJoint;
@@ -28,21 +28,7 @@ const BASE = {
   L: { p: new THREE.Vector3(-0.17, -0.34, -0.1), r: new THREE.Euler(0.46, -0.16, 0) },
 };
 
-/* ---------- models: self-contained .gltf decoded in memory (LESSONS H1) ---------- */
-const loader = new GLTFLoader();
-// the .gltf embeds its buffer as a data: URI, which a strict CSP can refuse to fetch; hand three.js a GLB instead
-async function loadGltf(url) {
-  const json = await fetch(url).then(r => r.json());
-  const bin = Uint8Array.from(atob(json.buffers[0].uri.split(',')[1]), c => c.charCodeAt(0));
-  delete json.buffers[0].uri;
-  const txt = new TextEncoder().encode(JSON.stringify(json));
-  const jl = Math.ceil(txt.length / 4) * 4, bl = Math.ceil(bin.length / 4) * 4;
-  const glb = new ArrayBuffer(28 + jl + bl), dv = new DataView(glb), u8 = new Uint8Array(glb);
-  dv.setUint32(0, 0x46546c67, true); dv.setUint32(4, 2, true); dv.setUint32(8, glb.byteLength, true);
-  dv.setUint32(12, jl, true); dv.setUint32(16, 0x4e4f534a, true); u8.fill(0x20, 20, 20 + jl); u8.set(txt, 20);
-  dv.setUint32(20 + jl, bl, true); dv.setUint32(24 + jl, 0x004e4942, true); u8.set(bin, 28 + jl);
-  return loader.parseAsync(glb, '');
-}
+/* ---------- models: self-contained .gltf decoded in memory (LESSONS H1, assets.js) ---------- */
 let M = null, loading = null;
 export function ready() {
   return loading ??= Promise.all(MODELS.map(async n => {

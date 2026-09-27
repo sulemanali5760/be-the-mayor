@@ -7,6 +7,14 @@ const V = new URL(import.meta.url).searchParams.get('v') || 'dev';
 const L = await import(`./look.js?v=${V}`);
 const R = await import(`./rules.js?v=${V}`);
 const B = await import(`./buildings.js?v=${V}`);
+const K = await import(`./assets.js?v=${V}`);
+
+// Lane A's kit models for props, trees and cars (docs/ASSETS.md); a prop type is one or more models [id, x, z]
+const PROP_KIT = { bench: [['bench']], fence: [['fence']], lamp: [['streetlight']], bush: [['potted_bush']],
+  flowers: [['flower_red', -0.4, 0], ['flower_yellow', 0, 0.12], ['flower_purple', 0.4, 0]] };
+const TREE_KIT = ['tree', 'tree_oak', 'tree_pine', 'tree_fat'];
+const CAR_KIT = ['car_hatchback', 'car_sedan', 'car_stationwagon'];
+export const KIT = [...new Set([...Object.values(PROP_KIT).flat().map(([id]) => id), ...TREE_KIT, ...CAR_KIT])];
 
 const ROAD_W = 5, PATH_W = 2, LANE = 1.3, MAX_PEOPLE = 12, CARS = 3, BIRDS = 5, CONFETTI = 180; // widths as in docs/GDD.md
 const P = L.piece;
@@ -87,6 +95,10 @@ export function createLife(scene, content = {}) {
     props: {},
   };
   const propGeo = t => (geos.props[t] ??= L.bake(PROPS[t](), true));
+  // the kit's scenes (id → scene) once world.js has loaded them; their meshes as instancing parts
+  let kit = null;
+  const partsOf = new Map();
+  const kitParts = id => (kit?.has(id) ? partsOf.get(id) ?? partsOf.set(id, K.parts(kit.get(id))).get(id) : null);
 
   // confetti lives across towns
   const conf = instanced(geos.confetti, mats.confetti, CONFETTI, false);
@@ -152,10 +164,16 @@ export function createLife(scene, content = {}) {
       if (nearLane(x, z, 2.5)) continue;
       trees.push([x, z, rand() * 6, 0.8 + rand() * 0.5]);
     }
-    const treeMesh = instanced(geos.tree, mats.tree, trees.length);
-    trees.forEach(([x, z, r, s], i) => put(treeMesh, i, x, 0, z, r, s));
-    treeMesh.receiveShadow = true;
-    group.add(treeMesh);
+    const kinds = TREE_KIT.map(kitParts).filter(Boolean); // the kit's trees, taken in turn; else the code-built one
+    for (const [k, parts] of (kinds.length ? kinds : [[{ geo: geos.tree, mat: mats.tree }]]).entries()) {
+      const mine = trees.filter((_, i) => i % Math.max(1, kinds.length) === k);
+      for (const pt of parts) {
+        const m = instanced(pt.geo, pt.geo.attributes.color ? mats.tree : pt.mat, mine.length);
+        mine.forEach(([x, z, r, s], i) => put(m, i, x, 0, z, r, s));
+        m.receiveShadow = true;
+        group.add(m);
+      }
+    }
 
     // props: town.json's, plus flowers, benches and lamps at every building; each belongs to its nearest building
     const props = [];
@@ -171,14 +189,20 @@ export function createLife(scene, content = {}) {
       const [w, d] = g.userData.foot, a = g.rotation.y, c = Math.cos(a), s = Math.sin(a);
       for (const [type, at] of Object.entries(AUTO)) for (const [lx, lz] of at(w, d, t)) props.push({ type, x: b.x + lx * c + lz * s, z: b.z - lx * s + lz * c, rot: a, owner: b.id });
     }
-    const propMeshes = {};
+    const propMeshes = {}; // type → [{ mesh, off }]: one instanced mesh per model part
     for (const type of new Set(props.map(p => p.type))) {
       const mine = props.filter(p => p.type === type);
       mine.forEach((p, i) => { p.i = i; p.shown = false; p.pop = 1; });
-      const m = propMeshes[type] = instanced(propGeo(type), L.townMat, mine.length);
-      m.receiveShadow = true;
-      mine.forEach(p => put(m, p.i, p.x, 0, p.z, p.rot, 0));
-      group.add(m);
+      const models = PROP_KIT[type]?.map(([id, x = 0, z = 0]) => [kitParts(id), x, z]);
+      const pieces = models?.every(([ps]) => ps) ? models.flatMap(([ps, x, z]) => ps.map(pt => ({ ...pt, off: new THREE.Matrix4().makeTranslation(x, 0, z) })))
+        : [{ geo: propGeo(type), mat: L.townMat, off: new THREE.Matrix4() }];
+      propMeshes[type] = pieces.map(({ geo, mat, off }) => {
+        const m = instanced(geo, mat, mine.length);
+        m.receiveShadow = true;
+        group.add(m);
+        return { mesh: m, off };
+      });
+      mine.forEach(p => placeProp(propMeshes, p, 0));
     }
 
     // named citizens: town.json homes and work ({ personId: buildingId }) first, then other people spread over
@@ -214,17 +238,28 @@ export function createLife(scene, content = {}) {
       return { pts: lp, len: R.pathLength(lp) };
     }).filter(l => l.len > 10).sort((a, b) => b.len - a.len);
     const cars = loops.length ? Array.from({ length: CARS }, (_, i) => ({ loop: loops[i % loops.length], s: (i / CARS) * loops[i % loops.length].len, speed: 5.5 + i * 0.8 })) : [];
-    const carMesh = instanced(geos.car, mats.car, cars.length);
-    cars.forEach((_, i) => carMesh.setColorAt(i, col.set(CAR[i % CAR.length])));
-    group.add(carMesh);
+    const carKits = CAR_KIT.map(kitParts).filter(Boolean); // the kit's cars, one each; else one tinted code-built mesh
+    const shared = carKits.length ? null : instanced(geos.car, mats.car, cars.length);
+    if (shared) { cars.forEach((_, i) => shared.setColorAt(i, col.set(CAR[i % CAR.length]))); group.add(shared); }
+    cars.forEach((c, i) => {
+      c.slots = shared ? [{ mesh: shared, i }] : carKits[i % carKits.length].map(pt => {
+        const m = instanced(pt.geo, pt.geo.attributes.color ? mats.car : pt.mat, 1);
+        group.add(m);
+        return { mesh: m, i: 0 };
+      });
+    });
 
     const birds = instanced(geos.bird, mats.bird, BIRDS, false);
     group.add(birds);
 
-    T = { items, grid, roads, paths, ring, trees, props, propMeshes, citizens, bodies, cars, carMesh, birds, routes: new Map(),
+    T = { items, grid, roads, paths, ring, trees, props, propMeshes, citizens, bodies, cars, birds, routes: new Map(),
       centre: [(x0 + x1) / 2, (z0 + z1) / 2], radius: Math.max(x1 - x0, z1 - z0) / 2, leisure: [] };
     refresh();
     update(0); // place everyone before the first render
+  }
+  function placeProp(pm, p, s) {
+    m5.compose(p3.set(p.x, 0, p.z), q.setFromAxisAngle(up, p.rot), s3.setScalar(s));
+    for (const { mesh, off } of pm[p.type]) { mesh.setMatrixAt(p.i, m4.multiplyMatrices(m5, off)); mesh.instanceMatrix.needsUpdate = true; }
   }
   function segBox(a, b, hw) {
     const dx = b[0] - a[0], dz = b[1] - a[1], len = Math.hypot(dx, dz);
@@ -238,10 +273,9 @@ export function createLife(scene, content = {}) {
     for (const p of T.props) {
       const show = !p.owner || !T.items.has(p.owner) || ok(p.owner);
       if (show && !p.shown) p.pop = 0; // pops in over half a second
-      if (!show) put(T.propMeshes[p.type], p.i, p.x, 0, p.z, p.rot, 0);
+      if (!show) placeProp(T.propMeshes, p, 0);
       p.shown = show;
     }
-    for (const m of Object.values(T.propMeshes)) m.instanceMatrix.needsUpdate = true;
     T.leisure = [...T.items.values()].filter(it => it.b.state !== 'broken' && !['house', 'streetlight', 'tree'].includes(it.group.userData.type)).map(it => it.b.id);
   }
 
@@ -275,8 +309,7 @@ export function createLife(scene, content = {}) {
     for (const p of T.props) if (p.shown && p.pop < 1) {
       p.pop = Math.min(1, p.pop + dt * 2);
       const k = p.pop, s = 1 + 2.2 * (k - 1) ** 3 + 1.2 * (k - 1) ** 2; // ease out with a little overshoot
-      put(T.propMeshes[p.type], p.i, p.x, 0, p.z, p.rot, s);
-      T.propMeshes[p.type].instanceMatrix.needsUpdate = true;
+      placeProp(T.propMeshes, p, s);
     }
     T.citizens.forEach((c, i) => {
       if (c.route) {
@@ -300,12 +333,11 @@ export function createLife(scene, content = {}) {
       for (const [k, side] of [[0, 0.12], [1, -0.12]]) T.bodies.legs.setMatrixAt(i * 2 + k, m4.makeRotationX((k ? -sw : sw) * 0.55).setPosition(side, 0.7, 0).premultiply(m5));
     });
     for (const m of Object.values(T.bodies)) m.instanceMatrix.needsUpdate = true;
-    T.cars.forEach((c, i) => {
+    for (const c of T.cars) {
       c.s = (c.s + c.speed * dt) % c.loop.len;
       const pt = R.pointAt(c.loop.pts, c.s);
-      put(T.carMesh, i, pt.x, 0, pt.z, pt.dir);
-    });
-    T.carMesh.instanceMatrix.needsUpdate = true;
+      for (const { mesh, i } of c.slots) { put(mesh, i, pt.x, 0, pt.z, pt.dir); mesh.instanceMatrix.needsUpdate = true; }
+    }
     T.birds.visible = !night;
     for (let i = 0; i < BIRDS; i++) {
       const w = (0.22 + 0.04 * i) * (i % 2 ? -1 : 1), a = clock * w + i * 1.3, r = T.radius * 0.6 + 6 * i;
@@ -351,5 +383,7 @@ export function createLife(scene, content = {}) {
     props: { total: T.props.length, shown: T.props.filter(p => p.shown).length }, roads: T.roads.length, paths: T.paths.length, ring: T.ring, confetti: bits.length,
   } : null);
 
-  return { group, build, refresh, update, route, confetti, anchors, personAt, info };
+  // the kit is in (world.js rebuilds this town's life right after)
+  const useKit = scenes => { kit = scenes; partsOf.clear(); };
+  return { group, build, refresh, update, route, confetti, anchors, personAt, info, useKit };
 }
