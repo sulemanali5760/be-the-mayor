@@ -5,11 +5,11 @@ Never run on the dev laptop: downloaded files are opened only on GitHub runners 
   blender --background --factory-startup --python-exit-code 1 --python blender/kits.py
 
 1. catalog (when tools/kits/kits.json has "catalog": true): every model of every kit, unconverted, in
-   docs/art/catalog-<kit>.png, to choose parts and check which way they face.
+   docs/art/catalog-<kit>.jpg, to choose parts and check which way they face.
 2. convert: each recipe in "models" is imported, turned so its front faces +z (three.js), scaled to real
    metres, recoloured face by face to the nearest assets/palette.json colour (vertex colours, one material),
    joined into one mesh, re-origined to its bottom centre and exported as self-contained .gltf.
-3. composites: models built from converted and own parts ("park" = fountain + trees + benches).
+3. orphans: a model file with no recipe and no own_meta.json entry (a renamed recipe) is removed.
 4. manifest and contact sheets: every assets/models/*.gltf, kits and own.
 """
 import sys, json, math, pathlib, collections
@@ -18,8 +18,8 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import bpy
 import numpy as np
 from mathutils import Matrix, Vector
-from common import (ROOT, OUT, PAL, lin, reset, paint, use_palette, palette_material, meshes_of, bounds, tris,
-                    export_gltf, import_gltf, grid_render)
+from common import (ROOT, OUT, PAL, lin, reset, use_palette, meshes_of, bounds, tris, export_gltf, import_gltf,
+                    grid_render, character_sheet)
 
 KITS = ROOT / "kits"  # unzipped by the workflow, never committed
 CFG = json.loads((ROOT / "tools" / "kits" / "kits.json").read_text())
@@ -197,34 +197,21 @@ def convert(mid, r):
     print(f"convert {mid} <- {r['kit']}/{r['file']}: {tris([o])} tris; colours {top}")
 
 
-# ---------- 3. composites ----------
-def composite(cid, c):
-    reset()
-    parts = []
-    for pid, x, z, rot, *s in c["parts"]:  # x, z in three.js metres (z towards the front), rot in degrees
-        for o in flatten(import_gltf(OUT / f"{pid}.gltf")):
-            o.data.transform(Matrix.Translation((x, -z, 0)) @ Matrix.Rotation(math.radians(rot), 4, "Z")
-                             @ Matrix.Scale(s[0] if s else 1.0, 4))
-            parts.append(o)
-    o = join(parts, cid)
-    export_gltf(OUT / f"{cid}.gltf", [o])
-    print(f"composite {cid}: {tris([o])} tris")
-
-
-# ---------- 4. manifest and contact sheets ----------
+# ---------- 3. manifest and contact sheets ----------
 def info(mid):
     if mid in CFG["models"]:
         kit = CFG["kits"][CFG["models"][mid]["kit"]]
         return {"source": kit["source"], "license": kit["license"], "url": kit["page"], "kind": CFG["models"][mid]["kind"]}
-    if mid in CFG["composites"]:
-        c = CFG["composites"][mid]
-        srcs = [info(p[0])["source"] for p in c["parts"]]
-        kits = [s for s in srcs if s != "own"]
-        return {"source": kits[0] if kits else "own", "license": "CC0-1.0" if kits else "own",
-                "url": f"{REPO}/blob/main/tools/kits/kits.json", "kind": c["kind"], "parts": sorted({p[0] for p in c["parts"]})}
-    m = OWN["models"].get(mid, {})
-    return {"source": "own", "license": "own", "url": m.get("url", f"{REPO}/blob/main/blender/make_own.py"),
-            "kind": m.get("kind", "prop")}
+    m = OWN["models"][mid]
+    return {"source": "own", "license": "own", "url": m.get("url", f"{REPO}/blob/main/blender/make_own.py"), "kind": m["kind"]}
+
+
+def drop_orphans():
+    """A model file that is neither a kit recipe nor listed by make_own.py (a renamed recipe) is removed."""
+    for f in OUT.glob("*.gltf"):
+        if f.stem not in CFG["models"] and f.stem not in OWN["models"]:
+            print(f"removing {f.name}: no recipe and not an own model")
+            f.unlink()
 
 
 def manifest():
@@ -273,79 +260,13 @@ def sheet_town(man):
     grid_render(items, ROOT / "docs" / "art" / "contact-town.png", cols=8, px=240, samples=16)
 
 
-def pose(roots, anim, frame):
-    for a in [o for o in roots if o.type == "ARMATURE"]:
-        ad = a.animation_data
-        if not ad:
-            continue
-        acts = [s.action for t in ad.nla_tracks for s in t.strips] + ([ad.action] if ad.action else [])
-        for t in ad.nla_tracks:
-            t.mute = True
-        hit = [x for x in acts if x and x.name.split("_")[0].split(".")[0] == anim]
-        if hit:
-            ad.action = hit[0]
-            bpy.context.scene.frame_set(frame)
-
-
-def show(roots, visible, colours):
-    for o in [x for r in roots for x in [r, *r.children_recursive]]:
-        base = o.name.split(".")[0]
-        if o.type == "MESH":
-            o.hide_render = base not in visible
-            for s in o.material_slots:
-                n = s.material.name.split(".")[0] if s.material else ""
-                if n in colours:
-                    s.material = s.material.copy()
-                    s.material.node_tree.nodes["Principled BSDF"].inputs["Base Color"].default_value = (*lin(colours[n]), 1)
-
-
-def sheet_character(man):
-    ch = man["character"]
-    if not ch:
-        return
-    reset()
-    f = OUT / f"{ch['base']}.gltf"
-    items = []
-    body = ch["body"]
-    for o in ch["outfits"]:
-        roots = [x for x in import_gltf(f) if x.parent is None]
-        show(roots, body + [ch["hairs"][0]["model"], ch["faces"][0]] + o["show"], {**o["colors"], "Skin": ch["skins"][1],
-                                                                                   "Hair": ch["hairs"][0]["color"]})
-        items.append((f"{o['rank']} {o['title']}", roots))
-    for i, hair in enumerate(ch["hairs"]):
-        roots = [x for x in import_gltf(f) if x.parent is None]
-        o = ch["outfits"][i % len(ch["outfits"])]
-        show(roots, body + ([hair["model"]] if hair.get("model") else []) + [ch["faces"][i % len(ch["faces"])]],
-             {**o["colors"], "Skin": ch["skins"][i % len(ch["skins"])], "Hair": hair["color"]})
-        items.append((f"hair {hair['id']}", roots))
-    for i, face in enumerate(ch["faces"]):
-        roots = [x for x in import_gltf(f) if x.parent is None]
-        show(roots, body + [ch["hairs"][0]["model"], face], {**ch["outfits"][0]["colors"], "Skin": ch["skins"][-1 - i],
-                                                              "Hair": ch["hairs"][0]["color"]})
-        items.append((f"face {face}", roots))
-    for x in ch["extras"]:
-        roots = [r for r in import_gltf(f) if r.parent is None]
-        show(roots, body + [ch["hairs"][1]["model"], ch["faces"][0], x["model"]], {**ch["outfits"][2]["colors"],
-                                                                                    "Skin": ch["skins"][2], "Hair": ch["hairs"][1]["color"]})
-        items.append((f"extra {x['id']}", roots))
-    for anim, frame in (("wave", 12), ("cheer", 10), ("walk", 5)):
-        roots = [x for x in import_gltf(f) if x.parent is None]
-        show(roots, body + [ch["hairs"][0]["model"], ch["faces"][1]] + ch["outfits"][4]["show"], {**ch["outfits"][4]["colors"],
-                                                                                                  "Skin": ch["skins"][3], "Hair": ch["hairs"][0]["color"]})
-        pose(roots, anim, frame)
-        items.append((f"{anim} (frame {frame})", roots))
-    for name in ("bird",):
-        if (OUT / f"{name}.gltf").exists():
-            items.append((name, [x for x in import_gltf(OUT / f"{name}.gltf") if x.parent is None]))
-    grid_render(items, ROOT / "docs" / "art" / "contact-character.png", cols=8, cell=2.2, px=220, normalise=False, samples=16)
-
-
 if CFG.get("catalog"):
     catalog()
 for mid, r in CFG["models"].items():
     convert(mid, r)
-for cid, c in CFG["composites"].items():
-    composite(cid, c)
+drop_orphans()
 man = manifest()
 sheet_town(man)
-sheet_character(man)
+if man["character"]:
+    reset()
+    character_sheet(man["character"], ROOT / "docs" / "art" / "contact-character.png")

@@ -207,3 +207,55 @@ def grid_render(items, path, cols=10, cell=1.0, px=180, turn=-30, normalise=True
     sc.render.filepath = str(path)
     pathlib.Path(path).parent.mkdir(parents=True, exist_ok=True)
     bpy.ops.render.render(write_still=True)
+
+
+# ---------- the character sheet: every rank outfit, hair, face, extra and animation ----------
+def show(roots, visible, colours):
+    """Render only the meshes named in `visible`; recolour materials by name ({"Shirt": "#hex"})."""
+    for o in [x for r in roots for x in [r, *r.children_recursive]]:
+        if o.type != "MESH":
+            continue
+        o.hide_render = o.name.split(".")[0] not in visible
+        for s in o.material_slots:
+            n = s.material.name.split(".")[0] if s.material else ""
+            if colours.get(n):
+                s.material = s.material.copy()
+                s.material.node_tree.nodes["Principled BSDF"].inputs["Base Color"].default_value = (*lin(colours[n]), 1)
+
+
+def pose(roots, anim):
+    for a in [o for o in roots if o.type == "ARMATURE" and o.animation_data]:
+        ad = a.animation_data
+        acts = [s.action for t in ad.nla_tracks for s in t.strips] + [ad.action]
+        for t in ad.nla_tracks:
+            t.mute = True
+        hit = [x for x in acts if x and x.name.split("_")[0].split(".")[0] == anim]
+        ad.action = hit[0] if hit else None
+
+
+def character_sheet(ch, path, frame=10):
+    f = OUT / f"{ch['base']}.gltf"
+    hairs, faces, skins, outfits = ch["hairs"], ch["faces"], ch["skins"], ch["outfits"]
+
+    def cell(text, nodes, outfit, skin, hair, anim="idle"):
+        roots = [x for x in import_gltf(f) if x.parent is None]
+        show(roots, ch["body"] + ([hair["model"]] if hair.get("model") else []) + nodes + outfit["show"],
+             {**outfit["colors"], "Skin": skin, "Hair": hair.get("color")})
+        pose(roots, anim)
+        return text, roots
+
+    items = [cell(f"{o['rank']} {o['title']}", [faces[0]], o, skins[i % len(skins)], hairs[0]) for i, o in enumerate(outfits)]
+    items += [cell(f"hair {h['id']}", [faces[i % len(faces)]], outfits[i % len(outfits)], skins[-1 - i % len(skins)], h)
+              for i, h in enumerate(hairs)]
+    items += [cell(f"face {x}", [x], outfits[1], skins[i], hairs[1]) for i, x in enumerate(faces)]
+    none = {"show": [], "colors": outfits[2]["colors"]}
+    items += [cell(f"extra {x['id']}", [faces[0], x["model"]], none, skins[2], hairs[i % len(hairs)])
+              for i, x in enumerate(ch["extras"])]
+    items += [cell(a, [faces[1]], outfits[4], skins[3], hairs[0], a) for a in ch["animations"].values()]
+    bird = OUT / "bird.gltf"
+    if bird.exists():
+        roots = [x for x in import_gltf(bird) if x.parent is None]
+        pose(roots, "fly")
+        items.append(("bird", roots))
+    bpy.context.scene.frame_set(frame)
+    grid_render(items, path, cols=8, cell=2.2, px=220, normalise=False, samples=16)
