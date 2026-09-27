@@ -1,0 +1,324 @@
+{
+ "models": {
+  "brick_nf": {
+   "kind": "task",
+   "url": "https://github.com/sulemanali5760/brick-by-brick/blob/main/blender/make_assets.py"
+  },
+  "brick_half": {
+   "kind": "task",
+   "url": "https://github.com/sulemanali5760/brick-by-brick/blob/main/blender/make_assets.py"
+  },
+  "trowel": {
+   "kind": "task",
+   "url": "https://github.com/sulemanali5760/brick-by-brick/blob/main/blender/make_assets.py"
+  },
+  "fp_arms": {
+   "kind": "task",
+   "url": "https://github.com/sulemanali5760/brick-by-brick/blob/main/blender/make_assets.py"
+  },
+  "mortar_tub": {
+   "kind": "task",
+   "url": "https://github.com/sulemanali5760/brick-by-brick/blob/main/blender/make_assets.py"
+  },
+  "pallet_euro": {
+   "kind": "task",
+   "url": "https://github.com/sulemanali5760/brick-by-brick/blob/main/blender/make_assets.py"
+  },
+  "line_pin": {
+   "kind": "task",
+   "url": "https://github.com/sulemanali5760/brick-by-brick/blob/main/blender/make_assets.py"
+  },
+  "spirit_level": {
+   "kind": "task",
+   "url": "https://github.com/sulemanali5760/brick-by-brick/blob/main/blender/make_assets.py"
+  },
+  "townhall": {
+   "kind": "building"
+  },
+  "keller_house": {
+   "kind": "building"
+  },
+  "bridge": {
+   "kind": "building"
+  },
+  "bridge_broken": {
+   "kind": "building"
+  },
+  "cafe": {
+   "kind": "building"
+  },
+  "shop": {
+   "kind": "building"
+  },
+  "pharmacy": {
+   "kind": "building"
+  },
+  "kiosk": {
+   "kind": "building"
+  },
+  "school": {
+   "kind": "building"
+  },
+  "busstop": {
+   "kind": "building"
+  },
+  "busstop_broken": {
+   "kind": "building"
+  },
+  "streetlight": {
+   "kind": "building"
+  },
+  "statue": {
+   "kind": "building"
+  },
+  "playground": {
+   "kind": "building"
+  },
+  "playground_broken": {
+   "kind": "building"
+  },
+  "park": {
+   "kind": "building"
+  },
+  "park_broken": {
+   "kind": "building"
+  },
+  "garden": {
+   "kind": "building"
+  },
+  "garden_broken": {
+   "kind": "building"
+  },
+  "dump_pile": {
+   "kind": "building"
+  },
+  "dump_pile_broken": {
+   "kind": "building"
+  },
+  "yard": {
+   "kind": "building"
+  },
+  "broken_rubble": {
+   "kind": "broken"
+  },
+  "broken_boards": {
+   "kind": "broken"
+  },
+  "broken_cone": {
+   "kind": "broken"
+  },
+  "broken_barrier": {
+   "kind": "broken"
+  },
+  "bird": {
+   "kind": "life"
+  },
+  "character": {
+   "kind": "character"
+  }
+ },
+ "character": {
+  "base": "character",
+  "animations": {
+   "idle": "idle",
+   "walk": "walk",
+   "wave": "wave",
+   "cheer": "cheer"
+  },
+  "attach": {
+   "head": "head",
+   "spine": "spine",
+   "handR": "handR"
+  },
+  "body": [
+   "body"
+  ],
+  "materials": [
+   "Skin",
+   "Hair",
+   "Shirt",
+   "Pants",
+   "Shoes",
+   "Jacket"
+  ],
+  "skins": [
+   "#f9dcc4",
+   "#f1c27d",
+   "#e0ac69",
+   "#c68642",
+   "#8d5524",
+   "#5c3a21"
+  ],
+  "hairs": [
+   {
+    "id": "short",
+    "model": "hair_short",
+    "color": "#5b3a29"
+   },
+   {
+    "id": "long",
+    "model": "hair_long",
+    "color": "#2e2a28"
+   },
+   {
+    "id": "bun",
+    "model": "hair_bun",
+    "color": "#c9a15b"
+   },
+   {
+    "id": "curly",
+    "model": "hair_curly",
+    "color": "#3a2a22"
+   },
+   {
+    "id": "none",
+    "model": null,
+    "color": null
+   }
+  ],
+  "faces": [
+   "face_smile",
+   "face_grin",
+   "face_calm"
+  ],
+  "outfits": [
+   {
+    "rank": 0,
+    "title": "Labourer",
+    "colors": {
+     "Shirt": "#8a9aa8",
+     "Pants": "#4a5d7a",
+     "Shoes": "#7a5233"
+    },
+    "sleeve": "#8a9aa8",
+    "show": [
+     "acc_vest",
+     "acc_hardhat"
+    ]
+   },
+   {
+    "rank": 1,
+    "title": "Skilled",
+    "colors": {
+     "Shirt": "#3e6fb0",
+     "Pants": "#3b4a5e",
+     "Shoes": "#5a4030"
+    },
+    "sleeve": "#3e6fb0",
+    "show": [
+     "acc_toolbelt",
+     "acc_tester"
+    ]
+   },
+   {
+    "rank": 2,
+    "title": "Community helper",
+    "colors": {
+     "Shirt": "#f2e6c9",
+     "Pants": "#4a5d7a",
+     "Shoes": "#e8e8e8",
+     "Jacket": "#39a58a"
+    },
+    "sleeve": "#39a58a",
+    "show": [
+     "acc_jacket",
+     "acc_clipboard"
+    ]
+   },
+   {
+    "rank": 3,
+    "title": "Councillor",
+    "colors": {
+     "Shirt": "#ffffff",
+     "Pants": "#4b4f58",
+     "Shoes": "#3a2a20",
+     "Jacket": "#8a93a0"
+    },
+    "sleeve": "#8a93a0",
+    "show": [
+     "acc_blazer"
+    ]
+   },
+   {
+    "rank": 4,
+    "title": "Mayor",
+    "colors": {
+     "Shirt": "#ffffff",
+     "Pants": "#2f4a7a",
+     "Shoes": "#2a2a2a",
+     "Jacket": "#2f4a7a"
+    },
+    "sleeve": "#2f4a7a",
+    "show": [
+     "acc_blazer",
+     "acc_tie",
+     "acc_chain"
+    ]
+   },
+   {
+    "rank": 5,
+    "title": "Governor",
+    "colors": {
+     "Shirt": "#e8eef5",
+     "Pants": "#2b2d33",
+     "Shoes": "#1e1e1e",
+     "Jacket": "#2b2d33"
+    },
+    "sleeve": "#2b2d33",
+    "show": [
+     "acc_blazer",
+     "acc_tie",
+     "acc_briefcase"
+    ]
+   },
+   {
+    "rank": 6,
+    "title": "President",
+    "colors": {
+     "Shirt": "#ffffff",
+     "Pants": "#151c2e",
+     "Shoes": "#141414",
+     "Jacket": "#151c2e"
+    },
+    "sleeve": "#151c2e",
+    "show": [
+     "acc_blazer",
+     "acc_tie",
+     "acc_flagpin"
+    ]
+   }
+  ],
+  "extras": [
+   {
+    "id": "cap",
+    "model": "extra_cap",
+    "slot": "hat"
+   },
+   {
+    "id": "beanie",
+    "model": "extra_beanie",
+    "slot": "hat"
+   },
+   {
+    "id": "sunglasses",
+    "model": "extra_sunglasses",
+    "slot": "face"
+   },
+   {
+    "id": "flower",
+    "model": "extra_flower",
+    "slot": "hair"
+   },
+   {
+    "id": "scarf",
+    "model": "extra_scarf",
+    "slot": "neck"
+   },
+   {
+    "id": "bowtie",
+    "model": "extra_bowtie",
+    "slot": "neck"
+   }
+  ]
+ }
+}
