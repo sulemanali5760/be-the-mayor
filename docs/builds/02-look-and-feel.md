@@ -57,6 +57,11 @@ Owner's choices (2026-09-27): cozy toon style; **CC0 kits** (KayKit, Kenney, Qua
   - the character ≤ **5k triangles**;
   - total assets ≤ **8 MB**.
 
+**Contract change 1 (director, from Lane A):** the manifest fields `kind`, `draws`, `kb` and `budget`, and in `character`: `body`, `materials`, `outfits` (colours per material, `sleeve`, `show`) and `extras` (with `slot`), are part of the contract, as documented in ASSETS.md.
+- Model ids equal the building types; `<id>_broken` exists for bridge, busstop, park, playground, garden and dump_pile.
+- `character.gltf` holds every variant as its own skinned mesh: show only the body, one hair, one face, the rank's `show` list and one extra.
+- The wardrobe extras are `cap`, `beanie`, `sunglasses`, `flower`, `scarf` and `bowtie`.
+
 ### 3.2 World API additions (Lane W → Lane G)
 
 ```js
