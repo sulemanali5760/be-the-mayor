@@ -135,12 +135,12 @@ def label(text, loc, size, rot_x):
     return o
 
 
-def grid_render(items, path, cols=10, cell=1.0, px=180, turn=-30, normalise=True, samples=16, el=35):
+def grid_render(items, path, cols=10, cell=1.0, px=180, turn=-30, normalise=True, samples=16, el=35, k=2.4):
     """Lay items [(label, root objects)] out in a labelled grid, seen from the front (Blender -Y, which is
     +z in three.js) and above, each turned by `turn` degrees, and render one PNG with Cycles on the CPU."""
     sc = bpy.context.scene
     rows = max(1, math.ceil(len(items) / cols))
-    k = 2.4  # row spacing on the ground, so the rows don't overlap on screen
+    # k: row spacing on the ground (in cells), so the rows don't overlap on screen
     e = math.radians(el)
     for i, (text, roots) in enumerate(items):
         c, r = i % cols, i // cols
@@ -189,7 +189,7 @@ def grid_render(items, path, cols=10, cell=1.0, px=180, turn=-30, normalise=True
     sun.energy, sun.angle = 2.6, math.radians(8)
     so = bpy.data.objects.new("sun", sun)
     sc.collection.objects.link(so)
-    so.rotation_euler = (math.radians(50), 0, math.radians(-35))
+    so.rotation_euler = (math.radians(30), 0, math.radians(-35))
 
     sc.render.engine = "CYCLES"
     sc.cycles.device = "CPU"
@@ -245,9 +245,9 @@ def character_sheet(ch, path, frame=10):
         return text, roots
 
     items = [cell(f"{o['rank']} {o['title']}", [faces[0]], o, skins[i % len(skins)], hairs[0]) for i, o in enumerate(outfits)]
-    items += [cell(f"hair {h['id']}", [faces[i % len(faces)]], outfits[i % len(outfits)], skins[-1 - i % len(skins)], h)
+    items += [cell(f"hair {h['id']}", [faces[i % len(faces)]], outfits[(i + 1) % len(outfits)], skins[-1 - i % len(skins)], h)
               for i, h in enumerate(hairs)]
-    items += [cell(f"face {x}", [x], outfits[1], skins[i], hairs[1]) for i, x in enumerate(faces)]
+    items += [cell(x, [x], outfits[1], skins[i], hairs[1]) for i, x in enumerate(faces)]
     none = {"show": [], "colors": outfits[2]["colors"]}
     items += [cell(f"extra {x['id']}", [faces[0], x["model"]], none, skins[2], hairs[i % len(hairs)])
               for i, x in enumerate(ch["extras"])]
@@ -258,4 +258,4 @@ def character_sheet(ch, path, frame=10):
         pose(roots, "fly")
         items.append(("bird", roots))
     bpy.context.scene.frame_set(frame)
-    grid_render(items, path, cols=8, cell=2.2, px=220, normalise=False, samples=16)
+    grid_render(items, path, cols=8, cell=2.2, px=220, normalise=False, samples=16, k=3.2)

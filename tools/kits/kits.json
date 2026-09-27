@@ -16,7 +16,8 @@
       "license": "CC0-1.0",
       "page": "https://kenney.nl/assets/city-kit-suburban",
       "url": "https://kenney.nl/media/pages/assets/city-kit-suburban/2c871b7af2-1745479373/kenney_city-kit-suburban_20.zip",
-      "sha256": "5869c35cf30b1c87bdb2d197b6d325eebadd2ef08ea27f04797e8e08d77a9a39"
+      "sha256": "5869c35cf30b1c87bdb2d197b6d325eebadd2ef08ea27f04797e8e08d77a9a39",
+      "recolor": { "#e0e0f0": "wall.0", "#f0f0f0": "wall.0", "#d0d0e0": "wall.4", "#30a070": "leaf.1", "#309070": "leaf.1", "#40b080": "leaf.0", "#50b080": "leaf.0", "#60c090": "leaf.2" }
     },
     "kenney_nature": {
       "source": "kenney",
@@ -24,20 +25,21 @@
       "license": "CC0-1.0",
       "page": "https://kenney.nl/assets/nature-kit",
       "url": "https://kenney.nl/media/pages/assets/nature-kit/37ac38a37b-1677698939/kenney_nature-kit.zip",
-      "sha256": "fa7974a0d342bfe63c38664ba9f8ec1a4aab8ea25f099bdc56870e33588c4d9d"
+      "sha256": "fa7974a0d342bfe63c38664ba9f8ec1a4aab8ea25f099bdc56870e33588c4d9d",
+      "recolor": { "#f0c0a0": "wood.1", "#e0b0a0": "wood.1", "#fff0e0": "wood.0", "#ffc0a0": "wood.0", "#e0b090": "wood.1", "#70e0d0": "leaf.0", "#70d0d0": "leaf.1", "#70f0e0": "leaf.0", "#e0f0f0": "stone.0", "#ffe090": "accent.0", "#d0c0ff": "roof.3", "#f09090": "accent.3" }
     }
   },
   "models": {
-    "house": { "kit": "kenney_suburban", "file": "building-type-a", "kind": "building", "fit": [6, 5] },
-    "house_2": { "kit": "kenney_suburban", "file": "building-type-c", "kind": "building", "fit": [6, 5] },
-    "house_3": { "kit": "kenney_suburban", "file": "building-type-j", "kind": "building", "fit": [6, 5] },
+    "house": { "kit": "kenney_suburban", "file": "building-type-a", "kind": "building", "fit": [6, 5], "recolor": { "#40b080": "roof.0", "#50c080": "roof.0", "#50b080": "roof.0" } },
+    "house_2": { "kit": "kenney_suburban", "file": "building-type-c", "kind": "building", "fit": [6, 5], "recolor": { "#40b080": "roof.2", "#50c080": "roof.2", "#50b080": "roof.2", "#e0e0f0": "wall.1", "#f0f0f0": "wall.1" } },
+    "house_3": { "kit": "kenney_suburban", "file": "building-type-j", "kind": "building", "fit": [6, 5], "recolor": { "#40b080": "roof.1", "#50c080": "roof.1", "#50b080": "roof.1", "#e0e0f0": "wall.2", "#f0f0f0": "wall.2" } },
     "planter": { "kit": "kenney_suburban", "file": "planter", "kind": "prop", "len": 1.6 },
     "fence_low": { "kit": "kenney_suburban", "file": "fence-low", "kind": "prop", "len": 2.0 },
     "path_stones": { "kit": "kenney_suburban", "file": "path-stones-short", "kind": "road", "len": 2.0 },
     "tree": { "kit": "kenney_nature", "file": "tree_default", "kind": "nature", "h": 3.8 },
     "tree_oak": { "kit": "kenney_nature", "file": "tree_oak", "kind": "nature", "h": 4.2 },
-    "tree_fat": { "kit": "kenney_nature", "file": "tree_fat", "kind": "nature", "h": 3.6 },
-    "tree_cone": { "kit": "kenney_nature", "file": "tree_cone", "kind": "nature", "h": 4.6 },
+    "tree_fat": { "kit": "kenney_nature", "file": "tree_fat", "kind": "nature", "h": 3.6, "recolor": { "#70e0d0": "leaf.2" } },
+    "tree_cone": { "kit": "kenney_nature", "file": "tree_cone", "kind": "nature", "h": 4.6, "recolor": { "#70e0d0": "leaf.1" } },
     "tree_pine": { "kit": "kenney_nature", "file": "tree_pineRoundC", "kind": "nature", "h": 5.0 },
     "flower_red": { "kit": "kenney_nature", "file": "flower_redA", "kind": "nature", "h": 0.45 },
     "flower_yellow": { "kit": "kenney_nature", "file": "flower_yellowA", "kind": "nature", "h": 0.45 },
