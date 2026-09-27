@@ -1,22 +1,64 @@
-# Assets (Lane W)
+# Assets
 
-All models are ours, in metres at real-world scale, self-contained `.gltf` with one embedded buffer (LESSONS H1). `wall.js` turns each into a GLB in memory, because a strict CSP can refuse `data:` fetches. Every push that touches `assets/` or `js/world/` runs the `assets` workflow:
+Lane A owns the art pipeline (build 0.2 §2); the world notes further down are Lane W's.
+
+All models are in metres at real-world scale, self-contained `.gltf` with one embedded buffer (LESSONS H1), origin at the bottom centre, front towards +z. Every push that touches `assets/` or `js/world/` runs the `assets` workflow:
 - the Khronos glTF validator on every model;
 - one embedded buffer per model;
-- the triangle budget below;
+- the budgets below;
 - `js/world/rules.test.mjs`;
 - a syntax check of every `js/world/*.js`;
 - `tools/smoke_world.mjs`: the real world in headless Chrome. It pans, zooms, pinches, taps and focuses the town, then plays both tasks with pointer input (the closed road, a detour, the wall with rain) and fails on any page error. `smoke-town.png` is kept as a run artifact.
 
-## Triangle budget (the CI enforces the model rows)
+## Sources (CC0 only)
 
-| What | Budget | Now |
+| Kit | Licence | Page | Download (pinned sha256 in `tools/kits/kits.json`) |
+|---|---|---|---|
+| KayKit City Builder Bits 1.0 (Kay Lousberg) | CC0 1.0 | https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0 | the repo archive at commit `6397691` |
+| Kenney City Kit (Suburban) 2.0 | CC0 1.0 | https://kenney.nl/assets/city-kit-suburban | `kenney_city-kit-suburban_20.zip` from kenney.nl |
+| Kenney Nature Kit 1.0 | CC0 1.0 | https://kenney.nl/assets/nature-kit | `kenney_nature-kit.zip` from kenney.nl |
+| Our own models | ours | `blender/make_own.py` | built on the laptop from procedural geometry |
+
+Researched and not used:
+- **Kenney Mini Characters** (CC0): one baked texture per character, so no separate shirt or trousers to recolour for outfits, and accessories could not be fitted without opening the files. Our own character does both.
+- **Quaternius Universal Base Characters** (CC0): about 13k triangles each (the budget is 5k), and the download is a button on quaternius.com, not a stable URL.
+- **Kenney City Kit (Commercial)**: office towers and skyscrapers, not a small town.
+
+## Pipeline
+
+- **Kits** (`.github/workflows/kits.yml`, on a push to `tools/kits/**`, `blender/**` or the palette): fetch each kit, check its sha256, and run `blender/kits.py` in Blender 4.2 on the runner. Each recipe in `kits.json` is turned so that it faces +z, scaled to metres (`fit`, `len`, `h`), recoloured face by face to the nearest palette colour in CIELAB (vertex colours, one `palette` material, one draw call), and exported. `recolor` maps a logged source colour to a palette key. The workflow then writes `assets/manifest.json` and `docs/art/contact-town.png` and `contact-character.png`, runs the validator and commits the results back. Kit files are opened only on the runner (LESSONS A1).
+- **Own models** (`blender/make_own.py`, local Blender, LESSONS A3): signature buildings, the other buildings, broken variants and props, the bird, and the character. It writes `assets/models/*.gltf` and `blender/own_meta.json` (kind of each model and the character block of the manifest), and with a folder argument renders the same two sheets there for checking.
+
+## Palette
+
+`assets/palette.json` is the one palette: `grass`, `road`, `path`, `water`, `soil`, `glass`, `gold`, and lists `leaf`, `roof`, `wall`, `wood`, `stone`, `metal`, `accent`. `sky` holds `[zenith, horizon]` for `morning`, `noon`, `evening` and `night`. Models refer to colours as keys like `roof.0`.
+
+## Manifest (`assets/manifest.json`, written by CI)
+
+`models.<id>`: `file`, `source` (`kaykit`, `kenney` or `own`), `license`, `url`, `kind`, `tris`, `size` [x, y, z] and `footprint` [x, z] in metres, `nodes`, `animations`, `draws` (primitives) and `kb`.
+- `kind` is `building`, `prop`, `nature`, `vehicle`, `road`, `broken` (props to drop around broken places), `life` (the bird), `character` or `task` (the 0.1 wall models).
+- Building ids match `town.json` types: `townhall`, `house` (plus `house_2`, `house_3`), `keller_house`, `cafe`, `shop`, `pharmacy`, `kiosk`, `school`, `busstop`, `streetlight`, `statue`, `garden`, `park`, `playground`, `bridge`, `dump_pile`, `yard`. A `<id>_broken` variant exists for `bridge`, `busstop`, `park`, `playground`, `garden` and `dump_pile`; the others are the ok model, greyed, with `broken_rubble`, `broken_boards`, `broken_cone` and `broken_barrier` around them.
+- Extra nodes: `townhall` has `clock_hour` and `clock_minute` (pivot at the clock centre; turn about z, clockwise seen from the front); `streetlight` has `lamp` (make it glow at night).
+- `budget`: total MB, the character's triangles, and the 0.1 `town.json` buildings' triangles and draw calls.
+
+## Character (`character` in the manifest)
+
+One file, `character.gltf`: a rig (`hips`, `spine`, `head`, `armL/R`, `forearmL/R`, `handL/R`, `legL/R`, `shinL/R`) with clips `idle`, `walk`, `wave` and `cheer`, and every variant as its own skinned mesh. Show `body`, one hair, one face, the rank's accessories and at most one extra per slot; hide the rest.
+- Materials `Skin`, `Hair`, `Shirt`, `Pants`, `Shoes` and `Jacket` are recoloured per avatar; accessories and faces use the `palette` vertex colours.
+- `outfits[rank]`: `colors` by material name, `sleeve` (for the first-person arms) and `show` (node names). Ranks 0–6: vest and hard hat; tool belt and tester; teal jacket and clipboard; grey blazer; navy suit, tie and chain of office; charcoal suit, tie and briefcase; dark navy suit, tie and flag pin.
+- `skins` (6), `hairs` (`short`, `long`, `bun`, `curly`, `none`, each with a default colour), `faces` (`face_smile`, `face_grin`, `face_calm`), `extras` (`cap`, `beanie`, `sunglasses`, `flower`, `scarf`, `bowtie`, each with a `slot`).
+- `attach` names the bones for anything else: `head`, `spine`, `handR`.
+
+## Budgets (build 0.2 §3.1)
+
+| What | Budget | Checked by |
 |---|---|---|
-| One model file | ≤ 5,000 | 4,264 max (`fp_arms`) |
-| All model files | ≤ 15,000 | 9,952 |
-| Town view, Lane S's 15-building `town.json` | ≤ 5,000 | about 2,400 |
-| Delivery overlay (van, stops, barrier, route dots) | ≤ 3,000 | about 700 + 6 per queued metre (400 m max) |
-| Wall scene (models, pallet stack, wall, garden) | ≤ 20,000 | about 13,000 |
+| One model file (the character included) | ≤ 5,000 triangles | `tools/validate_assets.mjs` |
+| All model files | ≤ 8 MB | `tools/validate_assets.mjs` |
+| The 0.1 `town.json` buildings | ≤ 60,000 triangles, ≤ 150 draw calls | `validate_assets.mjs --manifest` (kits.yml) |
+| A whole town scene with props and life | ≤ 60,000 triangles, ≤ 150 draw calls | QA C3 (Lane G) |
+| Delivery overlay (van, stops, barrier, route dots) | ≤ 3,000 triangles | Lane W (about 700 + 6 per queued metre) |
+| Wall scene (models, pallet stack, wall, garden) | ≤ 20,000 triangles | Lane W (about 13,000) |
 
 ## Models (copied from Brick by Brick, made by its `blender/make_assets.py`)
 

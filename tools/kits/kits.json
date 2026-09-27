@@ -1,0 +1,69 @@
+{
+  "catalog": false,
+  "kits": {
+    "kaykit_city": {
+      "source": "kaykit",
+      "name": "KayKit City Builder Bits 1.0 (Kay Lousberg)",
+      "license": "CC0-1.0",
+      "page": "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0",
+      "url": "https://github.com/KayKit-Game-Assets/KayKit-City-Builder-Bits-1.0/archive/63976910ca04d16f0fc531b9c614244be8128713.zip",
+      "sha256": "dc101668e104968509740fcad1ed2a12f6123e1a75185f050abeef76dbefd151",
+      "recolor": { "#707080": "road", "#707070": "road", "#708080": "road", "#606070": "road", "#606060": "road", "#808090": "road", "#e0e0f0": "wall.4" }
+    },
+    "kenney_suburban": {
+      "source": "kenney",
+      "name": "Kenney City Kit (Suburban) 2.0",
+      "license": "CC0-1.0",
+      "page": "https://kenney.nl/assets/city-kit-suburban",
+      "url": "https://kenney.nl/media/pages/assets/city-kit-suburban/2c871b7af2-1745479373/kenney_city-kit-suburban_20.zip",
+      "sha256": "5869c35cf30b1c87bdb2d197b6d325eebadd2ef08ea27f04797e8e08d77a9a39",
+      "recolor": { "#e0e0f0": "wall.0", "#f0f0f0": "wall.0", "#d0d0e0": "wall.4", "#30a070": "leaf.1", "#309070": "leaf.1", "#40b080": "leaf.0", "#50b080": "leaf.0", "#60c090": "leaf.2" }
+    },
+    "kenney_nature": {
+      "source": "kenney",
+      "name": "Kenney Nature Kit 1.0",
+      "license": "CC0-1.0",
+      "page": "https://kenney.nl/assets/nature-kit",
+      "url": "https://kenney.nl/media/pages/assets/nature-kit/37ac38a37b-1677698939/kenney_nature-kit.zip",
+      "sha256": "fa7974a0d342bfe63c38664ba9f8ec1a4aab8ea25f099bdc56870e33588c4d9d",
+      "recolor": { "#f0c0a0": "wood.1", "#e0b0a0": "wood.1", "#fff0e0": "wood.0", "#ffc0a0": "wood.0", "#e0b090": "wood.1", "#70e0d0": "leaf.0", "#70d0d0": "leaf.1", "#70f0e0": "leaf.0", "#e0f0f0": "stone.0", "#ffe090": "accent.0", "#d0c0ff": "roof.3", "#f09090": "accent.3" }
+    }
+  },
+  "models": {
+    "house": { "kit": "kenney_suburban", "file": "building-type-a", "kind": "building", "fit": [6, 5], "recolor": { "#40b080": "roof.0", "#50c080": "roof.0", "#50b080": "roof.0" } },
+    "house_2": { "kit": "kenney_suburban", "file": "building-type-c", "kind": "building", "fit": [6, 5], "recolor": { "#40b080": "roof.2", "#50c080": "roof.2", "#50b080": "roof.2", "#e0e0f0": "wall.1", "#f0f0f0": "wall.1" } },
+    "house_3": { "kit": "kenney_suburban", "file": "building-type-j", "kind": "building", "fit": [6, 5], "recolor": { "#40b080": "roof.1", "#50c080": "roof.1", "#50b080": "roof.1", "#e0e0f0": "wall.2", "#f0f0f0": "wall.2" } },
+    "planter": { "kit": "kenney_suburban", "file": "planter", "kind": "prop", "len": 1.6 },
+    "fence_low": { "kit": "kenney_suburban", "file": "fence-low", "kind": "prop", "len": 2.0 },
+    "path_stones": { "kit": "kenney_suburban", "file": "path-stones-short", "kind": "road", "len": 2.0 },
+    "tree": { "kit": "kenney_nature", "file": "tree_default", "kind": "nature", "h": 3.8 },
+    "tree_oak": { "kit": "kenney_nature", "file": "tree_oak", "kind": "nature", "h": 4.2 },
+    "tree_fat": { "kit": "kenney_nature", "file": "tree_fat", "kind": "nature", "h": 3.6, "recolor": { "#70e0d0": "leaf.2" } },
+    "tree_cone": { "kit": "kenney_nature", "file": "tree_cone", "kind": "nature", "h": 4.6, "recolor": { "#70e0d0": "leaf.1" } },
+    "tree_pine": { "kit": "kenney_nature", "file": "tree_pineRoundC", "kind": "nature", "h": 5.0 },
+    "flower_red": { "kit": "kenney_nature", "file": "flower_redA", "kind": "nature", "h": 0.45 },
+    "flower_yellow": { "kit": "kenney_nature", "file": "flower_yellowA", "kind": "nature", "h": 0.45 },
+    "flower_purple": { "kit": "kenney_nature", "file": "flower_purpleA", "kind": "nature", "h": 0.45 },
+    "rock": { "kit": "kenney_nature", "file": "stone_largeA", "kind": "nature", "h": 0.8 },
+    "rock_small": { "kit": "kenney_nature", "file": "stone_smallA", "kind": "nature", "h": 0.35 },
+    "stump": { "kit": "kenney_nature", "file": "stump_round", "kind": "nature", "h": 0.5 },
+    "log": { "kit": "kenney_nature", "file": "log", "kind": "nature", "len": 1.6 },
+    "fence": { "kit": "kenney_nature", "file": "fence_simple", "kind": "prop", "len": 2.0 },
+    "fence_gate": { "kit": "kenney_nature", "file": "fence_gate", "kind": "prop", "len": 2.0 },
+    "car_sedan": { "kit": "kaykit_city", "file": "car_sedan", "kind": "vehicle", "len": 4.2, "recolor": { "#809090": "metal.0", "#90a0a0": "metal.0", "#808090": "metal.0" } },
+    "car_hatchback": { "kit": "kaykit_city", "file": "car_hatchback", "kind": "vehicle", "len": 3.8, "recolor": { "#809090": "metal.0", "#90a0a0": "metal.0", "#808090": "metal.0" } },
+    "car_stationwagon": { "kit": "kaykit_city", "file": "car_stationwagon", "kind": "vehicle", "len": 4.5, "recolor": { "#809090": "metal.0", "#90a0a0": "metal.0", "#808090": "metal.0", "#00a060": "roof.4" } },
+    "bench": { "kit": "kaykit_city", "file": "bench", "kind": "prop", "len": 1.8, "recolor": { "#b07050": "wood.0", "#a06050": "wood.1" } },
+    "potted_bush": { "kit": "kaykit_city", "file": "bush", "kind": "prop", "h": 1.2, "recolor": { "#007050": "leaf.1", "#008050": "leaf.1", "#009050": "leaf.0", "#00a060": "leaf.0" } },
+    "dumpster": { "kit": "kaykit_city", "file": "dumpster", "kind": "prop", "len": 2.0 },
+    "hydrant": { "kit": "kaykit_city", "file": "firehydrant", "kind": "prop", "h": 0.8 },
+    "trash_bags": { "kit": "kaykit_city", "file": "trash_A", "kind": "prop", "len": 1.2 },
+    "trash_bags_2": { "kit": "kaykit_city", "file": "trash_B", "kind": "prop", "len": 1.2 },
+    "box": { "kit": "kaykit_city", "file": "box_A", "kind": "prop", "h": 0.6 },
+    "road_straight": { "kit": "kaykit_city", "file": "road_straight", "kind": "road", "fit": [6, 6] },
+    "road_corner": { "kit": "kaykit_city", "file": "road_corner_curved", "kind": "road", "fit": [6, 6] },
+    "road_junction": { "kit": "kaykit_city", "file": "road_junction", "kind": "road", "fit": [6, 6] },
+    "road_tsplit": { "kit": "kaykit_city", "file": "road_tsplit", "kind": "road", "fit": [6, 6] },
+    "road_crossing": { "kit": "kaykit_city", "file": "road_straight_crossing", "kind": "road", "fit": [6, 6] }
+  }
+}

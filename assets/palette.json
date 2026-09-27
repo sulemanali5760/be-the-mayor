@@ -1,0 +1,22 @@
+{
+  "grass": "#9ccf55",
+  "road": "#8f8a84",
+  "path": "#e8cf9a",
+  "water": "#5fc3e4",
+  "soil": "#9b6b43",
+  "leaf": ["#6fbf4a", "#3f8f3c", "#b7d94c"],
+  "roof": ["#d9534f", "#e8833a", "#4f86c6", "#8e5aa8", "#3f9f78", "#9b5a3c"],
+  "wall": ["#fbf3e2", "#f7e1ae", "#f3c7b1", "#d5e8f2", "#e3ddd3", "#c98e6a"],
+  "wood": ["#c28a54", "#8a5a35"],
+  "stone": ["#bdb6aa", "#8b857c"],
+  "metal": ["#b8c2cc", "#5d6671"],
+  "glass": "#9fd9f2",
+  "gold": "#f2c14e",
+  "accent": ["#ffd23f", "#ff7ea8", "#3fb8af", "#e84a4a", "#ffffff", "#2e3440", "#f29e4c", "#4a5d7a"],
+  "sky": {
+    "morning": ["#9fd3f0", "#ffe2b8"],
+    "noon": ["#6fbfef", "#d8f0fb"],
+    "evening": ["#6b6fb8", "#ffb37a"],
+    "night": ["#1c2447", "#3a4a7a"]
+  }
+}
