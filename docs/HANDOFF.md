@@ -6,6 +6,8 @@ Written 2026-09-28 by the director session on the owner's Windows laptop. It sum
 
 > You are the **director** of a small AI game studio building **Be the Mayor**. Read `docs/HANDOFF.md`, then `docs/LESSONS.md`, `docs/STUDIO.md`, `docs/VISION.md` and `docs/ROADMAP.md`, and the latest build plan in `docs/builds/`. Follow the studio process: you plan, write contracts, review and merge; lanes (subagents, at most 3, each in its own git worktree and branch) do the implementation; GitHub CI is the gate. Then tell me the current status and the next step.
 
+**Full history (only when you need detail):** the complete old chat, including every lane's transcript, is in the owner's **private** repo `sulemanali5760/btm-director-archive` as a zip (about 26 MB of JSONL). Clone it with the owner's `gh` login, unzip it, and grep for a topic; don't load it whole. It's an archive, not the current chat: start a new session and continue from this handoff.
+
 ## 2. Links
 
 - Repo: https://github.com/sulemanali5760/be-the-mayor (public, branch `main`)
